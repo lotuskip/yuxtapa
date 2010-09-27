@@ -1,0 +1,50 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Server log</h2>
+
+<p>The yuxtapa server will write a log file 'server.log' into the config
+directory (typically /home/user/.config/yuxtapa/). The file contains
+various information that can be of use or of interest to the server
+administrator.</p>
+
+<p>The file is created if it is missing and new log entries are appended
+to an existing file.</p>
+
+<p>The best way to get acquainted with the log is to run a server for
+a while and then take a look at the log. A few points of particular
+interest are mentioned here:</p>
+
+<h3>Usage reports</h3>
+
+<p>Every half hour, the server reports the current number of connected players
+if it is not zero. An entry is also printed when the last player leaves.
+This can be used to construct a (graphical, if you wish)
+representation of the server usage. (If anyone feels like writing
+a script to do this, feel free to contribute!)</p>
+
+<p>The average presense is also printed upon server shutdown, and for
+each day, at midnight. (That's the new average since the average
+was last printed, not overall.)</p>
+
+<h3>Warnings in the log</h3>
+
+<p>The server can sometimes write warnings into the log. These <em>usually</em>
+indicate that the server settings might need some adjusting. Most
+common causes of warnings are:
+<dl>
+<dt>map size had to be enlarged due to too high number of players</dt>
+<dd>Indicates that you <em>might</em> want to either make the mapsize
+variable larger or limit the maximum number of players. This warning
+can be safely ignored, though, if you wish to play with small maps
+when there are only a few players.</dd>
+<dt>the server lagged so-and-so many turns during a map</dt>
+<dd>This indicates that the server cannot keep up with all what's
+going on. If the number of turns lagged is very small and the warnings
+only occur occasionally, it's probably all right (perhaps you have some
+other processes running on the same computer that occasionally eat some
+processor time?). But if the lagging is great and constant, you should
+(A) limit the maximum number of players, or, which is more effective,
+(B) increase the turnms value. The latter greatly affects the general
+feel of the gameplay, so use it as a last-resort. Disabling <a href="bots.html">bots</a>,
+if they are used, probably also helps.</dd>
+</dl></p>
+</body></html>

@@ -1,0 +1,58 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Traps</h2>
+
+<p>The maps in yuxtapa often have hidden traps that can damage you or disturb your
+playing in some other way.</p>
+
+<p>Traps that you know about are drawn with a '^' symbol (traps that you don't
+know about obviously aren't drawn at all). The colour of the symbol tells the
+type of the trap (see below).</p>
+
+<p>Walking over a trap you don't know about automatically causes the trap to be
+triggered. Walking over a known trap if the area is lit is safe: the trap won't
+be triggered. However, in the dark you might accidentally trigger a trap even
+if you know about!</p>
+
+<p>You can intentionally trigger a trap you're standing on (the default key binding
+is 'T').</p>
+
+<h3>Detecting traps</h3>
+
+<p>Traps are detected by remaining still, doing nothing (your PC is then assumed
+to be looking around for traps). Traps that are within 3 tiles can be detected
+this way.</p>
+
+<p>A <a href="trapper.html">trapper</a> only needs half of the normal time to detect traps.
+A <a href="scout.html">scout</a> needs 3/4. These two classes also detect all traps automatically.
+All other classes have a 60% (75% if lit) chance to detect each trap.</p>
+
+<p>Everyone will automatically see the traps detected by teammates. Trappers obviously
+detect immediately the traps they themselves leave.</p>
+
+<p>You can, of course, also detect a trap by just walking into it and setting it off. This
+won't happen if you don't survive the trap, though, and it never happens with teleportation
+traps, either.</p>
+
+
+<h3>Trap types</h3>
+<p><em>Fireball traps</em> (red ^) cause an explosion that damages everyone in a radius 
+of 2 tiles. The damage is higher close to the trap. The explosion also lights
+the area around it. If you kill someone by stepping on a trap, you are
+responsible (or get the honour) for the kill.</p>
+
+<p><em>Light traps</em> (yellow ^) blind you for a few turns. While blind, you can carry
+out all actions as usual, but can't see anything on your screen. [[Assassins]]
+are immune to light traps.</p>
+
+<p><em>Water traps</em> (blue ^) will instantly extinguish your torch if it is lit, and
+rust your melee weapon causing a penalty to your to-hit and your melee damage.
+The penalties won't go away until you die and respawn.</p>
+
+<p><em>Teleport traps</em> (green ^) will teleport you to a random location. That location
+might be a chasm or a water tile, too.</p>
+
+<p><em>Booby traps</em> (gray ^) can be randomly generated like the other traps, or set
+by <a href="trapper.html">trappers</a>. They damage the one who triggers them. A booby
+trap left by a trapper disappears once triggered.</p>
+
+</body></html>

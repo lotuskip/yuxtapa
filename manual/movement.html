@@ -1,0 +1,112 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Movement</h2>
+
+<p>
+Players familiar with roguelike games should have no trouble adjusting to the
+basic movement method of yuxtapa. By default, you move using the numpad keys 1-4 and 6-9:
+<pre>
+7: up-left     8: up     9: up-right
+
+4: left        @ (you)   6: right
+
+1: down-left   2: down   3: down-right
+</pre>
+</p>
+
+<p>You can walk on anything except
+<ul>
+<li>walls and windows ('#', '|', '-')</li>
+<li>closed doors ('+'); although walking at them will open them</li>
+<li>other players ('@') and boulders ('O')</li>
+</ul></p>
+
+<p>Many actions are triggered simply by moving: to enter a portal you just walk
+into it; to attack someone you simply <em>walk at them</em>, etc.</p>
+
+<p>Due to the real-timedness, there are some peculiarities that players of
+roguelikes probably are not used to. These are explained below.</p>
+
+
+<h3>Terrain</h3>
+
+<p>Walking on most tiles takes one turn per step. However, marsh (green '&quot;')
+and rough terrain (dark ';') are slower to walk on, and you lose one turn after
+stepping on such tiles (unless your class is <a href="trapper.html">Trapper</a> or <a href="scout.html">Scout</a>).</p>
+
+<p>Some terrains are dangerous to walk on. Water terrain (blue '~') can cause drowning
+damage, and walking into a chasm (just emptiness: ' ') will instantly kill you.</p>
+
+<p>It is possible to <strong>swim</strong> through water without drowning. This, however,
+requires quite perfect timing. The details are explained in <a href="rulemech.html">Rule mechanics</a>.
+Stepping on water squares makes noise unless your class is <a href="scout.html">Scout</a> or
+<a href="assassin.html">Assassin</a>.</p>
+
+
+<h3>Walk mode</h3>
+<p>You can press 'w' to toggle the so-called <em>walk mode</em>. Many roguelikes
+have a feature with a similar name, but in yuxtapa it's different.</p>
+
+<p>When you take a step in walking mode (with 1-4, 6-9), then, until you do
+something else, this same step in the same direction is repeated over
+and over again. So, if you hit 'w' to toggle walk mode on, then hit '8'
+to move up, and just wait doing nothing, your character will walk up
+one step per turn. <em>Until you do something</em>, there is no condition
+to <em>automatically</em> stop. Also, the direction does not change; the walk
+mode will not steer you along a corridor like in many roguelikes.</p>
+
+<p>To stop without leaving the walk mode, press '5' (default keybinding).</p>
+
+<p>The purpose of the walk mode is mainly to ease the stress that yuxtapa
+causes on your keyboard. If nothing is going on and you need to walk
+long distances, it's nicer to do in walk mode: you only have to hit
+a key to <em>turn</em>, not to explicitly take each step.</p>
+
+<p>The walk mode is also very nice when <a href="spectating.html">Spectating</a>, since you can
+go through walls. Although note that when spectating it's also possible
+to take more than one steps per turn, and this might be preferable
+to cross long distances (walk mode only walks one step per turn).</p>
+
+
+<h3>Swapping places with teammates</h3>
+<p>It often happens that you are in a narrow corridor with a teammate.
+In roguelikes, you can usually swap places with nonhostiles without
+any trouble, but in yuxtapa such behaviour would cause problems (to
+understand why, read the page <a href="timesystem.html">Time system</a>).</p>
+
+<p>Roughly speaking, the rules are these:</p>
+
+<p>If you walk at a teammate and that teammate moves away on the same
+turn, you will occupy her place:
+<pre>
+#####   both hit '6'  #####
+.@@..      --->       ..@@.
+#####                 #####
+ AB                     AB
+</pre>
+If the teammate is walking at you on the same turn, you swap places:
+<pre>
+   ...   A hits '2'   ...
+A->.@.      --->      .@.<-B
+B->.@.   B hits '8'   .@.<-A
+   ...                ...
+</pre>
+If the teammate hasn't acted for 8 turns (on normal settings that's
+2 seconds), only your move is necessary to cause a swap. This means
+that your teammate's PC moves even though she didn't mean that to
+happen, and might have nasty consequences (if, e.g. your teammate is
+a <a href="combatmage.html">Combat mage</a> about to cast a spell).</p>
+
+<p>Otherwise you cannot swap places with a teammate. Go around if there's
+room, and if there isn't and if they don't seem to notice, you can
+<a href="chatting.html">yell</a>. Also, look things the other way
+and be courteous to teammates who might want to pass <em>you</em> in a
+tight spot.</p>
+
+<p>Observer that when swapping places, no other actions are taken. In
+particular, if one of the PCs was standing on a trap, swapping places
+won't cause the trap to be triggered by the other PC. The same goes
+for portals: the swapping PC won't enter the portal. Also, swapping
+into a swamp/rough tile won't slow you down, like just walking into
+one does.</p>
+
+</body></html>

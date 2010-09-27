@@ -1,0 +1,61 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Rule mechanics</h2>
+
+<p>This page is in no particular order, and contains no <em>necessary</em>
+information. Read only if truly interested.</p>
+
+
+<h3>Tohit, PV, and DV</h3>
+
+<p>Let P := [target's DV] - [attacker's tohit].<br>
+Let R := 1d20-1 (random number 0..19).<br>
+If R &gt;= P, the attack hits.<br>
+If R/P (integer division) &gt;= 2 or R==19, the hit is critical.</p>
+
+<p>Next, roll the damage defined for the attack (see <a href="classov.html">Class overview</a>).
+Unless the hit was critical, reduce defender's PV. This is the amount
+of damage dealt.</p>
+
+<p>
+The above applies to all melee attacks, shooting arrows, <a href="fighter.html">fighters'</a>
+circle-strike, and booby traps.
+<ul>
+<li>archery: damage 1d6, tohit +7</li>
+<li>circle-strike: damage 1d8, tohit +5 (hit tested separately for each target)</li>
+<li>booby-trap: damage 2d6, tohit +9</li>
+<li>assassins when hiding: damage is doubled, 2d4+4</li>
+</ul>
+Archery damage and tohit are not affect by rusting (caused by <a href="traps.html">water traps</a>).</p>
+
+
+<h3>Spells</h3>
+
+<p>Spells always hit and bypass armour (DV/PV play no role). Damage for a magic missile is 1d5.
+Damage for a zap is 2d5, rolled separately for each hit.</p>
+
+<p>However, with magic resistance it is possible to avoid the effect of a spell. The resistance
+given in <a href="classov.html">Class overview</a> is the chance in percents of this happening.
+With magic resistance you can resist:
+<ul>
+<li>magic missiles (the missile hits you but deals no damage)</li>
+<li>zaps (the zap hits you or passes through you but deals no damage)</li>
+<li>teleportation <a href="traps.html">traps</a> (you simply do not teleport; here the resistance can kick in even if you <em>intentionally</em>
+trigger the trap to make yourself teleport!)</li>
+</ul></p>
+
+
+<h3>Swimming and Drowning</h3>
+
+<p>When you enter a water square (by walking there, by switching places with
+someone there, or by blinking there), you will lose the next two turns.</p>
+
+<p>Drowning damage is dealt if, at the end of any given turn, you are in water
+and are not losing any turns. The damage amount is random, between 1 and 3 points.</p>
+
+<p>To avoid drowning, you must move out of the water (possibly to another water square,
+but it doesn't matter) precisely at that turn on which you would take the
+first drowning damage. On normal timing settings this means that you must move
+two steps per second, no more, no less. Attempting to move faster means you rush and
+don't swim properly, while moving too slowly means you don't swim enough and thus sink.</p>
+
+</body></html>

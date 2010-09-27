@@ -1,0 +1,70 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Mindcrafter</h2>
+
+<p>pros: pretty good in all respects except:<br>
+cons: low HPs, no torch</p>
+
+<h3>Abilities</h3>
+<ul>
+<li>Blink (random teleport)</li>
+</ul>
+
+<p>The Mindcrafters can <em>blink</em> themselves away (or into) danger by
+simply hitting space. This will effectively teleport the mindcrafter
+instantly to a random square which is:
+<ul>
+<li>not occupied</li>
+<li>walkable</li>
+<li>within the mindcrafter's line of sight, or just outside of it</li>
+</ul>
+The target position will be the furthest possible, or a random one of
+those if there are several options.</p>
+
+<p>Some points to consider, though:</p>
+
+<p>The blinking really is instantaneous; consider the following example.
+<pre>
+@ <-- the Mc
+
+    @ <-- enemy PC
+   X <-- point where the Mc blinks
+</pre>
+Here we assume that the enemy PC is moving SW on the same turn, but that the
+blinking action takes place before the move. The result: the enemy PC gets to
+attack the Mc for free. On the other hand, if the move took place first, the
+blinking destination could not be at 'X'; the enemy PC would now be there!</p>
+
+<p>Another thing to keep in mind is that the destination square only needs to
+be vacant. This means that you can blink into water and drown or into a chasm
+and die instantly. If there is water or chasm in your LOS, only use blinking
+if the risk is worth taking! (If you want to, for instance, cross a chasm
+by blinking, you usually should blink right at the edge of the chasm to minimise
+the risk.)</p>
+
+<p>It can happen that there are no free squares to blink to. Then you simply
+won't blink after all. This counts as an action, though, not as a turn spent
+waiting.</p>
+
+<p>You cannot blink too often, either. (Understanding this simple statement is
+enough for most players; technicalities follow:)</p>
+
+<font size="-1">
+<p>There is a counter, call it C, attached to each mindcrafter. It is initially
+at value 0. When you blink, C is increased by one and you lose 2C turns. If you
+don't do anything (just wait; a lost turn doesn't count here!), C is decreased
+by one (down to zero).</p>
+
+<p>So, usually you can blink whenever you need to, and you lose two turns. But if you
+try blinking all of the time, this is what happens:
+<ul>
+<li>you blink at turn 0</li>
+<li>you lose turns 1-2 (C=1)</li>
+<li>you blink at turn 3</li>
+<li>you lose turns 4-7 (C=2)</li>
+<li>you blink at turn 8</li>
+<li>you lose turns 9-14 (C=3)</li>
+<li>etc.</li>
+</ul></p>
+
+<p>The value of C cannot rise higher than to 10.</p></font>
+</body></html>

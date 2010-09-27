@@ -1,0 +1,298 @@
+// Please see LICENSE file.
+#include "input.h"
+#include "settings.h"
+#include "view.h"
+#include "base.h"
+#include "network.h"
+#include "msg.h"
+#include "class_cpv.h"
+#include "../common/netutils.h"
+#include "../common/utfstr.h"
+#include "../common/constants.h"
+#include <ncurses.h>
+#include <cctype>
+
+e_ClientState clientstate = CS_NORMAL;
+
+namespace
+{
+using namespace std;
+
+/* These decimal values of the various special keys I've obtained through
+ * testing. Hence, they might not work on some platforms. If it turns out
+ * they don't, these constants should be defined separately for those
+ * platforms (using precompiler #if .. #else if ... #else ... #endif) */
+const char KEYCODE_ENTER = 13; // != '\n'
+const char KEYCODE_INT = 3; // ^C
+
+string typed_str;
+short type_pos; // in *UTF-8 symbols*, not chars
+short num_syms;
+
+e_Dir last_dir = MAX_D;
+bool walkmode = false;
+
+void leave_limbo()
+{
+	clientstate = CS_NORMAL;
+	redraw_view();
+	Base::def_cursor();
+}
+
+void walkmode_off()
+{
+	if(walkmode)
+		Base::print_walk((walkmode = false));
+	last_dir = MAX_D;
+}
+
+void init_type()
+{
+	typed_str.clear();
+	Base::type_cursor((type_pos = num_syms = 0));
+}
+
+void typing_done()
+{
+	if(!typed_str.empty())
+	{
+		Config::do_aliasing(typed_str);
+		Network::send_line(typed_str, clientstate == CS_TYPE_CHAT);
+	}
+	Base::print_str("", 0, 0, MSG_WIN_Y-1, MSG_WIN, true);
+	Base::def_cursor();
+}
+
+bool check_typing()
+{
+	int k;
+	wint_t key;
+
+	if((k = get_wch(&key)) == KEY_CODE_YES)
+	{
+		switch(key)
+		{
+		/* In my experience, KEY_ENTER never works. But here it is in case
+		 * it might, on some obscure platform. */
+		case KEY_ENTER:
+			typing_done();
+			return true;
+		// The rest appear to work fine:
+		case KEY_BACKSPACE:
+			if(type_pos > 0)
+			{
+				del(typed_str, type_pos-1);
+				--type_pos;
+				--num_syms;
+			}
+			break;
+		case KEY_DC: // delete key
+			if(type_pos < num_syms)
+			{
+				del(typed_str, type_pos);
+				--num_syms;
+			}
+			break;
+		case KEY_LEFT:
+			if(type_pos > 0)
+				--type_pos;
+			break;
+		case KEY_RIGHT:
+			if(type_pos < num_syms)
+				++type_pos;
+			break;
+		case KEY_HOME:
+			type_pos = 0;
+			break;
+		case KEY_END:
+			type_pos = num_syms;
+			break;
+		default: // unknown control key
+			return false;
+		}
+	} // control key
+	else if(k == OK) // key holds a proper wide character
+	{
+		if(key == KEYCODE_ENTER)
+		{
+			typing_done();
+			return true;
+		}
+		// else
+		if(key == '\t' || key == KEYCODE_INT) // tab: exit
+		{
+			typed_str.clear();
+			typing_done();
+			return true;
+		}
+		// else
+		ins(typed_str, key, type_pos);
+		++num_syms; // string got longer
+		++type_pos;
+	}
+	else // no key at all
+		return false;
+
+	Base::print_str(typed_str.c_str(), 7, 0, MSG_WIN_Y-1, MSG_WIN, true);
+	Base::type_cursor(type_pos);
+	return false;
+}
+
+} // end local namespace
+
+
+bool Input::inputhandle()
+{
+	if(clientstate == CS_TYPE_CHAT || clientstate == CS_TYPE_SHOUT)
+	{
+		// check_typing will accept wide characters
+		if(check_typing()) // returns true if done typing
+		{
+			clientstate = CS_NORMAL;
+			Base::def_cursor();
+		}
+		return false;
+	}
+	// else
+	
+	int key = getch();
+	if(key != ERR) // there is some key
+	{
+		if(key == KEYCODE_INT)
+			return true; // ^C quits
+
+		if(clientstate == CS_LIMBO)
+		{
+			if(isalpha(key))
+			{
+				key = tolower(key);
+				if(key <= 'j' && key >= 'a') // switch class
+				{
+					Network::send_spawn((unsigned char)(key - 'a'));
+					leave_limbo();
+				}
+				else if(key == 't')
+				{
+					Network::send_switch();
+					leave_limbo();
+				}
+				else if(key == 's')
+				{
+					Network::send_spawn(NO_CLASS);
+					leave_limbo();
+				}
+				else if(key == 'l')
+					leave_limbo();
+			}
+		}
+		else
+		{
+			// clientstate is such that we need to convert the key:
+			e_Key_binding kb = MAX_KEY_BINDING;
+			if(key < 256) // fits in a byte; try to convert
+				kb = Config::convert_key(char(key));
+			// map arrow keys to the directions, for the n00bs:
+			else if(key == KEY_UP)
+				kb = KB_8;
+			else if(key == KEY_DOWN)
+				kb = KB_2;
+			else if(key == KEY_LEFT)
+				kb = KB_4;
+			else if(key == KEY_RIGHT)
+				kb = KB_6;
+		
+			if(kb < MAX_KEY_BINDING) // a recognized key
+			{
+			switch(kb)
+			{
+			/*
+			 * The effect of these depends on clientstate & class.
+			 * The handling is delegated to class_cpv.cpp
+			 */
+			case KB_1: // movement
+			case KB_2: case KB_3: case KB_4: case KB_6: case KB_7: case KB_8: case KB_9:
+				ClassCPV::move((last_dir = e_Dir(kb)));
+				break;
+			case KB_5: // special direction
+				ClassCPV::five();
+				last_dir = MAX_D;
+				break;
+			case KB_SPACE: // action key
+				ClassCPV::space();
+				walkmode_off();
+				break;
+
+			/*
+			 * These can be done in the middle of unfinished actions, but will cause
+			 * interruption:
+			 */
+			case KB_C: // say in chat
+				clientstate = CS_TYPE_CHAT;
+				init_type();
+				walkmode_off();
+				break;
+			case KB_s: // say aloud
+				clientstate = CS_TYPE_SHOUT;
+				init_type();
+				walkmode_off();
+				break;
+			case KB_c: // close a door
+				Network::send_action(XN_CLOSE_DOOR);
+				// interrupts any aiming/casting etc:
+				clientstate = CS_NORMAL;
+				walkmode_off();
+				break;
+			case KB_u: // torch handling
+				Network::send_action(XN_TORCH_HANDLE);
+				// interrupts any aiming/casting etc:
+				clientstate = CS_NORMAL;
+				walkmode_off();
+				break;
+			case KB_T: // trigger a trap
+				Network::send_action(XN_TRAP_TRIGGER);
+				// interrupts any aiming/casting etc:
+				clientstate = CS_NORMAL;
+				walkmode_off();
+				break;
+			case KB_X: // suicide
+				ClassCPV::suicide();
+				walkmode_off();
+				break;
+			case KB_l: // limbo toggle
+				clientstate = CS_LIMBO;
+				walkmode_off();
+				redraw_view();
+				Base::type_cursor(0);
+				break;
+			case KB_Q: // quit
+				return true; // confirmation? nah
+
+			/*
+			 * The following can be carried out in any clientstate without
+			 * interruption:
+			 */
+			case KB_w: // walk toggle
+				if(walkmode)
+					walkmode_off();
+				else
+					Base::print_walk((walkmode = true));
+				break;
+			case KB_t: // titles toggle
+				toggle_titles();
+				break;
+			case KB_PLUS:
+				scroll_chat_up();
+				break;
+			case KB_MINUS:
+				scroll_chat_down();
+				break;
+			default: break;
+			}
+			} // a recognized key binding
+		} // need to convert key
+	} // key != ERR
+	else if(clientstate == CS_NORMAL && walkmode && last_dir != MAX_D
+		&& Network::not_acted())
+		ClassCPV::move(last_dir);
+	return false;
+}

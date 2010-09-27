@@ -1,0 +1,50 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Admin levels</h2>
+
+<p>Every player on a server has an <em>admin level</em> (AL) on a server. The ALs are
+<ul>
+<li>0, <em>guest</em>, (G)</li>
+<li>1, <em>regular</em>, (R)</li>
+<li>2, <em>trusted user</em>, (TU)</li>
+<li>3, <em>admin</em>, (A)</li>
+<li>4, <em>super admin</em>, (SA)</li>
+</ul></p>
+
+<p>Every newly connected player is initially a guest. There can be only one super
+admin per server.</p>
+
+<p>To check the AL of yourself or anyone else, you can use the <em>!adminlvl</em> command,
+see <a href="chatting.html">Chatting and shouting</a>. All the ALs of all connected players are also
+automatically displayed during intermission.</p>
+
+
+<h3>The Super Admin</h3>
+
+<p>To become a super admin, you must be the first player to connect to the server,
+and execute the command
+<pre>
+!setal [your-nick-here] 4
+</pre>
+This command (see <a href="chatting.html">Chatting and shouting</a>) sets the AL of a user. Usually
+you can only change the AL of <em>other</em> users, but in the special case
+that you are the first and only player on the server, you can make yourself a super
+admin.</p>
+
+
+<h3>Privileges</h3>
+
+<p>Your AL determines what you are entitled to do on the server, executing
+commands wise.</p>
+
+<p>You may only set the AL (<em>!setal</em>) of a player whose AL currently
+is lower than yours, and you can set their AL to atmost your own AL.
+There can be only one super admin, though.</p>
+
+<p>You may only kick, ban, mute, or unmute (<em>!kick</em>, <em>!ban</em>, <em>!mute</em>,
+<em>!unmute</em>) players with lower AL than your own. Moreover, to ban
+you must be an admin (AL at least 3).</p>
+
+<p>The commands <em>!shuffle</em>, <em>!nextmap</em>, and <em>!teambalance</em> are usable by
+trusted users and admins (AL at least 2).</p>
+
+</body></html>

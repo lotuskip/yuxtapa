@@ -1,0 +1,49 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Statistics</h2>
+
+<p>The server keeps various statistics on the performance of all the players.
+Normally these are 'hidden' in the servers memory, not visible to the
+players themselves, but they can be published by the server administrator.
+If you start the server with the extra command line argument '--pstats',
+the server will print to stdout all player statistics and exit.</p>
+
+<p>The stats are supposed to be human-readable to some extent, but in particular
+easily analysable with self-made scripts or programs.</p>
+
+
+<h3>The statistics table</h3>
+
+<p>For each player, the following information is included:
+<ul>
+<li>most recent nick</li>
+<li>time information:</li>
+<ul>
+<li>last seen (date and time)</li>
+<li>total time spent connected to the server (h:min:s), minus intermissions</li>
+<li>percentage of that spent spectating</li>
+<li>percentage of that spent playing as each class (if non-zero)</li>
+</ul>
+<li>performance information:</li>
+<ul>
+<li>kills, grand total</li>
+<li>deaths, grand total</li>
+<li>total healing received in hitpoints (includes self-healing)</li>
+<li>archery accuracy-%</li>
+<li>combat magic (zap) accuracy-% (since zaps can hit several times their accuracy can exceed 100%)</li>
+</ul>
+</ul></p>
+
+<p>Hitting teammates does not count as hitting in the accuracy considerations. With archery, it is considered a hit if your
+arrow stops at a square where there is an opponent, even if the actual result is a 'miss'.</p>
+
+<p>
+About the times, note that if the percentages don't quite add up to 100%, this is due to two reasons:
+<ul>
+<li>(main reason:) time spent dead, aka 'in the limbo' counts as time spent on the server but not as any of the percentages</li>
+<ul>
+<li>this way it is possible to compare also how much time players 'waste being dead'</li>
+</ul>
+<li>rounding errors; all percentages are rounded down to integers, and all times are rounded down to full seconds</li>
+</ul></p>
+
+</body></html>

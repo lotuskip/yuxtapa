@@ -1,0 +1,63 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Getting and installing</h2>
+
+<h3>Downloading</h3>
+<p>You have one or two options:
+<ul>
+<li>Download the yuxtapa source code (link on the <a href="http://tempoanon.net/lotuskip/yuxtapa/">homepage</a>) and compile it yourself</li>
+<li>If you are an Arch Linux user, just search for yuxtapa in the <a href="http://aur.archlinux.org">AUR</a></li>
+</ul></p>
+
+
+<h3>Requirements</h3>
+<p>The client program needs the <em>NCurses library</em> (the package is typically called
+'libncurses' or just 'ncurses' on most Linux distros). For compiling,
+you need the development package, too, if it is separate (e.g. 'libncurses-devel').
+The library should be built with support to 256 colours (nowadays it
+most likely is, so don't worry about this unless you face colour
+issues).</p>
+
+<p>Both the client and the server need the <em>C++ boost library</em> (typically
+named 'boost'; 'boost-devel' for the separate development package),
+and <em>zlib</em>.</p>
+
+<p>Please see the <a href="terminals.html">Terminals</a> page for information about what yuxtapa
+requires from the terminal emulator.</p>
+
+
+<h3>Compiling the source</h3>
+<p>You can compile the server, the client, or both. Furthermore, you can compile with debug either enabled or disabled. (Debug being enabled
+results in a larger binary and perhaps a tiny performance drop.) <em>By default</em> both the server and the client are built, and
+debugging is disabled.</p>
+
+<p><em>If you use AUR</em>, these defaults are followed (but perhaps you know enough to change that). The following instructions
+are intended for people not using AUR:</p>
+
+<p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', where XX is a version number,
+run configure (one of the following, for instance):
+<pre>
+./configure                                   [default: client + server, no debug]
+./configure --enable-debug                    [client + server, with debug]
+./configure --disable-client                  [just the server, no debug]
+./configure --enable-debug --disable-server   [just the client, with debug]
+</pre>
+etc., you get the idea. If that runs smoothly without complaints, you can continue with
+<pre>
+make
+</pre>
+to compile and, optionally,
+<pre>
+make install
+</pre>
+as root to install. Installing is not necessary to play or to run a server.
+</p>
+
+<h3>Configuring and running</h3>
+<p>Next, in order to get playing, you must <a href="clientconf.html">configure the client</a>. After
+that is done, you can run the client program with
+<pre>yuxtapa_cl</pre>
+if you installed the game, or
+<pre>./yuxtapa_cl</pre>
+in the directory containing the executable otherwise.</p>
+
+</body></html>

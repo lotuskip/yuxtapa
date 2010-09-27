@@ -1,0 +1,102 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Vision and hearing</h2>
+
+<p>A typical view of an in-game situation in yuxtapa is given in
+<a href="clientscreen.html">Client screen</a>.
+The symbols are explained in <a href="mapsymbols.html">Map symbols</a>.</p>
+
+
+<h3>Lighting</h3>
+
+<p>There are three <em>lighting conditions</em> in yuxtapa: <em>lit</em>,
+<em>not lit</em>, and <em>outside of LOS</em> (line of sight). Lit areas are drawn brighter,
+areas outside of LOS dimmer and with less saturation.</p>
+
+<p>The map can feature <em>torches</em> (see <a href="objects.html">Objects in the game</a>)
+that light the area around them. Many player characters can carry <a href="pctorch.html">portable
+torches</a> with them. In addition, the spells of <a href="wizard.html">wizards</a> and
+<a href="combatmage.html">combat magi</a> create small temporary lights.</p>
+
+
+<h3>Line of sight</h3>
+
+<p>Each PC has a maximum LOS radius defined (see <a href="classov.html">Class overview</a>). This
+describes the eyesight of the PC; not only how far she can see, but also
+how accurately she sees. A PC with LOS radius 10 will possibly see more
+within a radius of 4 than a PC with LOS radius only 6, even though both
+in principle 'can see 4 tiles away' (this is actually a 'side effect' of
+the LOS-algorithm).</p>
+
+<p>The LOS radius given in <a href="classov.html">Class overview</a> determines the furthest the PC
+can see <em>to lit areas</em>. Things that are in non-lit areas are only seen
+if within (LOS-rad + 5)/3 of the LOS radius.</p>
+
+<p><em>Note</em>: the radius is given in the so-called 'walk-metric', i.e., how many steps
+it takes to walk from a point to point, assuming diagonal steps can be taken.
+This makes the field of vision seemingly a square, but in fact it is a circle
+in the walk-metric! (In fact the often seen 'round' field of vision of many
+roguelikes is entirely wrong: it looks seemingly right, but it has the semi-hidden
+effect that you see further away in non-diagonal directions!) In particular:</p>
+
+<p>Consider the following example. Tiles that are lit are marked with an
+'L' above them, and below are the distances from the PC, the '@'. Assume
+the PC has LOS radius 7; then the reduced radius is 4.
+<pre>
+lit:  LLLLL  LL
+      @...xyyz.
+dist: 0   4  7
+</pre>
+Now the PC <em>can</em> see an object at 'x' or 'z', but <em>not</em> an object at 'y'.</p>
+
+<p>A second example, about the 'eyesight accuracy' issue:
+<pre>
+      ....#x..
+      .@......
+dist:  0   4
+</pre>
+Here the '#' is a wall or a pillar or something that anyway prevents seeing
+through it. Assume, for simplicity, that the entire area is lit. Now a PC
+with a LOS radius 5 cannot see an enemy at 'x', even though that is within
+the radius. But a PC with LOS radius 6 or more <em>can</em> see to 'x'! Hence
+the statement that <em>LOS radius also measures eyesight accuracy, not just the
+furthest you can see.</em></p>
+
+
+<h3>Sounds</h3>
+<p>yuxtapa features 'visual sound effects'. When something makes a noise and your PC
+can hear it, this is indicated by an exclamation mark, '!', on the screen.
+The position of the exclamation mark tells where the sound is coming
+from, and the colour describes the sound.</p>
+
+<p>The possible sounds and their colours:
+<ul>
+<li>blue !, 'a splash': someone hit by a water trap, or someone swimming</li>
+<li>brown !, 'a creak': a door opened or closed, or a boobytrap going off</li>
+<li>red !, 'a boom': a fireball trap went off</li>
+<li>yellow !, 'a zap': a zap of a <a href="combatmage.html">combat mage</a> bounces of a wall</li>
+<li>white !, 'a voice': see <a href="chatting.html">Chatting and shouting</a></li>
+<li>green !, 'a whoosh': someone entering or exiting a portal</li>
+<li>gray !, 'a rumble': a miner is digging or carving a block here</li>
+</ul></p>
+
+
+<h3>Action indicators</h3>
+<p>If the background colour of a symbol is not black, this indicates that some
+action took place at that location <em>in the past</em> (see <a href="timesystem.html">Time system</a>). The
+possible indicators are the following:
+<ul>
+<li><strong>blue</strong>: someone was healed by a <a href="healer.html">healer</a> here</li>
+<li><strong>red</strong>: an attack succesfully landed here (it did not necessarily deal any damage!)</li>
+<li><strong>gray</strong>: an attack missed here (melee, arrow, magic missile, zap), or someone resisted a <a href="traps.html">
+teleportation trap</a></li>
+<li><strong>brown</strong>: a <a href="trapper.html">trapper</a> was/is setting a trap here; or someone carrying the
+<a href="gametypes.html">objective item</a></li>
+<li><strong>green</strong>: a player was poisoned here by an enemy <a href="healer.html">healer</a></li>
+<li><strong>yellow</strong>: a <a href="scout.html">scout</a> was/is disguising here</li>
+</ul></p>
+
+<p>Note that the object of the action might not be <em>there</em> any more! The symbols
+represent current situation; the background colours are a peek to the past;
+they reveal the effects of previous turns' events.</p>
+
+</body></html>

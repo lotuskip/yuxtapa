@@ -1,0 +1,63 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Chatting and shouting</h2>
+<p>The commands <strong>c</strong> and <strong>s</strong> (default) put you in <em>typing mode</em> where
+you can type something to say; hit enter to say it, or tab/esc to cancel (hitting
+enter when you haven't typed anything also cancels, so you won't 'say nothing'.)</p>
+
+<p>The difference between these commands is that <em>shouting</em> is an 'in-game'
+feature while <em>chatting</em> is considered 'off-game'. Every connected player
+sees what you say in the chat. But when you shout, it's not <em>you</em> who
+shouts but your character! Only the players whose characters are close enough
+to your character will see what you say. This includes spectators. Shouting
+also triggers a sound event, see <a href="vision.html">Vision and hearing</a>. If a PC shouts
+in your line of sight, her '@' is replaced by a '!' for one turn.</p>
+
+
+<h3>Chat commands</h3>
+
+<p>The chat can also be used to send certain commands and requests to the server.
+These always start with an exclamation mark.</p>
+
+<p>Usable by anyone, anytime:
+<ul>
+<li><strong>!serverinfo</strong> prints information about the server's settings into the chat</li>
+<li><strong>!adminlvl [nick]</strong> prints the <a href="adminlevels.html">admin level</a> of the player with the specified nick</li>
+<li><strong>!teams</strong> prints the current teams</li>
+<li><strong>!dontstatme</strong>: tell the server not to save your statistics; works per-session only (this is not intended so much for
+shy human players to keep their performance secret, but is used by the <a href="bots.html">Bots</a>)</li>
+</ul></p>
+
+<p>Requiring <a href="adminlevels.html">AL</a> at least 2:
+<ul>
+<li><strong>!shuffle</strong> shuffles the teams, see <a href="teambalance.html">Team balance</a></li>
+<li><strong>!nextmap</strong> forces an <a href="intermission.html">Intermission</a>, or, if on one, forces it to end</li>
+</ul></p>
+
+<p>Requiring AL higher than the target's:
+<ul>
+<li><strong>!kick [nick]</strong> kicks a player off of the server</li>
+<li><strong>!mute [nick]</strong> prevents the chat messages of a player from showing (not just to the issuer but to anyone)</li>
+<li><strong>!unmute [nick]</strong> remove a mute</li>
+<li><strong>!setal [nick] [value]</strong> sets a player's admin level; see <a href="adminlevels.html">Admin levels</a></li>
+</ul>
+</p>
+
+<p>Requiring AL at least 3 and higher than the target's:
+<ul>
+<li><strong>!ban [nick]</strong> kicks a player and bans their IP</li>
+<li><strong>!clearbans</strong> removes all bans (otherwise they remain until server restart)</li>
+<li><strong>!teambal [o/a/p]</strong> sets the <a href="teambalance.html">Team balance</a> option ([o]ff, [a]ctive, [p]assive)</li>
+<li><strong>!servermsg [new serverinfo]</strong> sets the serverinfo</li>
+<li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9</li>
+<li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
+</ul>
+The last two commands only affect a session; they do not overwrite the settings in the <a href="serverconf.html">Server configuration</a>.</p>
+
+<p>In all the commands that contain [nick], you can use a partial nick. For instance, if there is an 'anonymous' playing
+and you issue '!kick ano', and there is no other player with 'ano' in their name, 'anonymous' gets kicked.</p>
+
+<p>Note that banning really bans the entire IP. This can have an undesired side-effect of banning a whole
+subnet of people when one player from that IP gets a ban. Also, if you ban bots, that
+bans the local IP making further spawning of bots impossible.</p>
+
+</body></html>

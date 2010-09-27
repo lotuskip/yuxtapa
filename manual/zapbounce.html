@@ -1,0 +1,67 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Zap bouncing</h2>
+
+<p>The bouncing of bolts in yuxtapa is based on the rules in roguelike games such
+as ADOM, but with certain quite important differences. For the exact algorithm,
+the reader is referred to the source code, but some essential examples are
+given below.</p>
+
+<p>In the below pictures, the bolt starts at the point marked with @ and travels
+in the path marked by '/', '\', '|', and '-'. The '#' denote walls. Zaps only
+bounce off of walls; other entities they either pass or become absorbed and
+disappear.</p>
+
+<p>
+The following situations are exactly like in games such as ADOM:
+<pre>
+#####                #           ##             ##
+  |            @-----#            ##             ##
+  |                  #           / ##            /##
+  @                  #          /   ##          /  ##
+                               @               @
+</pre>
+Above, the bolt will bounce back to the '@' travelling along the same path.
+The same thing happens if the bolt hits a 'pillar' (a single wall tile):
+<pre>
+ @---#         @           @
+               |          /
+               |         /
+               #        #
+</pre>
+Here the bolt bounces 'in a 45 degree angle':
+<pre>
+#######              @  #
+  /\                  \ #
+ /  \                  \#
+@                      /#
+                      / #
+</pre></p>
+
+<p>In ADOM, 'diagonal walls' behave in a square way; visually intuitively, but
+rather unintuitively if you think about it. As if 'turning the world 45 degrees'
+would utterly change the behaviour. This cannot be completely remedied,
+but yuxtapa makes an attempt, anyhow. The following bounce you won't see in ADOM:
+<pre>
+  ##
+   ##
+@---##
+    |##
+    | ##
+</pre>
+Here the bolt bounces 'in a 45 degree angle' off of a diagonal wall. Compare to the
+previous two pictures, where the wall is horizontal or vertical.</p>
+
+<p>Since the algorithm to determine the bounces is rather simple (and complicating it too
+much is not desirable), there is a side effect. The following bounce, which will
+happen in yuxtapa according to the current rules, seems a bit arbitrary:
+<pre>
+   #
+   #
+@--#
+   |
+   |
+</pre>
+Here the vertical wall ends abruptly, and a bolt hitting the very end of it makes
+a weird bounce as if it had hit a diagonal wall.</p>
+
+</body></html>

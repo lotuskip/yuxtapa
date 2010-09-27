@@ -1,0 +1,108 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Client configuration</h2>
+
+<p>
+The yuxtapa client configuration, like the <a href="serverconf.html">Server configuration</a>, is
+typically in the file
+<blockquote>/home/username/.config/yuxtapa/client.conf</blockquote>
+It is first looked for in '$XGD_CONFIG_HOME/yuxtapa/', and secondarily, if
+XGD_CONFIG_HOME is not defined, in '$HOME/.config/yuxtapa/'. You should
+create this directory and copy the file 'tmplates/client.conf' there.</p>
+
+<p>You can edit the file with your favourite text editor.
+The config is read one line at a time. A line beginning with a '#' is
+a comment and is skipped. Empty lines are skipped, too.</p>
+
+<p>A valid entry starts with a keyword, one of the following: <strong>nick</strong>,
+<strong>server</strong>, <strong>key</strong>, <strong>anim</strong>, <strong>alias</strong>. These are explained below.</p>
+
+<p>
+<pre>nick mynick</pre>
+sets your nick (username, by which you are known when you play) to 'mynick'.
+It can be any string, but at most 10 characters long. (Yes, that's not much.)
+If no nick is provided or the config file is missing, the default nick
+'player' will be used. Try to be more original.</p>
+
+<p>
+<pre>anim ABCD</pre>
+sets the <em>update animation</em> (see <a href="clientscreen.html">Client screen</a>). It can be anything
+you like, but at least 2 and at most 15 symbols. The default is '-\|/', which
+then appears as a 'turning stick'.</p>
+
+<p>
+The <strong>nick</strong> and <strong>anim</strong> are <em>overwriting</em> settings. That means that if they
+are given more than once in the config, only the last value is effective. That is, if
+your config says
+<pre>
+nick Allan
+nick Joe
+key Q}
+nick Thomas
+</pre>
+yout nick will be 'Thomas' (and the values 'Allan' and 'Joe' are simply discarded).
+</p>
+
+<h3>Aliases</h3>
+<p>
+<pre>alias xyz much longer outcome</pre>
+will make 'xyz' a short alias for 'much longer outcome'. The effect of this
+is that whenever you say 'xyz' (in the chat or out loud, see <a href="chatting.html">Chatting and shouting</a>),
+it is automatically expanded into 'much longer outcome' before sending to the
+server. The expanded string could be something you find yourself saying often,
+or a server command you often use.</p>
+
+<h3>Servers</h3>
+<p>
+<pre>server 123.123.123.123:4444 MyFaveServ</pre>
+stores a server, with the IP 123.123.123.123 and port 4444 under the name
+'MyFaveServ', and defines this as a known server. Now you can connect to
+this server by running the client with its name as an argument:
+<blockquote>yuxtapa MyFaveServ</blockquote>
+and the client will connect to MyFaveServ, i.e. 123.123.123.123:4444.</p>
+
+<p>You can store as many servers as you want in the config; just put each
+on a separate line. The <em>first</em> server in the file is the <strong>default
+server</strong>. That's where the client connects if you don't give it any
+argument.</p>
+
+<p>If there are no servers in the config file, the client will only know
+about <em>localhost</em> (a server running on the same computer) and connect
+there. If localhost (127.0.0.1:???? or the IPv6 equivalent) <em>is</em> one of
+the servers you use, you must explicitly specify it in the config.</p>
+
+<p>yuxtapa should be able to handle both IPv4 and IPv6 addresses.</p>
+
+<h3>How to find servers?</h3>
+<p>Good question! If you have bandwidth to spare and feel like putting up your
+own permanent server, please do so and post your IP and port on the <a href="serverlist.html">Server list</a>!
+That list is also the best place to start looking for a place to play. You
+can, obviously, also organise a play-together with some friends; just have
+one of you run the server and inform the others of the server's IP.</p>
+
+
+<h3>Key remapping</h3>
+<p>
+<pre>key XY</pre>
+remaps the default key 'X' to the key 'Y'. That is, if you press 'Y', the
+client will suicide (as 'X' is the default key to suicide). See the default
+<a href="keybindings.html">Key bindings</a> for a complete list.</p>
+
+<p>The <em>key</em> setting is an overwriting one as well, and moreover it overwrites
+as the config file is processed. Suppose you have in your config
+<pre>
+key Xa
+key Xb
+key ab
+</pre>
+Now the first line maps 'X' to 'a'. This is fine. But the second line will give
+an error, since 'X' is no longer a known key (it's been remapped to 'a'). The
+thirds line, however, is fine, and remaps the suicide key to 'b'.</p>
+
+<p>Conflicts (two functions mapped to the same key) are not tolerated, and if any
+appear, the client reverts back to the default keys.</p>
+
+<p>Note that you can only remap to ASCII keys, not for instance to the function keys
+F1 through F12, or to CTRL or Alt etc. Just to the keys you can type into the
+config file as characters.</p>
+
+</body></html>

@@ -1,0 +1,26 @@
+This directory includes the source code of some helper programs. They should
+be of interest only to people who develop yuxtapa.
+
+anims.cpp
+	Used to test the "update animations"; you can use this to see how a non-
+	laggy update indicator looks like... Compile with -lncurses(w)
+
+lostbl.cpp
+	Used to generate the ../common/los_lookup.h file. (Runs Bresenham's
+	algorithm on a large set of points.)
+
+scenecol.cpp
+	Used to test the colour values in ../client/colourdef.h. Prints stuff
+	like you see when playing, using the colour definitions given in the
+	header file. Also works for testing terminals and fonts, obviously.
+	Compile with -lncurses(w)
+
+mrbrown.cpp
+	Since I don't have enough interested Linux-using friends to test the
+	game with multiple players, I wrote this idiot bot client, that just
+	kind of walks around randomly (hence the name). It keeps running until
+	the server shutdowns. If anyone wants to write actual bots for yuxtapa,
+	this is the starting point: all it needs is a bit of AI!
+
+The provided Makefile is only to compile mrbrown.
+

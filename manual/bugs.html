@@ -1,0 +1,93 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Sending bug reports</h2>
+
+<p>Bug reports can be sent via email to onnir <em>at sign</em> iki <em>dot</em> fi, or anonymously
+at the game's <a href="http://tempoanon.net/lotuskip/yuxtapa/">homepage</a>.</p>
+
+<p>The bottom of this page lists known bugs; please check them first before submitting
+anything! Make sure you also check the <a href="faq.html">Frequently asked</a>.</p>
+
+<p>
+Some guidelines to sending bug reports:
+<ul>
+<li>Make sure you are running the latest version of the game, or what you report might already be fixed</li>
+<li>If you are not quite sure it's a bug you've found, ask around the forums/IRC before submitting a report</li>
+<li>Check the list of known bugs at the bottom of this page</li>
+<li>What some people seem to consider bugs are merely <em>counterintuitive features</em>, eg.:</li>
+<ul>
+<li>Yes, I know that in the game arrows fly only 3 times as fast as people run; it's a game, not a real-life simulation!</li>
+<li>Yes, you instantly know in which part of the map you are even after being randomly teleported</li>
+</ul>
+<li>Provide information that you think is relevant. This could be:</li>
+<ul>
+<li>config files</li>
+<li>server log</li>
+<li>screenshots (if you really need to <em>show</em> something; most things can be explained)</li>
+<li>messages printed by the game (especially if the game crashed)</li>
+</ul>
+<li>But most importantly, <em>always</em> provide a good description:</li>
+<ul>
+<li>a good general description of the situation where the problem occured</li>
+<li>always mention if you know a definite way of reproducing the bug</li>
+</ul>
+</ul></p>
+
+
+<h3>Known bugs</h3>
+
+<p>There are some known 'bugs' (or <em>odd features</em>) that won't be fixed even though they could. The reasons can be many, e.g.:
+<ul>
+<li>it would be a lot of trouble</li>
+<li>it would require a large renovation of the code</li>
+<li>it would pose or a significant efficiency/tidyness drop for only a minor benefit</li>
+<li>the issue doesn't really distract normal gameplay as it is</li>
+</ul></p>
+
+
+<p><em><u>Delayed updating of destroyed things</u></em><br>
+There are generally a number of situations where the view won't update even though
+it ought to in order to keep the client up to date. The usual reason is that a player disconnects
+and all the entities she owns are destroyed, but they will linger in the views of other
+players until something else forces the view to update. Another typical case is a corpse that
+has in truth rotten away but still lingers in view. <em>Movement</em> always forces
+the view to update, so if you take a step, you can be sure that what you see is an up to date
+representation of the situation right after you took the step.</p>
+
+<p><em><u>The 'but there are no animations!' bug</u></em><br>
+Some people might think it a bug that you only see snapshots of an arrow flying, for instance. That is, you only see the
+arrow there every 3 tiles instead of seeing it smoothly fly one tile at a time. But <em>that is how it is!</em> There are
+no 'animations'! See <a href="timesystem.html">Time system</a>.</p>
+
+<p><em><u>The 'wall dust' bug</u></em><br>
+If a wall is dug out, and the tile that is uncovered is lit, you will not see that
+tile until you're close enough to see it even if it was not lit.
+If this bothers you, just think about it like this: after a wall is dug out, a
+cloud of dust remains behind, making it difficult to see. On the other hand, if you
+didn't even understand the bug by the above explanation, then surely it hasn't
+bothered you!</p>
+
+<p><em><u>The 'thin walls have many holes' bug</u></em><br>
+If there is a thin wall (one tile wide) and a light source on the other side, you
+see the wall as lit even when standing on the dark side:
+<pre>
+           wall
+         ...#...
+torch--> .t.#..@ <-- this PC sees the wall as lit
+         ...#...
+tile lit:1111000
+</pre>
+This can be 'explained' by stating that thin walls have small holes in them: you
+really see the torch light shining through.</p>
+
+
+<p><em><u>The 'classlimitless shuffling' bug</u></em><br>
+After a '!shuffle' command (see <a href="chatting.html">Chatting and shouting</a>), the classes
+of the PCs aren't checked, so the <em>classlimit setting</em> (see <a href="serverconf.html">Server configuration</a>)
+might be violated. You still can't change your class into any 'fully taken' class, but you can
+retain your own 'fully taken' class as long as you wish.
+The problem here is partly about fairness: some players could be forced to switch their class,
+but just picking those players randomly seems like an unnecessary annoyance to the players. Then
+again, if a team wants to do well, they will need a variety of classes, so it can be expected that
+experienced players switch class after a shuffle if they see the need.</p>
+
+</body></html>

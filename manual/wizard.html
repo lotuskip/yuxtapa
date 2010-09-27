@@ -1,0 +1,73 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Wizard</h2>
+
+<p>pros: spell can be very effective, very high magic resistance<br>
+cons: the weakest class, terrible in melee</p>
+
+<h3>Abilities</h3>
+<ul>
+<li>Cast magic missiles</li>
+<li>Self-lighting torch</li>
+</ul>
+
+<p>Wizards' special ability is a spell named <em>magic missile</em>, MM for short.
+It fires 4 missiles, marked by asterisks, '*', in your <a href="facing.html">facing direction</a>, its
+opposite direction, and the two normal directions:
+<pre>
+         * *          *
+either    @     or   *@*
+         * *          *
+</pre>
+Note that a missile can only be created at a non-occupied location. Hence, if
+there is a wall, a boulder, an enemy, or something else there, no missile is created.</p>
+
+<p>
+The missiles behave in the following way:
+<ul>
+<li>They move 1 tile per turn (as fast as PCs, but aren't slown down by terrain)</li>
+<li>First they move straight for 2 turns in the direction they were shot</li>
+<li>After this they will automatically move towards the nearest enemy</li>
+<ul>
+<li>If there is no enemy within 15 tiles, they keep moving straight</li>
+<li>Note that the <em>nearest enemy</em> can change every turn</li>
+</ul>
+<li>If a missile hits a PC, it deals damage and disappears</li>
+<li>If a missile hits a wall, a boulder, or another missile, it disappears</li>
+</ul></p>
+
+<p>Note that there is no pathfinding involved: the MMs will <em>not</em> avoid
+walls, friendly PCs, <em>or even the wizard herself!</em></p>
+
+<p>Also note that the MMs don't exactly 'beeline' to the target. Rather,
+they <em>turn</em>, somewhat slowly you could say. Consider the following example.
+The '@' is an enemy, who remains still. The direction of the MM, '*', is
+shown by a bar.
+<pre>
+turn 1   turn 2   turn 3   turn 4   turn 5 ... hits on turn 7
+.......  .......  ../....  ..*-...  ...*...
+.......  .|.....  .*.....  .......  ....\..
+.\...@.  .*...@.  .....@.  .....@.  .....@.
+..*....  .......  .......  .......  .......
+</pre></p>
+
+<p>To fire a MM, you must:
+<ul>
+<li>hit space to go into spell casting mode</li>
+<li>hit the directional keys 1-4,6-9 in a sequence that makes a circle around the 5 in the numpad</li>
+<ul>
+<li>you must start from the direction of your previous move</li>
+<li>eg. 12369874 if you moved SW last turn, or 47896321 if you moved W</li>
+<li>extra keys in between mess you up and you need to start over</li>
+</ul>
+</ul></p>
+
+<p>You will know that you screwed up the casting sequence if your
+PC starts to take steps before any spell is released!</p>
+
+<p>Another ability of the wizards is to light their <a href="pctorch.html">torch</a> whenever,
+not just when standing on a static torch (see <a href="objects.html">Objects in the game</a>)
+or next to teammate with a lit torch. This of course means that they
+can extinguish the torch whenever, too, without worrying about getting
+it lit again.</p>
+
+</body></html>

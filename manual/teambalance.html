@@ -1,0 +1,28 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Team balance</h2>
+
+<p>As it's more fun to play 5 vs. 5 than 1 vs. 9, yuxtapa provides the option to
+force balanced teams. The team balance option, defined in the <a href="serverconf.html">Server configuration</a>
+has three possible values:</p>
+
+<p><strong>off</strong>: no team balance of any kind. The server lets the players form the teams
+the way they want. Even all on one side and no one on the other.</p>
+
+<p><strong>passive</strong>: the server prevents team changes that would make the teams unbalanced.
+In particular, if green team has less players than purple team, joining the purple
+team is not allowed, and switching from the green to the purple team is not allowed
+(leaving the green team in even more trouble by joining the spectators is allowed).
+And the same thing if the purples has less players. In other words, you can join only
+(or switch into) the team that less players.</p>
+
+<p><strong>active</strong>: in addition to the behaviour of the <em>passive</em> setting, in the active
+mode the server will react to severe inbalance. If one side has two players more than
+the other for more than 40 turns (that's 10 seconds on normal <a href="timesystem.html">time scaling</a>),
+the server will send everyone a warning message, telling someone to switch sides.
+If the situation isn't remedied by the players in another 40 turns, the server
+will shuffle the teams, placing every non-spectator to a random team, equally many
+to both teams (or one more in the other).</p>
+
+<p>Note that admins can also force a shuffle of the teams, see the list of commands in
+<a href="chatting.html">Chatting and shouting</a>.</p>
+</body></html>

@@ -1,0 +1,93 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Server configuration</h2>
+
+<p>The server configuration file is read similarly as the <a href="clientconf.html">Client configuration</a>
+file, and general things mentioned on that page are not repeated here.</p>
+
+<p>The following numberic entries are recognised (in the form 'keyword [value]'). Listed
+are also the limits and the default value. The default value is used if the given
+value is not in the limits or the entry is missing in the config.
+<ul>
+<li><strong>maxplayers</strong>: how many simultaneous connections are allowed, 2-200, default 25</li>
+<li><strong>mapsize</strong>, <strong>mapsizevar</strong>: see below</li>
+<li><strong>classlimit</strong>: see below</li>
+<li><strong>turnms</strong>: how many ms is one turn (see <a href="timesystem.html">Time system</a>), 50-2000, default 250</li>
+<li><strong>interm</strong>: how many seconds is the intermission 10-120, default 45</li>
+<li><strong>port</strong>: what server port to use, 1024-61000, default 12360</li>
+<li><strong>statpurge</strong>: how many hours to store players' stats if they don't visit; 0: no limit, default 24. Players whose
+<a href="adminlevels.html">Admin level</a> is at least 'trusted user' are always spared.</li>
+</ul>
+</p>
+
+<p>In addition the following non-numeric entries:</p>
+
+<p><strong>greeting</strong>: message to joining players, e.g.
+<pre>
+greeting Welcome to my server! Please behave! Teambalance is set to passive.
+</pre>
+(Any joining player sees the string after 'greeting' when they succesfully connect.)
+Note that the greeting must be on one line.</p>
+
+<p><strong>teambalance</strong>: the <a href="teambalance.html">Team balance</a> setting. Recognised values are 'off', 'active', and 'passive'.</p>
+
+<p><strong>mode</strong>: the <a href="gametypes.html">game type</a> allowed. Recognized values are 'dominion', 'conquest',
+'steal', and 'destroy'. They should be given as a space separated list. One of these is picked randomly for each map.</p>
+
+<p><strong>bots</strong>: the path to the executable of the bot client. A typical entry is
+<pre>
+bots /usr/bin/yuxtapa_mrb
+</pre>
+If this entry is missing, requests to spawn <a href="bots.html">Bots</a> (see <a href="chatting.html">Chatting and shouting</a>) are ignored.</p>
+
+
+<h3>Map generation</h3>
+<p>The map is a square of 'mapsize'x'mapsize' tiles (a tile is one symbol on the screen.
+yuxtapa generates random maps; you cannot have 'designed' maps like in many other
+multiplayer games.</p>
+
+<p>The variable <strong>mapsizevar</strong> is used to slighly randomise the size. It is interpreted
+as a percentage of the base mapsize given in the config. So, for instance, if your config has
+<pre>
+mapsize 100
+mapsizevar 10
+</pre>
+then the generated maps will be 90-110 tiles wide and tall (but always square).</p>
+
+<p>There is another limitation, forced upon generation of a new map: the final mapsize
+sqrt(num of players)*10 to ensure sufficient spawning space. This extra limitation might
+make the map larger than specified by the config, but never smaller.</p>
+
+
+<h3>Class limit</h3>
+<p>The <strong>classlimit</strong> variable tells how many PCs of the same class a team can have,
+at most. If zero, there is no limit. The limit cannot be lower than maxplayers/20,
+because this could lead to a situation that a player can't pick any class.</p>
+
+
+<h3>General about running an yuxtapa server</h3>
+<p>yuxtapa is designed to follow an architecture where the server 'does all the work' and
+the client only works as an interpreter between the player and the server. This has
+certain advantages:</p>
+<ul>
+<li>easier development; (most) mutable logic is in one end of the system</li>
+<li>harder to cheat; clients have very little power over things</li>
+<li>less fuzz with updates; usually old versions of the client will function with the newest server</li>
+</ul>
+and it has one major disadvantage:
+<ul>
+<li>the server can get really busy</li>
+</ul>
+This is because the server, for instance, <em>renders the views</em> for all the players.
+(Okay, rendering a view in yuxtapa is not the same as rendering a 3D world in an FPS game,
+but with 30+ players it is a considerable workload.)</p>
+
+<p>It is often asked what kind of a connection the server needs. A rough formula, assuming
+you follow the default 'pace' of 250ms per turn, is
+<blockquote>[TODO] kb/s out</blockquote>
+where N is the number of connected players. This is the value during gameplay, and has
+been obtained <em>partially</em> through testing, partially through theoretical computation.
+There can be occasional peaks and variation (if lots of new players connect or if the
+players chat a lot). Incoming network traffic to the server is much smaller, insignificant
+compared to the out-going amount.</p>
+
+</body></html>

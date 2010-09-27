@@ -1,0 +1,34 @@
+######################################################
+# Read me! Read me!                                  #
+# The first "release" of this game is not ready yet, #
+# but will be soon, hopefully. Hence, the homepage   #
+# given below doesn't even exist yet. The game is    #
+# still lacking a couple of features and large-scale #
+# testing. The rest of this file is not quite        #
+# relevant just yet. Tnank you.                      #
+######################################################
+
+
+yuxtapa, version 1
+
+The latest stable version, further info & bug reports:
+	http://tempoanon.net/lotuskip/yuxtapa/
+
+
+The structure of this package:
+##############################
+README      this file
+LICENSE     license information
+manual/     the manual, HTML format
+client/     client source code
+server/     server source code
+common/     source code used by both client and server
+testes/     some auxiliary source code, see testes/README
+tmplates/   documented example config files
++ the usual compilation related files
+
+
+Compilation, installation, and other information can be found in the manual;
+start with looking at the file
+	manual/index.html
+

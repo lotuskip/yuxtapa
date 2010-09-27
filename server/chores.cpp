@@ -1,0 +1,1222 @@
+// Please see LICENSE file.
+#include "chores.h"
+#include "actives.h"
+#include "network.h"
+#include "map.h"
+#include "game.h"
+#include "viewpoint.h"
+#include "declares.h"
+#include "spiral.h"
+#include "../common/los_lookup.h"
+#include "../common/util.h"
+#ifdef DEBUG
+#include <iostream>
+#endif
+
+namespace Game { extern Map *curmap; }
+extern e_GameMode gamemode;
+
+namespace
+{
+using namespace std;
+
+const string teammate_str = "TEAMMATE ";
+
+const string spell_kill_msg[2][3] = {
+/* mms: */ { " could not outrun ", "her own", "magic missile." },
+/* zaps */ { " was zapped by ", "herself", "." }
+};
+
+const char IDLE_TURNS_TO_AUTOSWAP = 8; /* NOTE: this should be larger than
+	the amount of turns it takes to complete any of the "chores" (trap, dig,
+	disguise) */
+const char MAX_BLINK_LIMITER = 10;
+const char MAX_BLK_DIST = 4;
+const char SCARED_TO_DEATH_DIST = 3;
+const char CORPSE_DECAY_TURNS = 60; // 15 seconds on normal settings
+const char DIG_TURNS = 5;
+const char TRAP_TURNS = 6;
+const char BASE_TURNS_TO_DETECT_TRAPS = 10;
+const char DETECT_TRAPS_RAD = 3;
+const char CHANCE_RUST = 65;
+const char RUST_MOD = 2;
+
+
+// Calls update_static_light for all those torches that are close enough
+// to c.
+void update_lights_around(const Coords &c)
+{
+	for(list<NOccEnt>::const_iterator it = noccents[NOE_TORCH].begin();
+		it != noccents[NOE_TORCH].end(); ++it)
+	{
+		if(c.dist_walk(it->getpos()) <= TORCH_LIGHT_RADIUS)
+			update_static_light(it->getpos());
+	}
+}
+
+bool can_dig_in(const Coords &c, const e_Dir d)
+{
+	// First requirement is that c is not on the edge of the map:
+	if(!c.x || !c.y || c.x == Game::curmap->get_size()-1
+		|| c.y == Game::curmap->get_size()-1)
+		return false;
+	// Mining requires one of: (A) there is a wall, (B) there is a blocked
+	// boulder, (C) there is a boulder source.
+	Tile* tp = Game::curmap->mod_tile(c);
+	if(tp->symbol == '#'
+		|| (tp->flags & TF_NOCCENT && any_noccent_at(c, NOE_BLOCK_SOURCE)
+			!= noccents[NOE_BLOCK_SOURCE].end()))
+		return true;
+	// that was (A) and (C); (B) is more complicated:
+	if(tp->flags & TF_OCCUPIED && any_boulder_at(c) != boulders.end())
+	{
+		Coords pushtarpos = c.in(d);
+		Tile *pushtar = Game::curmap->mod_tile(pushtarpos);
+		if((tp->flags & TF_SLOWWALK) || (pushtar->flags & TF_OCCUPIED)
+			|| !(pushtar->flags & TF_WALKTHRU) || pushtar->symbol == '\\'
+			|| ((pushtar->flags & TF_NOCCENT)
+			&& any_noccent_at(pushtarpos, NOE_FLAG) != noccents[NOE_FLAG].end()))
+			return true; // cannot push; hence can dig
+	}
+	return false;
+}
+
+void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
+{
+	fit->set_col(C_GREEN_PC + short(t == T_PURPLE));
+	fit->set_misc(t);
+	team_flags[t == T_PURPLE].push_back(fit);
+	string msg = str_team[t == T_PURPLE] + " team captured "
+		+ sector_name[Game::curmap->coords_in_sector(fit->getpos())]
+		+ " flag!";
+	Network::construct_msg(msg, team_colour[t-1]);
+	Network::broadcast();
+	// In dominion&conquest this always changes objective status:
+	if(gamemode == GM_DOM || gamemode == GM_CONQ)
+		Game::send_team_upds(cur_players.end());
+}
+
+
+bool test_hit(const list<Player>::iterator def, const char tohit,
+	const char numdies, const char ddie, const char dadd)
+{
+	Coords loc = def->own_pc->getpos();
+	char P = def->cl_props.dv - tohit;
+	char R = random()%20;
+	if(R >= P) // hit
+	{
+		char dam = numdies*(random()%ddie) + dadd + 1;
+		if(R != 19 && R/P < 2) // not critical hit; apply PV
+			dam -= def->cl_props.pv;
+		def->cl_props.hp -= max(0, int(dam));
+		add_action_ind(loc, A_HIT);
+		return true;
+	}
+	add_action_ind(loc, A_MISS);
+	return false;
+}
+
+
+void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
+	const bool should_void_zap)
+{
+#ifdef DEBUG
+	if(!mis)
+	{
+		cerr << "Detected a non-cleared OCCUPIED-flag!" << endl;
+		cerr << "Coordinates: (" << pit->own_pc->getpos().x << ',' << pit->own_pc->getpos().y << ')' << endl;
+		cerr << "Player is " << str_team[pit->team == T_PURPLE] << ", faces " << sector_name[pit->facing]
+			<< ", and has wants_to_move_to=" << sector_name[pit->wants_to_move_to] << endl;
+		Tile* tp = Game::curmap->mod_tile(pit->own_pc->getpos());
+		cerr << "Tile has symbol \'" << tp->symbol << "\', colour " << int(tp->cpair) << ", and flags " << tp->flags << endl;
+		tp = Game::curmap->mod_tile(pit->own_pc->getpos().in(!pit->facing));
+		cerr << "Originating tile has symbol \'" << tp->symbol << "\', colour " << int(tp->cpair) << ", and flags " << tp->flags << endl;
+		return;
+	}
+#endif
+	list<Player>::iterator shooter = mis->get_owner();
+	if(dynamic_cast<Arrow*>(mis)) // it's an arrow
+	{
+		if(pit->team != shooter->team) // shooting teammates don't count as hit
+			shooter->stats_i->arch_hits++;
+
+		if(test_hit(pit, 7, 1, 6, 0)) // arrows: 1d6+0 damage, +7 to hit
+		{
+			if(pit->cl_props.hp <= 0) // (check if died)
+			{
+				string msg = " was shot by ";
+				if(pit->team == shooter->team)
+					msg += teammate_str;
+				else // shot enemy, count kill
+					shooter->stats_i->kills++;
+				player_death(pit, msg + shooter->nick + '.', true);
+			}
+			else
+				pit->needs_state_upd = true;
+		}
+		mis->makevoid(); // occupied flag is unset in kill_player if necessary
+	}
+	else // a mm or a zap
+	{
+		add_action_ind(pit->own_pc->getpos(), A_HIT);
+
+		bool is_zap = dynamic_cast<Zap*>(mis);
+		if(is_zap && shooter->team != pit->team)
+			shooter->stats_i->cm_hits++;
+
+		char dam = random()%5 + 1; // 1d5
+		if(is_zap)
+			dam += random()%5 + 1; // 2d5 for zaps
+		pit->cl_props.hp -= dam;
+		if(pit->cl_props.hp <= 0) // died
+		{
+			string msg = spell_kill_msg[is_zap][0];
+			if(pit == shooter)
+				msg += spell_kill_msg[is_zap][1];
+			else
+			{
+				if(pit->team == shooter->team)
+					msg += teammate_str;
+				else
+					shooter->stats_i->kills++;
+				msg += shooter->nick;
+				if(!is_zap)
+					msg += "\'s ";
+			}
+			msg += spell_kill_msg[is_zap][2];
+			player_death(pit, msg, true);
+		}
+		else
+			pit->needs_state_upd = true;
+		// mms voided always, zaps only if we are allowed to do so here:
+		if(should_void_zap || !is_zap)
+			mis->makevoid(); // occupied flag is unset in kill_player if necessary
+	} // mm or zap
+}
+
+
+void heal_PC(const list<Player>::iterator pit)
+{
+	if(pit->cl_props.hp < classes[pit->cl].hp)
+	{
+		pit->cl_props.hp++;
+		pit->stats_i->healing_recvd++;
+		pit->poisoner = cur_players.end();
+		pit->needs_state_upd = true;
+		add_action_ind(pit->own_pc->getpos(), A_HEAL);
+	}
+}
+
+void move_player_to(const list<Player>::iterator p, const Coords &c,
+	const bool do_flags); // (This needs to call trigger_trap needs to call this)
+
+bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator tr)
+{
+	Coords pos = pit->own_pc->getpos();
+	switch(tr->get_m())
+	{
+	case TRAP_WATER:
+		// Extinguish torch, make splash sound, possibly rust weapon
+		if(pit->own_pc->torch_is_lit())
+			pit->own_pc->toggle_torch();
+		add_sound(pos, S_SPLASH);
+		// Rusting happens only once; to see if it has happened we compare
+		// the PCs 2-hit to the 2-hit of that class by default:
+		if(pit->cl_props.tohit == classes[pit->cl].tohit
+			&& random()%100 < CHANCE_RUST)
+		{
+			string msg = "Your weapon rusts!";
+			Network::construct_msg(msg, C_WATER_TRAP);
+			Network::send_to_player(*pit);
+			pit->cl_props.tohit -= RUST_MOD;
+			pit->cl_props.dam_add -= RUST_MOD;
+			pit->needs_state_upd = true;
+		}
+		break;
+	case TRAP_LIGHT:
+		// TODO: call blinding sub-routine
+		break;
+	case TRAP_TELE:
+	{
+		// Get a random tile that's walkable and not occupied:
+		Coords tar(1 + random()%(Game::curmap->get_size()-1),
+			1 + random()%(Game::curmap->get_size()-1));
+		init_nearby(tar);
+		unsigned short f = Game::curmap->get_tile(tar).flags;
+		while(!(f & TF_WALKTHRU) || (f & TF_OCCUPIED))
+			f = Game::curmap->get_tile((tar = next_nearby())).flags;
+		// Jump there:
+		event_set.insert(pos);
+		move_player_to(pit, tar, true);
+		// NOTE: do not clear axn queue like in blinking
+		return false; // do not make teleportation traps seen
+	}
+	case TRAP_BOOBY:
+		// TODO: boobytrap trigger (check if tr->owner is a player (even self?))
+		break;
+	case TRAP_FIREB:
+		// TODO: fireball trap trigger
+		break;
+	//default: anything else is an error!
+	}
+	// If here, PC survived; and all except teleport traps are made known:
+	tr->set_seen_by(pit->team);
+	return false;
+}
+
+
+void move_player_to(const list<Player>::iterator p, const Coords &c,
+	const bool do_flags)
+{
+	Coords opos = p->own_pc->getpos();
+	// must move both the PC entity and the viewpoint:
+	p->own_pc->setpos(c);
+	p->own_vp->set_pos(c);
+	if(p == pl_with_item)
+		add_action_ind(c, A_TRAP);
+	else // add_action inserts to event_set
+		event_set.insert(c);
+
+	// Check if ended up in some special tile: (note that some of
+	// these are checked only when *walking* into them, but in
+	// this function we don't know the "method of arrival")
+	Tile* tile = Game::curmap->mod_tile(c);
+	if(tile->flags & TF_KILLS) // chasm
+	{
+		player_death(p, " fell into oblivion.", false);
+		add_voice(c, "Aieeeee...!");	
+		Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
+		return; // dead, no need to check anything else
+	}
+	if(tile->flags & TF_TRAP)
+	{
+		list<Trap>::iterator tr_it = any_trap_at(c);
+		// A trap is triggered always if not seen and sometimes if it's dark:
+		if(!tr_it->is_seen_by(p->team)
+			|| (!(tile->flags & TF_LIT) && random()%100 < 15))
+		{
+			if(trigger_trap(p, tr_it))
+			{
+				// if returned true, PC died!
+				Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
+				return;
+			}
+		}
+	}
+	
+	// If we made it here, the PC survived the checks.
+	if(tile->flags & TF_DROWNS) // water slows down
+	{
+		p->wait_turns += 2;
+		if(p->cl != C_ASSASSIN && p->cl != C_SCOUT)
+			add_sound(c, S_SPLASH);
+	}
+	else if((tile->flags & TF_SLOWWALK) // slow non-trappers/scouts
+		&& p->cl != C_TRAPPER && p->cl != C_SCOUT)
+		p->wait_turns++;
+	
+	// The occupied flags don't need to be changed when switching places:
+	if(do_flags)
+	{
+		Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
+		Game::curmap->mod_tile(c)->flags |= TF_OCCUPIED;
+	}
+	
+	// Check if moved to another sector:
+	e_Dir newsector = Game::curmap->coords_in_sector(c);
+	if(p->sector != newsector)
+	{
+		p->sector = newsector;
+		p->needs_state_upd = true;
+	}
+
+	// Whenever a PC moves, we check if they are seen by enemy scouts:
+	if(p->own_pc->visible_to_team(opp_team[p->team]))
+	{
+		Coords thc; // "their coords"
+		char d = classes[C_SCOUT].losr;
+		if(!(Game::curmap->get_tile(c).flags & TF_LIT))
+			d = (d+5)/3; // not lit, shorter radius
+		for(list<Player>::const_iterator pit = cur_players.begin();
+			pit != cur_players.end(); ++pit)
+		{
+			// Search for opponent scouts who are alive...
+			if(pit->team != p->team && pit->cl == C_SCOUT && pit->is_alive()
+				&& Game::curmap->LOS_between(c, pit->own_pc->getpos(), d))
+			{
+				p->own_pc->set_seen_by_team(pit->team);
+				return; // done
+			}
+		} // loop through current players
+	}
+	// If we end up here, was not seen by enemy scouts:
+	p->own_pc->set_seen_by_team(T_NO_TEAM);
+
+	// Also, whenever a PC moves, we check if they spot some hiding enemies.
+	// The requirement for this is that the tile this PC is facing to is at
+	// a distance <= 1 from a hiding enemy.
+	opos = opos.in(p->facing); // reusing opos
+	for(list<PCEnt>::iterator pc_it = PCs.begin(); pc_it != PCs.end(); ++pc_it)
+	{
+		if(!pc_it->isvoid() && !pc_it->visible_to_team(p->team)
+			&& opos.dist_walk(pc_it->getpos()) <= 1)
+			pc_it->set_invis_to_team(T_NO_TEAM); // seen!
+	}
+}
+
+
+void portal_jump(const list<Player>::iterator pit, const Coords &tar)
+{	
+	add_sound(pit->own_pc->getpos(), S_WHOOSH);
+	add_sound(tar, S_WHOOSH);
+	move_player_to(pit, tar, true);
+}
+
+
+void try_move(const list<Player>::iterator pit, const e_Dir d)
+{
+	// get target tile and its position:
+	Coords opos = pit->own_pc->getpos();
+	Coords tarpos = opos.in(d);
+	Tile *tar = Game::curmap->mod_tile(tarpos.x, tarpos.y);
+	list<Player>::iterator them;
+	// unwalkable tiles are unwalkable tiles:
+	if(!(tar->flags & TF_WALKTHRU))
+	{
+		// Check if walking to a closed door; if so, open it
+		if(tar->symbol == '+')
+		{
+			tar->symbol = '\\';
+			tar->flags |= TF_WALKTHRU|TF_SEETHRU;
+			update_lights_around(tarpos);
+			if(random()%2)
+				add_sound(tarpos, S_CREAK);
+			else // a sound sets an event
+				event_set.insert(tarpos);
+		}
+		return; // do not move
+	}
+	/*else*/ if(tar->flags & TF_OCCUPIED)
+	{
+		// Tile is occupied; first check for another PC:
+		list<PCEnt>::iterator pc_it = any_pc_at(tarpos);
+		if(pc_it != PCs.end())
+		{
+			them = pc_it->get_owner();
+			if(them->team == pit->team) // teammate
+			{
+				if(them->wants_to_move_to == !d)
+				{
+					// That player is willing to swap places:
+					move_player_to(them, opos, false);
+					move_player_to(pit, tarpos, false);
+					pit->wants_to_move_to = them->wants_to_move_to = MAX_D;
+				}
+				else // the processing of this move is finished later
+					pit->wants_to_move_to = d;
+			}
+			else // enemy, do melee attack:
+			{
+				// if a hiding assassin, damage is different:
+				char multip = 1 + char(pit->cl == C_ASSASSIN
+					&& !pit->own_pc->visible_to_team(opp_team[pit->team]));
+				if(test_hit(them, pit->cl_props.tohit, multip, pit->cl_props.dam_die,
+					multip*(pit->cl_props.dam_add)) // was hit...
+					&& them->cl_props.hp <= 0) // ...and died
+				{
+					pit->stats_i->kills++;
+					if(multip == 2)
+						player_death(them, " was backstabbed by " + pit->nick + '.', true);
+					else
+						player_death(them, " was killed by " + pit->nick + '.', true);
+				}
+			}
+			return; // do not move
+		}
+		// else check all other occents; first blocks:
+		list<OccEnt>::iterator bl_it = any_boulder_at(tarpos);
+		if(bl_it != boulders.end()) // there's a block
+		{
+			// First check if PC can push blocks:
+			if(!pit->cl_props.can_push)
+				return; // do not move
+			// Get the tile where we'd push the block:
+			Coords pushtarpos = tarpos.in(d);
+			Tile *pushtar = Game::curmap->mod_tile(pushtarpos);
+			// Cannot push if block is currently standing on nonflat terrain.
+			// Cannot push into nonwalkables, occupieds, doorways, flags.
+			if((tar->flags & TF_SLOWWALK) || (pushtar->flags & TF_OCCUPIED)
+				|| !(pushtar->flags & TF_WALKTHRU) || pushtar->symbol == '\\'
+				|| ((pushtar->flags & TF_NOCCENT)
+				&& any_noccent_at(pushtarpos, NOE_FLAG) != noccents[NOE_FLAG].end()))
+				return; // do not move
+			// Pushing to a chasm destroys the block:
+			if(pushtar->flags & TF_KILLS)
+				boulders.erase(bl_it); // PC will replace block; no need to unset occ flag
+			// Pushing to water makes a "bridge":
+			else if(pushtar->flags & TF_DROWNS)
+			{
+				boulders.erase(bl_it); // PC will replace block; no need to unset occ flag
+				*pushtar = T_FLOOR;
+				add_sound(pushtarpos, S_SPLASH);
+			}
+			else // otherwise we just push:
+			{
+				bl_it->setpos(pushtarpos);
+				pushtar->flags |= TF_OCCUPIED;
+				tar->flags &= ~(TF_OCCUPIED);
+			}
+			pit->wait_turns++;
+			// PC will be moved below, and that will also add to event_set.
+		}
+		else // no block, must be arrow/zap/mm
+		{
+			missile_hit_PC(pit, any_missile_at(tarpos), true);
+			if(pit->cl_props.hp <= 0) // died; don't walk!
+				return;
+			// else survived; let walk
+		}
+	} // target tile is occupied
+
+	// Check for various effects of *walking* into various things:
+	// (the rest, those that apply regardless of whether walking or not,
+	// are checked in move_player_to(...))
+	if(tar->flags & TF_NOCCENT)
+	{
+		list<NOccEnt>::iterator noe_it = any_noccent_at(tarpos, NOE_FLAG);
+		if(noe_it != noccents[NOE_FLAG].end()) // there's a flag
+		{
+			// A neutral flag is always captured:
+			if(noe_it->get_m() == T_NO_TEAM)
+				capt_flag(noe_it, pit->team);
+			// Enemy flag capturing depends on game mode.
+			else if(noe_it->get_m() != pit->team)
+			{
+				// dominion: capture always
+				// conquest: green team can capture
+				// others: capture if not their last flag
+				if(gamemode == GM_DOM
+					|| (gamemode == GM_CONQ && pit->team == T_GREEN)
+					|| (gamemode != GM_CONQ &&
+					team_flags[noe_it->get_m() == T_PURPLE].size() >= 2))
+				{
+					team_flags[noe_it->get_m() == T_PURPLE].erase(
+						find(team_flags[noe_it->get_m() == T_PURPLE].begin(),
+						team_flags[noe_it->get_m() == T_PURPLE].end(), noe_it));
+					capt_flag(noe_it, pit->team);
+				}
+			}
+			// else own flag:
+			else if(pit == pl_with_item // is carrying item (implies team is green and gamemode steal)
+				&& noe_it == *(team_flags[0].begin())) // original flag
+			{
+				// Green wins. We ensure this by clearing the purple flags list,
+				// so actually the map won't until the next purple spawning:
+				team_flags[1].clear();
+				Network::to_chat("The green team has secured the treasure!");
+				pl_with_item = cur_players.end();
+				// item won't be drawn any more
+			}
+		}
+		else if((noe_it = any_noccent_at(tarpos, NOE_PORTAL_ENTRY))
+			!= noccents[NOE_PORTAL_ENTRY].end())
+		{
+			// Get a random, non-blocked 1-way portal exit:
+			char ind = randor0(noccents[NOE_PORTAL_EXIT].size());
+			for(noe_it = noccents[NOE_PORTAL_EXIT].begin(); ind > 0; --ind)
+				++noe_it;
+			list<NOccEnt>::iterator startit = noe_it;
+			while(Game::curmap->mod_tile(noe_it->getpos())->flags & TF_OCCUPIED)
+			{
+				if(++noe_it == noccents[NOE_PORTAL_EXIT].end())
+					noe_it = noccents[NOE_PORTAL_EXIT].begin();
+				if(noe_it == startit) // went around!
+				{
+					// Just move the PC onto the portal without jumping
+					move_player_to(pit, tarpos, true);
+					return;
+				}
+			}
+			portal_jump(pit, noe_it->getpos());
+			return;
+		}// else
+		if((noe_it = any_noccent_at(tarpos, NOE_PORTAL_2WAY))
+			!= noccents[NOE_PORTAL_2WAY].end())
+		{
+			list<NOccEnt>::iterator startit = noe_it;
+			do {
+				if(++noe_it == noccents[NOE_PORTAL_2WAY].end())
+					noe_it = noccents[NOE_PORTAL_2WAY].begin();
+				if(noe_it == startit) // went around!
+				{
+					// Just move the PC onto the portal without jumping
+					move_player_to(pit, tarpos, true);
+					return;
+				}
+			}
+			while(Game::curmap->mod_tile(noe_it->getpos())->flags & TF_OCCUPIED);
+			portal_jump(pit, noe_it->getpos());
+			return;
+		} // else
+		if(gamemode == GM_STEAL && pit->team == T_GREEN
+			&& pl_with_item == cur_players.end() && tarpos == the_item.getpos())
+		{
+			pl_with_item = pit;
+			item_moved = true;
+			Game::send_team_upds(cur_players.end());
+		}
+	}
+
+	// Hiding checks:
+	bool hide = false;
+	if(!(tar->flags & TF_LIT)
+		&& ((pit->cl == C_ASSASSIN && (tar->flags & TF_BYWALL))
+		|| (pit->cl == C_TRAPPER && tar->symbol == 'T'))
+		&& !is_dynlit(tarpos))
+	{
+		// No enemy may see here:
+		for(them = cur_players.begin(); them != cur_players.end(); ++them)
+		{
+			if(them->team != pit->team && them->is_alive()
+				&& Game::curmap->LOS_between(them->own_pc->getpos(),
+					tarpos, classes[them->cl].losr))
+				break; // seen by an enemy
+		}
+		if(them == cur_players.end()) // seen by no-one!
+			hide = true;
+	}
+	if(hide)
+		pit->own_pc->set_invis_to_team(opp_team[pit->team]);
+	else
+		pit->own_pc->set_invis_to_team(T_NO_TEAM);
+
+	// If we ever arrive here, we are to move the PC:
+	move_player_to(pit, tarpos, true);
+}
+
+} // end local namespace
+
+
+// This function assumes that pit points to a player who is alive, and
+// axn is an action that "makes sense for that player to do"
+void process_action(const Axn &axn, const list<Player>::iterator pit)
+{
+	// Stuff that happens whenever a PC acts:
+	pit->acted_this_turn = true;
+	pit->wants_to_move_to = MAX_D;
+
+	switch(axn.xncode)
+	{
+	case XN_CLOSE_DOOR:
+	{
+		// Find an open door, starting the search from the facing direction:
+		e_Dir d = pit->facing;
+		Tile *t;
+		Coords c;
+		do {
+			c = pit->own_pc->getpos().in(d);
+			t = Game::curmap->mod_tile(c);
+			if(t->symbol == '\\' && !(t->flags & TF_OCCUPIED))
+			{
+				t->symbol = '+';
+				t->flags &= ~(TF_WALKTHRU|TF_SEETHRU);
+				update_lights_around(c);
+				if(random()%2)
+					add_sound(c, S_CREAK);
+				else // a sound sets an event
+					event_set.insert(c);
+				pit->facing = d;
+				break;
+			}
+			++d;
+		} while(d != pit->facing);
+		break;
+	}
+	case XN_TORCH_HANDLE:
+	{
+		Coords pos = pit->own_pc->getpos();
+		if(pit->own_pc->torch_is_lit())
+		{
+			pit->own_pc->toggle_torch();
+			event_set.insert(pos);
+		}
+		else if(pit->torch_left) // wants to light it
+		{
+			// Check the three conditions: wizard, on a static torch, or
+			// next to a teammate with a lit torch:
+			if(pit->cl == C_WIZARD || any_noccent_at(pos, NOE_TORCH) != noccents[NOE_TORCH].end())
+			{
+				pit->own_pc->toggle_torch();
+				event_set.insert(pos);
+			}
+			else // Check the teammates:
+			{
+				for(list<PCEnt>::const_iterator pcit = PCs.begin();
+					pcit != PCs.end(); ++pcit)
+				{
+					if(pcit->getpos().dist_walk(pos) == 1
+						&& pcit->torch_is_lit()
+						&& pcit->get_owner()->team == pit->team)
+					{
+						pit->own_pc->toggle_torch();
+						event_set.insert(pos);
+						break;
+					}
+				}
+			}
+		} // trying to light a torch
+		break;
+	}
+	case XN_TRAP_TRIGGER:
+		if(Game::curmap->get_tile(pit->own_pc->getpos()).flags & TF_TRAP)
+			trigger_trap(pit, any_trap_at(pit->own_pc->getpos()));
+		break;
+	case XN_SUICIDE:
+	{
+		// Check for "scared to death" conditions:
+		if(pit->cl_props.hp <= 2*classes[pit->cl].hp/3) // <= 2/3 hp
+		{
+			// Go through the PCs looking for any visible enemy <= 3 tiles away
+			list<PCEnt>::iterator it = PCs.begin();
+			while(it != PCs.end())
+			{
+				// not void, visible, enemy, close enough:
+				if(!it->isvoid() && it->visible_to_team(pit->team)
+					&& it->get_owner()->team != pit->team
+					&& Game::curmap->LOS_between(it->getpos(), pit->own_pc->getpos(),
+						SCARED_TO_DEATH_DIST))
+				{
+					player_death(pit, " was scared to death by "
+						+ it->get_owner()->nick + '.', true);
+					it->get_owner()->stats_i->kills++;
+					break;
+				}
+				++it;
+			}
+			if(it != PCs.end()) // was broken
+				break;
+		}
+		// If here, just suicide:
+		player_death(pit, " suicided.", true);
+		break;
+	}
+	case XN_MOVE:
+		try_move(pit, (pit->facing = e_Dir(axn.var1)));
+		break;
+	case XN_SHOOT:
+	{
+		// The coords are already validated in network.cpp upon receiving!
+		Coords targetc(axn.var1, axn.var2);
+		pit->facing = Coords(0,0).dir_of(targetc);
+		pit->stats_i->arch_shots++;
+		arrows.push_back(Arrow(targetc, pit));
+		break;
+	}
+	case XN_FLASH:
+		if(pit->limiter) // have flashbombs left
+		{
+			// TODO: do the flash
+			pit->limiter--;
+		}
+		break;
+	case XN_ZAP:
+		pit->facing = e_Dir(axn.var1);
+		zaps.push_back(Zap(pit, pit->facing));
+		pit->stats_i->cm_shots++;
+		break;
+	case XN_CIRCLE_ATTACK:
+		pit->facing = e_Dir(axn.var1);
+		pit->doing_a_chore = 2;
+		break;
+	case XN_HEAL:
+		if(axn.var1 != MAX_D)
+		{
+			Coords c = pit->own_pc->getpos().in((pit->facing = e_Dir(axn.var1)));
+			list<PCEnt>::iterator pc_it = any_pc_at(c);
+			if(pc_it != PCs.end())
+			{
+				list<Player>::iterator nit = pc_it->get_owner();
+				if(nit->team == pit->team) // teammate => heal
+					heal_PC(nit);
+				else // enemy => poison
+				{
+					nit->poisoner = pit;
+					add_action_ind(c, A_POISON);
+				}
+			}
+		}
+		else // healing self
+			heal_PC(pit);
+		break;
+	case XN_BLINK:
+	{
+		if(pit->limiter < MAX_BLINK_LIMITER)
+			pit->limiter++; // always, even if cannot blink
+		pit->wait_turns += 2*pit->limiter;
+
+		// Determine a point to blink to, if any:
+		Coords c;
+		Coords opos = pit->own_pc->getpos();
+		vector<Coords> optimals;
+		Coords cg = opos; // "good" coords
+		char line, ind;
+		for(line = 0; line < MAX_BLK_DIST*8; ++line)
+		{
+			for(ind = 0; ind < 2*MAX_BLK_DIST; ind += 2)
+			{
+				c.x = loslookup[MAX_BLK_DIST-2][line*2*MAX_BLK_DIST+ind]
+					+ opos.x;
+				c.y = loslookup[MAX_BLK_DIST-2][line*2*MAX_BLK_DIST+ind+1]
+					+ opos.y;
+				// the point must be visible:
+				if(!(Game::curmap->get_tile(c).flags & TF_SEETHRU))
+					break;
+				//else
+				cg = c;
+			}
+			// Note that points outside of the map cannot be reached; the edge
+			// wall prevents them from being visible!
+			// Endpoint must be walkable and not occupied:
+			if((Game::curmap->get_tile(cg).flags & TF_WALKTHRU)
+				&& !(Game::curmap->get_tile(cg).flags & TF_OCCUPIED))
+			{
+				// Trying to get as far as possible:
+				if(optimals.empty())
+					optimals.push_back(cg); // no previous record
+				else if(cg.dist_walk(opos) > optimals.front().dist_walk(opos))
+				{
+					optimals.clear(); // a new record!
+					optimals.push_back(cg);
+				}
+				else if(cg.dist_walk(opos) == optimals.front().dist_walk(opos))
+					optimals.push_back(cg); // repeat old record
+			}
+		}
+		if(optimals.empty())
+			break; // cannot blink!
+		c = optimals[randor0(optimals.size())];
+
+		// Do the transfer:
+		event_set.insert(opos);
+		move_player_to(pit, c, true);
+		pit->action_queue.clear(); /* Rarely does one plan her actions
+			beyond a blink. */
+		break;
+	}
+	case XN_MINE:
+	{
+		pit->facing = e_Dir(axn.var1);
+		// Mining requires one of: (A) there is a wall, (B) there is a blocked
+		// boulder, (C) there is a boulder source.
+		Coords c = pit->own_pc->getpos().in(e_Dir(axn.var1));
+		if(can_dig_in(c, e_Dir(axn.var1)))
+		{
+			pit->doing_a_chore = DIG_TURNS;
+			add_sound(c, S_RUMBLE);
+		}
+		// else there is nothing to dig
+		break;
+	}
+	case XN_DISGUISE:
+		// TODO: if standing on an enemy corpse, create disguising chore
+		break;
+	case XN_SET_TRAP:
+	{
+		// A trap can be set where there is no trap or noccent:
+		if(!(Game::curmap->get_tile(pit->own_pc->getpos()).flags
+			& (TF_TRAP|TF_NOCCENT)))
+		{
+			pit->doing_a_chore = TRAP_TURNS;
+			add_action_ind(pit->own_pc->getpos(), A_TRAP);
+		}
+		break;
+	}
+	case XN_MM:
+	{
+		Coords pos;
+		e_Dir d;
+		unsigned short flgs;
+		for(char ch = 0; ch < 4; ++ch)
+		{
+			d = e_Dir((pit->facing + 2*ch)%MAX_D);
+			pos = pit->own_pc->getpos().in(d);
+			flgs = Game::curmap->mod_tile(pos)->flags;
+			if(flgs & TF_WALKTHRU && !(flgs & TF_OCCUPIED))
+			{
+				MMs.push_back(MM(pit, d));
+				event_set.insert(pos);
+			}
+			// else cannot conjure a MM there
+		}
+		break;
+	}
+	}
+}
+
+
+void player_death(const list<Player>::iterator pit, const string &way,
+	const bool corpse)
+{
+	string msg = pit->nick + way;
+	Network::construct_msg(msg, 7);
+	Network::broadcast();
+	pit->stats_i->deaths++;
+	pit->needs_state_upd = true;
+	if(corpse && pit != pl_with_item) // item carrier leaves no corpse!
+	{
+		Coords pos = pit->own_pc->getpos();
+		// If there is already a corpse there, this corpse "overrules" the
+		// older one. But if there is some other noccent there, do not cover
+		// it with a corpse.
+		list<NOccEnt>::iterator enoe = any_noccent_at(pos, NOE_CORPSE);
+		if(enoe != noccents[NOE_CORPSE].end())
+		{
+			enoe->set_col(team_colour[pit->team -1]);
+			enoe->set_misc(CORPSE_DECAY_TURNS);
+		}
+		else
+		{
+			Tile* tp = Game::curmap->mod_tile(pos);
+			if(!(tp->flags & TF_NOCCENT))
+			{
+				noccents[NOE_CORPSE].push_back(NOccEnt(pos, '%',
+					team_colour[pit->team -1], CORPSE_DECAY_TURNS)); 
+				tp->flags |= TF_NOCCENT;
+			}
+		}
+	}
+	kill_player(pit);
+}
+
+void kill_player(const list<Player>::iterator pit)
+{
+	pit->cl_props.hp = pit->doing_a_chore = 0;
+	event_set.insert(pit->own_pc->getpos());
+	Tile* tp = Game::curmap->mod_tile(pit->own_pc->getpos());
+	// if was carrying item, drop it
+	if(pit == pl_with_item)
+	{
+		pl_with_item = cur_players.end();
+		the_item.setpos(pit->own_pc->getpos());
+		tp->flags |= TF_NOCCENT;
+		Game::send_team_upds(cur_players.end());
+	}
+	
+	tp->flags &= ~(TF_OCCUPIED);
+	pit->own_pc->makevoid();
+	
+	pit->own_vp->move_watchers(); // remove any watchers except self
+	pit->action_queue.clear();
+	pit->poisoner = cur_players.end();
+
+	if(pit->next_cl != pit->cl)
+		Game::send_state_change(pit);
+
+	pit->stats_i->time_played[pit->cl] += time(NULL) - pit->last_switched_cl;
+	time(&(pit->last_switched_cl));
+}
+
+
+void process_swaps()
+{
+	for(list<Player>::iterator it = cur_players.begin();
+		it != cur_players.end(); ++it)
+	{
+		if(it->is_alive() && it->wants_to_move_to != MAX_D)
+		{
+			Coords tarpos = it->own_pc->getpos().in(it->wants_to_move_to);
+			Tile *tar = Game::curmap->mod_tile(tarpos);
+			if(tar->flags & TF_OCCUPIED)
+			{
+				// Check if there is teammate willing to swap:
+				list<PCEnt>::iterator pc_it = any_pc_at(tarpos);
+				if(pc_it != PCs.end())
+				{
+					list<Player>::iterator pp = pc_it->get_owner();
+					if(pp->team == it->team
+						&& (pp->wants_to_move_to == !(it->wants_to_move_to)
+						|| pp->turns_without_axn >= IDLE_TURNS_TO_AUTOSWAP))
+					{
+						move_player_to(pp, it->own_pc->getpos(), false);
+						move_player_to(it, tarpos, false);
+						it->wants_to_move_to = pp->wants_to_move_to = MAX_D;
+					}
+				}
+			}
+			else // not occupied; can move there!
+			{
+				move_player_to(it, tarpos, true);
+				it->wants_to_move_to = MAX_D;
+			}
+		}
+	}
+}
+
+
+void progress_chore(const list<Player>::iterator pit)
+{
+	pit->doing_a_chore--;
+	switch(pit->cl)
+	{
+	case C_SCOUT: // disguise
+		// TODO: if done disguising...
+		break;
+	case C_FIGHTER: // circle strike 
+	{
+		list<Player>::iterator them;
+		list<PCEnt>::const_iterator pc_it;
+		Coords c = pit->own_pc->getpos(), d;
+		char die = 8, add = 0;
+		// see if weapon has rusted:
+		if(pit->cl_props.tohit != classes[pit->cl].tohit)
+		{
+			die -= RUST_MOD;
+			add -= RUST_MOD;
+		}
+		for(char ch = 0; ch < 4; ++ch)
+		{
+			d = c.in(pit->facing);
+			if((pc_it = any_pc_at(d)) != PCs.end())
+			{
+				them = pc_it->get_owner();
+				if(test_hit(them, 5, 1, die, add) // was hit...
+				&& them->cl_props.hp <= 0) // ...and died
+				{
+					string msg = " was sliced in half by ";
+					if(pit->team == them->team)
+						msg += teammate_str;
+					else
+						pit->stats_i->kills++;
+					player_death(them, msg + pit->nick + '.', true);
+				}
+			}
+			else
+				add_action_ind(d, A_MISS);
+			++(pit->facing);
+		}
+		break;
+	}
+	case C_MINER: // mine
+	{
+		Coords c = pit->own_pc->getpos().in(pit->facing);
+		if(!pit->doing_a_chore) // done
+		{
+			// Digging is done; outcome depends on what exactly is there:
+			Tile* tp = Game::curmap->mod_tile(c);
+			list<OccEnt>::iterator b_it;
+			if(tp->symbol == '#') // wall; dig a passage
+			{
+				tp->symbol = '.';
+				tp->flags |= TF_WALKTHRU|TF_SEETHRU;
+				update_lights_around(c);
+				// Need to update BYWALL for neighbours:
+				e_Dir dir = D_N;
+				Coords cn;
+				for(;;)
+				{
+					cn = c.in(dir);
+					Game::curmap->upd_by_wall_flag(cn);
+					if(++dir == D_N)
+						break;
+				}
+				event_set.insert(c);
+			}
+			else if(tp->flags & TF_OCCUPIED && (b_it = any_boulder_at(c)) != boulders.end())
+			{
+				// boulder; made this far so just destroy it:
+				boulders.erase(b_it);
+				tp->flags &= ~(TF_OCCUPIED);
+				event_set.insert(c);
+			}
+			else if(tp->flags & TF_NOCCENT
+				&& any_noccent_at(c, NOE_BLOCK_SOURCE) != noccents[NOE_BLOCK_SOURCE].end())
+			{
+				boulders.push_back(OccEnt(c, 'O', C_WALL));
+				if(tp->flags & TF_OCCUPIED) // we know it's not a boulder!
+				{
+					list<PCEnt>::iterator pc_it = any_pc_at(c);
+					if(pc_it != PCs.end())
+					{
+						list<Player>::iterator pit2 = pc_it->get_owner();
+						string msg = " was squashed by ";
+						if(pit->team == pit2->team)
+							msg += teammate_str;
+						msg += pit->nick + "\'s carving frenzy.";
+						player_death(pit2, msg, false);
+					}
+					else // may assume it's a missile
+					{
+#ifdef DEBUG
+						OwnedEnt* mis = any_missile_at(c);
+						if(!mis)
+						{
+							cerr << "Detected a non-cleared OCCUPIED-flag!" << endl;
+							cerr << "Coordinates: (" << c.x << ',' << c.y << ')' << endl;
+							cerr << "Tile has symbol \'" << tp->symbol << "\', colour " << int(tp->cpair) << ", and flags " << tp->flags << endl;
+							break;
+						}
+						mis->makevoid();
+#else
+						any_missile_at(c)->makevoid();
+#endif
+					}
+				}
+				tp->flags |= TF_OCCUPIED; /* Note: set in any case; if a player
+					was killed, that cleared the occupied-flag! */
+				event_set.insert(c);
+			}
+			// else it is not possible to finish for some reason
+		}
+		else if(!can_dig_in(c, pit->facing))
+			pit->doing_a_chore = 0; // must abort
+		else
+			add_sound(c, S_RUMBLE);
+		break;
+	}
+	case C_TRAPPER: // plant trap
+		if(!pit->doing_a_chore) // done
+		{
+			Coords c = pit->own_pc->getpos();
+			traps.push_back(Trap(c, TRAP_BOOBY, pit));
+			traps.back().set_seen_by(pit->team);
+			Game::curmap->mod_tile(c)->flags |= TF_TRAP;
+			event_set.insert(c);
+		}
+		break;
+	//default: break; // Reaching this is an error!
+	}
+}
+
+
+bool missile_coll(OwnedEnt* mis, const Coords &c)
+{
+	Tile* tar = Game::curmap->mod_tile(c);
+	if(!(tar->flags & TF_WALKTHRU))
+	{
+		Zap* mis_as_z;
+		if(tar->symbol != '+' // zaps don't bounce off of doors!
+			&& (mis_as_z = dynamic_cast<Zap*>(mis)))
+		{
+			// Handle zap bouncing off of walls. This is a bit complicated.
+			Coords now_at = mis->getpos();
+			/* We want to get the tiles marked by 1 and 2 here, and they are
+			 * defined differently for diagonal/nondiagonal movement:
+			      2     2#
+		 	   ---#     /1
+			      1    /    */
+			e_Dir d = mis_as_z->get_dir();
+			e_Dir dtest = d;
+			add_sound(now_at.in(d), S_ZAP);
+			Tile *t1, *t2;
+			Coords c1, c2;
+			if(d%2) // a diagonal direction
+			{
+				--dtest;
+				t2 = Game::curmap->mod_tile((c2 = now_at.in(dtest)));
+				++(++dtest);
+				t1 = Game::curmap->mod_tile((c1 = now_at.in(dtest)));
+			}
+			else // not diagonal dir
+			{
+				++(++dtest);
+				t1 = Game::curmap->mod_tile((c1 = c.in(dtest)));
+				t2 = Game::curmap->mod_tile((c2 = c.in(!dtest)));
+			}
+			// If BOTH or NEITHER of 1&2 are blocked, we bounce back. If exactly one
+			// is blocked, we bounce to the direction that is not blocked.
+			if(bool(t1->flags & TF_WALKTHRU) != bool(t2->flags & TF_WALKTHRU))
+			{
+				if(t1->flags & TF_WALKTHRU) // go to t1
+					++(++d);
+				else // go to t2
+				{
+					--(--d);
+					c1 = c2;
+				}
+				// Now 'd' holds the new movement direction and c1 is the next location.
+				if(mis_as_z->bounce(d))
+					return true; // didn't have energy to bounce any more
+				// else: imitate moving to c1:
+				mis->setpos(c1.in(!d));
+				return missile_coll(mis, c1);
+			}
+			// else both or neither is walkthru; bounce back
+			mis->setpos(c);
+			return mis_as_z->bounce(!d);
+		}
+		//else
+		mis->makevoid(); // caller has unset occupied flag
+		add_action_ind(c, A_MISS);
+		return true;
+	}
+	else if(tar->flags & TF_OCCUPIED)
+	{
+		// There is something. A boulder?
+		list<OccEnt>::iterator bl_it = any_boulder_at(c);
+		if(bl_it != boulders.end())
+		{
+			// Missile hits a boulder: missile is destroyed.
+			mis->makevoid(); // caller has unset occ flag for missile; for block no change
+			add_action_ind(c, A_MISS);
+			return true;
+		}
+		// else: other missile?
+		OccEnt* omis = any_missile_at(c);
+		if(omis)
+		{
+			// Missile hits missile: both are destroyed:
+			mis->makevoid();
+			omis->makevoid();
+			Game::curmap->mod_tile(c)->flags &= ~(TF_OCCUPIED);
+			add_action_ind(c, A_MISS);
+			return true;
+		}
+		//else: PC?
+		list<PCEnt>::iterator pc_it = any_pc_at(c);
+		if(pc_it != PCs.end())
+		{
+			missile_hit_PC(pc_it->get_owner(), mis, false);
+			return true;
+		}
+	}
+	return false; // no collision or bounced
+}
+
+
+void trap_detection(const list<Player>::iterator pit)
+{
+	unsigned char req_turns = BASE_TURNS_TO_DETECT_TRAPS;
+	if(pit->cl == C_SCOUT) req_turns = 3*req_turns/4;
+	else if(pit->cl == C_TRAPPER) req_turns /= 2;
+
+	if(pit->turns_without_axn >= req_turns)
+	{
+		pit->turns_without_axn = 0; // detection counts as an action!
+		// Go through traps in a radius of 3 squares:
+		Coords pos = pit->own_pc->getpos();
+		Coords c;
+		short f;
+		char line, ind;
+		for(line = 0; line < DETECT_TRAPS_RAD*8; ++line)
+		{
+			for(ind = 0; ind < 2*DETECT_TRAPS_RAD; ind += 2)
+			{
+				c.x = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind] + pos.x;
+				c.y = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind+1] + pos.y;
+				if((f = Game::curmap->get_tile(c).flags) & TF_TRAP)
+				{
+					if(req_turns < BASE_TURNS_TO_DETECT_TRAPS
+						|| ((f & TF_LIT) && random()%100 < 75)
+						|| (!(f & TF_LIT) && random()%100 < 60))
+					{
+						any_trap_at(c)->set_seen_by(pit->team);
+						event_set.insert(c);
+					}
+				}
+				else if(!(f & TF_SEETHRU))
+					break;
+			}
+		}
+	} // if should detect traps
+}
+
