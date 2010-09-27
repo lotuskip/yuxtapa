@@ -1,8 +1,8 @@
 // Please see LICENSE file.
 #include "viewpoint.h"
 #include "actives.h"
+#include "declares.h"
 #include "../common/los_lookup.h"
-#include "../common/col_codes.h"
 #include <cstring>
 #include <cstdlib>
 #ifdef DEBUG
@@ -364,7 +364,20 @@ bool ViewPoint::render_pc_at(const Coords &c, char *target, const bool lit,
 		if(it->getpos() == c && it->visible_to_team(owner->team)
 			&& !it->isvoid())
 		{
+			// Drawing:
 			it->draw(target, lit);
+			if(it->is_disguised())
+			{
+				// disguised: brown for teammates & specs; for enemies their colour
+				if(it->get_owner()->team == owner->team || owner->team == T_SPEC)
+					*target = C_BROWN_PC;
+				else
+					*target = team_colour[owner->team -1];
+				if(lit)
+					*target += NUM_NORM_COLS;
+			}
+
+			// Title:
 			if(owner->team == T_SPEC || owner->team == it->get_owner()->team)
 				tstr = it->get_owner()->nick + '|';
 			else

@@ -36,6 +36,7 @@ const char SCARED_TO_DEATH_DIST = 3;
 const char CORPSE_DECAY_TURNS = 60; // 15 seconds on normal settings
 const char DIG_TURNS = 5;
 const char TRAP_TURNS = 6;
+const char DISGUISE_TURNS = 7;
 const char BASE_TURNS_TO_DETECT_TRAPS = 10;
 const char DETECT_TRAPS_RAD = 3;
 const char CHANCE_RUST = 65;
@@ -123,20 +124,6 @@ bool test_hit(const list<Player>::iterator def, const char tohit,
 void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 	const bool should_void_zap)
 {
-#ifdef DEBUG
-	if(!mis)
-	{
-		cerr << "Detected a non-cleared OCCUPIED-flag!" << endl;
-		cerr << "Coordinates: (" << pit->own_pc->getpos().x << ',' << pit->own_pc->getpos().y << ')' << endl;
-		cerr << "Player is " << str_team[pit->team == T_PURPLE] << ", faces " << sector_name[pit->facing]
-			<< ", and has wants_to_move_to=" << sector_name[pit->wants_to_move_to] << endl;
-		Tile* tp = Game::curmap->mod_tile(pit->own_pc->getpos());
-		cerr << "Tile has symbol \'" << tp->symbol << "\', colour " << int(tp->cpair) << ", and flags " << tp->flags << endl;
-		tp = Game::curmap->mod_tile(pit->own_pc->getpos().in(!pit->facing));
-		cerr << "Originating tile has symbol \'" << tp->symbol << "\', colour " << int(tp->cpair) << ", and flags " << tp->flags << endl;
-		return;
-	}
-#endif
 	list<Player>::iterator shooter = mis->get_owner();
 	if(dynamic_cast<Arrow*>(mis)) // it's an arrow
 	{
@@ -437,7 +424,18 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 		p->needs_state_upd = true;
 	}
 
-	// Whenever a PC moves, we check if they are seen by enemy scouts:
+	// Whenever a PC moves, we check if they spot some hiding enemies.
+	// The requirement for this is that the tile this PC is facing to is at
+	// a distance <= 1 from a hiding enemy.
+	opos = opos.in(p->facing); // reusing opos
+	for(list<PCEnt>::iterator pc_it = PCs.begin(); pc_it != PCs.end(); ++pc_it)
+	{
+		if(!pc_it->isvoid() && !pc_it->visible_to_team(p->team)
+			&& opos.dist_walk(pc_it->getpos()) <= 1)
+			pc_it->set_invis_to_team(T_NO_TEAM); // seen!
+	}
+
+	// Also, whenever a PC moves, we check if they are seen by enemy scouts:
 	if(p->own_pc->visible_to_team(opp_team[p->team]))
 	{
 		Coords thc; // "their coords"
@@ -458,17 +456,22 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 	}
 	// If we end up here, was not seen by enemy scouts:
 	p->own_pc->set_seen_by_team(T_NO_TEAM);
+}
 
-	// Also, whenever a PC moves, we check if they spot some hiding enemies.
-	// The requirement for this is that the tile this PC is facing to is at
-	// a distance <= 1 from a hiding enemy.
-	opos = opos.in(p->facing); // reusing opos
-	for(list<PCEnt>::iterator pc_it = PCs.begin(); pc_it != PCs.end(); ++pc_it)
-	{
-		if(!pc_it->isvoid() && !pc_it->visible_to_team(p->team)
-			&& opos.dist_walk(pc_it->getpos()) <= 1)
-			pc_it->set_invis_to_team(T_NO_TEAM); // seen!
-	}
+
+void swap_places(const list<Player>::iterator pit1, const list<Player>::iterator pit2)
+{
+	Coords pos1 = pit1->own_pc->getpos();
+	Coords pos2 = pit2->own_pc->getpos();
+	move_player_to(pit1, pos2, false);
+	move_player_to(pit2, pos1, false);
+	pit1->wants_to_move_to = pit2->wants_to_move_to = MAX_D;
+	// A very rare possibility is that one of the players dies due to a
+	// trap; we must check this:
+	if(!pit1->is_alive())
+		Game::curmap->mod_tile(pos1)->flags &= ~(TF_OCCUPIED);
+	if(!pit2->is_alive())
+		Game::curmap->mod_tile(pos2)->flags &= ~(TF_OCCUPIED);
 }
 
 
@@ -512,13 +515,8 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 			them = pc_it->get_owner();
 			if(them->team == pit->team) // teammate
 			{
-				if(them->wants_to_move_to == !d)
-				{
-					// That player is willing to swap places:
-					move_player_to(them, opos, false);
-					move_player_to(pit, tarpos, false);
-					pit->wants_to_move_to = them->wants_to_move_to = MAX_D;
-				}
+				if(them->wants_to_move_to == !d) // That player is willing to swap places
+					swap_places(them, pit);
 				else // the processing of this move is finished later
 					pit->wants_to_move_to = d;
 			}
@@ -537,6 +535,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 					else
 						player_death(them, " was killed by " + pit->nick + '.', true);
 				}
+				pit->own_pc->set_disguised(false);
 			}
 			return; // do not move
 		}
@@ -925,8 +924,21 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		break;
 	}
 	case XN_DISGUISE:
-		// TODO: if standing on an enemy corpse, create disguising chore
+	{
+		Coords pos = pit->own_pc->getpos();
+		if(Game::curmap->get_tile(pos).flags & TF_NOCCENT)
+		{
+			// check that there's an enemy corpse
+			list<NOccEnt>::iterator c_it = any_noccent_at(pos, NOE_CORPSE);
+			if(c_it != noccents[NOE_CORPSE].end()
+				&& c_it->get_colour() != team_colour[pit->team -1])
+			{
+				pit->doing_a_chore = DISGUISE_TURNS;
+				add_action_ind(pos, A_DISGUISE);
+			}
+		}
 		break;
+	}
 	case XN_SET_TRAP:
 	{
 		// A trap can be set where there is no trap or noccent:
@@ -1045,11 +1057,7 @@ void process_swaps()
 					if(pp->team == it->team
 						&& (pp->wants_to_move_to == !(it->wants_to_move_to)
 						|| pp->turns_without_axn >= IDLE_TURNS_TO_AUTOSWAP))
-					{
-						move_player_to(pp, it->own_pc->getpos(), false);
-						move_player_to(it, tarpos, false);
-						it->wants_to_move_to = pp->wants_to_move_to = MAX_D;
-					}
+						swap_places(pp, it);
 				}
 			}
 			else // not occupied; can move there!
@@ -1068,7 +1076,14 @@ void progress_chore(const list<Player>::iterator pit)
 	switch(pit->cl)
 	{
 	case C_SCOUT: // disguise
-		// TODO: if done disguising...
+		if(!pit->doing_a_chore) // done
+		{
+			pit->own_pc->set_disguised(true);
+			string msg = "You are now disguised as the enemy.";
+			Network::construct_msg(msg, C_BROWN_PC);
+			Network::send_to_player(*pit);
+			event_set.insert(pit->own_pc->getpos());
+		}
 		break;
 	case C_FIGHTER: // circle strike 
 	{
@@ -1130,6 +1145,7 @@ void progress_chore(const list<Player>::iterator pit)
 				}
 				event_set.insert(c);
 			}
+			// Destroying a boulder:
 			else if(tp->flags & TF_OCCUPIED && (b_it = any_boulder_at(c)) != boulders.end())
 			{
 				// boulder; made this far so just destroy it:
@@ -1137,6 +1153,7 @@ void progress_chore(const list<Player>::iterator pit)
 				tp->flags &= ~(TF_OCCUPIED);
 				event_set.insert(c);
 			}
+			// Carving a new boulder:
 			else if(tp->flags & TF_NOCCENT
 				&& any_noccent_at(c, NOE_BLOCK_SOURCE) != noccents[NOE_BLOCK_SOURCE].end())
 			{
@@ -1154,21 +1171,7 @@ void progress_chore(const list<Player>::iterator pit)
 						player_death(pit2, msg, false);
 					}
 					else // may assume it's a missile
-					{
-#ifdef DEBUG
-						OwnedEnt* mis = any_missile_at(c);
-						if(!mis)
-						{
-							cerr << "Detected a non-cleared OCCUPIED-flag!" << endl;
-							cerr << "Coordinates: (" << c.x << ',' << c.y << ')' << endl;
-							cerr << "Tile has symbol \'" << tp->symbol << "\', colour " << int(tp->cpair) << ", and flags " << tp->flags << endl;
-							break;
-						}
-						mis->makevoid();
-#else
-						any_missile_at(c)->makevoid();
-#endif
-					}
+						any_missile_at(c)->makevoid(); // tile remains occupied by the boulder
 				}
 				tp->flags |= TF_OCCUPIED; /* Note: set in any case; if a player
 					was killed, that cleared the occupied-flag! */

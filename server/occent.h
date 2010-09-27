@@ -50,12 +50,16 @@ public:
 	bool torch_is_lit() const { return torch_lit; }
 	void toggle_torch();
 
+	bool is_disguised() const { return disguised; }
+	void set_disguised(const bool d) { disguised = d; }
+
 private:
 	// "Invisible to team" indicates a PC is hiding (assassin/trapper).
 	// This overrules "Seen by team" which indicates that the PC has
 	// been spotted by an enemy scout.
 	e_Team invis_to_team, seen_by_team;
 	bool torch_lit;
+	bool disguised;
 };
 
 

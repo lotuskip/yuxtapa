@@ -47,7 +47,7 @@ OwnedEnt::OwnedEnt(const Coords &c, const char sym, const char cp,
 
 PCEnt::PCEnt(const Coords &c, const std::list<Player>::iterator o)
 	: OwnedEnt(c, '@', C_GREEN_PC, o), invis_to_team(T_NO_TEAM),
-	seen_by_team(T_NO_TEAM), torch_lit(false)
+	seen_by_team(T_NO_TEAM), torch_lit(false), disguised(false)
 {
 	if(o->team == T_PURPLE)
 		set_col(C_PURPLE_PC);
@@ -62,6 +62,7 @@ void PCEnt::toggle_torch()
 	torch_lit = !torch_lit;
 	owner->needs_state_upd = true;
 }
+
 
 
 Arrow::Arrow(Coords t, const list<Player>::iterator o)
@@ -232,7 +233,7 @@ bool Zap::bounce(const e_Dir nd)
 	{
 		makevoid();
 		// This is called only via missile_coll, which is called only via this->update(),
-		// no occupied flag has been unset.
+		// occupied flag has been unset.
 		return true;
 	}
 	dir = nd;

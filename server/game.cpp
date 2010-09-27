@@ -1094,7 +1094,7 @@ list<Player>::iterator Game::remove_player(list<Player>::iterator pit,
 			pit->stats_i->time_specced += time(NULL) - pit->last_switched_cl;
 	}
 	
-	// We don't store the stats for buts:
+	// We don't store the stats for bots:
 	if(pit->stats_i->bot)
 		known_players.erase(pit->stats_i);
 	

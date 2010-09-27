@@ -4,12 +4,10 @@
 
 #include "../common/netutils.h"
 #include "players.h"
-#include "../common/col_codes.h"
 
 class Map;
 
 const std::string str_team[2] = { "Green", "Purple" };
-const unsigned char team_colour[3] = { C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
 
 // describes "one game", playing of a single map
 namespace Game

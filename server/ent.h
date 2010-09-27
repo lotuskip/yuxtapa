@@ -21,6 +21,8 @@ public:
 	Coords getpos() const { return pos; }
 	void setpos(const Coords &c) { pos = c; }
 
+	char get_colour() const { return cpair; }
+
 protected:
 	Coords pos;
 	char symbol;

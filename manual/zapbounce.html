@@ -1,12 +1,15 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Zap bouncing</h2>
 
-<p>The bouncing of bolts in yuxtapa is based on the rules in roguelike games such
+<p>The bouncing of zaps in yuxtapa is based on the rules in roguelike games such
 as ADOM, but with certain quite important differences. For the exact algorithm,
 the reader is referred to the source code, but some essential examples are
 given below.</p>
 
-<p>In the below pictures, the bolt starts at the point marked with @ and travels
+<p>The zaps bounce off of all non-passable tiles except closed doors, which absorb
+zaps. A boulder likewise absorbs a zap that hits it.</p>
+
+<p>In the below pictures, the zap starts at the point marked with @ and travels
 in the path marked by '/', '\', '|', and '-'. The '#' denote walls. Zaps only
 bounce off of walls; other entities they either pass or become absorbed and
 disappear.</p>
@@ -20,15 +23,15 @@ The following situations are exactly like in games such as ADOM:
   @                  #          /   ##          /  ##
                                @               @
 </pre>
-Above, the bolt will bounce back to the '@' travelling along the same path.
-The same thing happens if the bolt hits a 'pillar' (a single wall tile):
+Above, the zap will bounce back to the '@' travelling along the same path.
+The same thing happens if the zap hits a 'pillar' (a single wall tile):
 <pre>
  @---#         @           @
                |          /
                |         /
                #        #
 </pre>
-Here the bolt bounces 'in a 45 degree angle':
+Here the zap bounces 'in a 45 degree angle':
 <pre>
 #######              @  #
   /\                  \ #
@@ -48,7 +51,7 @@ but yuxtapa makes an attempt, anyhow. The following bounce you won't see in ADOM
     |##
     | ##
 </pre>
-Here the bolt bounces 'in a 45 degree angle' off of a diagonal wall. Compare to the
+Here the zap bounces 'in a 45 degree angle' off of a diagonal wall. Compare to the
 previous two pictures, where the wall is horizontal or vertical.</p>
 
 <p>Since the algorithm to determine the bounces is rather simple (and complicating it too
@@ -61,7 +64,7 @@ happen in yuxtapa according to the current rules, seems a bit arbitrary:
    |
    |
 </pre>
-Here the vertical wall ends abruptly, and a bolt hitting the very end of it makes
+Here the vertical wall ends abruptly, and a zap hitting the very end of it makes
 a weird bounce as if it had hit a diagonal wall.</p>
 
 </body></html>
