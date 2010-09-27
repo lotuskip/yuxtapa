@@ -730,6 +730,8 @@ bool Game::process_turn()
 				shouts.pop_back();
 			}
 		}
+		// If the viewpoint is blinded, reduce time left:
+		it->own_vp->reduce_blind();
 		// Check if the player needs a state update:
 		if(it->needs_state_upd)
 			send_state_upd(it);
@@ -737,6 +739,7 @@ bool Game::process_turn()
 	event_set.clear();
 	clear_action_inds();
 	clear_sounds();
+	fball_centers.clear();
 
 	// Teams need shuffled?
 	if(team_unbalance && time(NULL) - teams_unbal_since >= SECS_TO_SHUFFLE)

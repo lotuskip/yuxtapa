@@ -253,6 +253,11 @@ unsigned char Player::torch_symbol(const bool lit) const
 	return '-'; // no torch whatsoever
 }
 
+bool Player::nomagicres() const
+{
+	return (random()%100 >= cl_props.magicres);
+}
+
 /////////////////////////////////////////////////////////
 
 

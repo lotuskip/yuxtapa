@@ -123,6 +123,7 @@ map<Coords, unsigned char> axn_indicators;
 map<Coords, e_Sound> reg_sounds;
 map<Coords, string> voices;
 
+list<Coords> fball_centers;
 set<Coords> event_set;
 
 list<Player>::const_iterator pl_with_item;
@@ -629,7 +630,12 @@ bool is_dynlit(const Coords &c)
 			&& Game::curmap->LOS_between(c, z_it->getpos(), 1))
 			return true;
 	}
-	// TODO: check fireballs lighting?
+	for(list<Coords>::const_iterator fb_it = fball_centers.begin(); 
+		fb_it != fball_centers.end(); ++fb_it)
+	{
+		if(Game::curmap->LOS_between(c, *fb_it, 4)) // fireballs light a rad 4
+			return true;
+	}
 	return false;
 }
 

@@ -67,6 +67,8 @@ struct Player
 	bool burn_torch();
 	unsigned char torch_symbol(const bool lit) const;
 
+	bool nomagicres() const;
+
 	// Basic stuff
 	mutable sockaddr_storage address; /* mutable because network
 		routines (C!) don't understand const pointers */

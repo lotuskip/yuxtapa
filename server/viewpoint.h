@@ -13,7 +13,7 @@ class ViewPoint
 {
 public:
 	ViewPoint();
-	~ViewPoint();
+	~ViewPoint() {}
 
 	void set_owner(const std::list<Player>::const_iterator i)
 		{ owner = i; }
@@ -36,6 +36,8 @@ public:
 	void set_pos(const Coords newpos);
 	Coords get_pos() const { return pos; }
 
+	void blind();
+	void reduce_blind();
 	void set_losr(const char nr) { LOSrad = nr; }
 
 private:
@@ -46,6 +48,7 @@ private:
 	(an often outdated) copy of the map (Map::data). Every viewpoint
 	needs its own copy, since player's should not be aware of e.g.
 	walls dug outside of their LOS until they actually see them. */
+	char blinded;
 
 	std::list<Player>::const_iterator owner;
 	std::vector< std::list<Player>::iterator > followers;

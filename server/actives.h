@@ -29,6 +29,7 @@ extern std::list<std::list<NOccEnt>::iterator> team_flags[2];
 enum e_Action { A_HEAL=0, A_TRAP, A_POISON, A_DISGUISE, A_HIT, A_MISS,
 	NUM_ACTIONS };
 extern std::map<Coords, unsigned char> axn_indicators;
+extern std::list<Coords> fball_centers; // for fireball-lighting
 
 void add_action_ind(const Coords &c, const e_Action a);
 void clear_action_inds();

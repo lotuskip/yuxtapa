@@ -98,17 +98,20 @@ void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 
 
 bool test_hit(const list<Player>::iterator def, const char tohit,
-	const char numdies, const char ddie, const char dadd)
+	char numdies, const char ddie, const char dadd)
 {
 	Coords loc = def->own_pc->getpos();
 	char P = def->cl_props.dv - tohit;
 	char R = random()%20;
 	if(R >= P) // hit
 	{
-		char dam = numdies*(random()%ddie) + dadd + 1;
+		char dam = dadd;
+		while(numdies--)
+			dam += 1 + random()%ddie;
 		if(R != 19 && R/P < 2) // not critical hit; apply PV
 			dam -= def->cl_props.pv;
 		def->cl_props.hp -= max(0, int(dam));
+		def->needs_state_upd = true;
 		add_action_ind(loc, A_HIT);
 		return true;
 	}
@@ -158,36 +161,40 @@ void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 	}
 	else // a mm or a zap
 	{
-		add_action_ind(pit->own_pc->getpos(), A_HIT);
-
 		bool is_zap = dynamic_cast<Zap*>(mis);
 		if(is_zap && shooter->team != pit->team)
 			shooter->stats_i->cm_hits++;
-
-		char dam = random()%5 + 1; // 1d5
-		if(is_zap)
-			dam += random()%5 + 1; // 2d5 for zaps
-		pit->cl_props.hp -= dam;
-		if(pit->cl_props.hp <= 0) // died
+		if(pit->nomagicres())
 		{
-			string msg = spell_kill_msg[is_zap][0];
-			if(pit == shooter)
-				msg += spell_kill_msg[is_zap][1];
-			else
+			add_action_ind(pit->own_pc->getpos(), A_HIT);
+
+			char dam = 1 + random()%5; // 1d5
+			if(is_zap)
+				dam += 1 + random()%5; // 2d5 for zaps
+			pit->cl_props.hp -= dam;
+			if(pit->cl_props.hp <= 0) // died
 			{
-				if(pit->team == shooter->team)
-					msg += teammate_str;
+				string msg = spell_kill_msg[is_zap][0];
+				if(pit == shooter)
+					msg += spell_kill_msg[is_zap][1];
 				else
-					shooter->stats_i->kills++;
-				msg += shooter->nick;
-				if(!is_zap)
-					msg += "\'s ";
+				{
+					if(pit->team == shooter->team)
+						msg += teammate_str;
+					else
+						shooter->stats_i->kills++;
+					msg += shooter->nick;
+					if(!is_zap)
+						msg += "\'s ";
+				}
+				msg += spell_kill_msg[is_zap][2];
+				player_death(pit, msg, true);
 			}
-			msg += spell_kill_msg[is_zap][2];
-			player_death(pit, msg, true);
-		}
+			else
+				pit->needs_state_upd = true;
+		} // no magic resistance
 		else
-			pit->needs_state_upd = true;
+			add_action_ind(pit->own_pc->getpos(), A_MISS);
 		// mms voided always, zaps only if we are allowed to do so here:
 		if(should_void_zap || !is_zap)
 			mis->makevoid(); // occupied flag is unset in kill_player if necessary
@@ -206,6 +213,39 @@ void heal_PC(const list<Player>::iterator pit)
 		add_action_ind(pit->own_pc->getpos(), A_HEAL);
 	}
 }
+
+
+void flash_at(const Coords &pos)
+{
+	// Every non-assassin within LOS is blinded (note that
+	// the radius is the same as for trap detection).
+	char line, ind;
+	Coords c;
+	unsigned short f;
+	list<PCEnt>::iterator pc_it;
+	for(line = 0; line < DETECT_TRAPS_RAD*8; ++line)
+	{
+		for(ind = 0; ind < 2*DETECT_TRAPS_RAD; ind += 2)
+		{
+			c.x = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind] + pos.x;
+			c.y = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind+1] + pos.y;
+			if((f = Game::curmap->get_tile(c).flags) & TF_OCCUPIED)
+			{
+				if((pc_it = any_pc_at(c)) != PCs.end()
+					&& pc_it->get_owner()->cl != C_ASSASSIN)
+					pc_it->get_owner()->own_vp->blind();
+			}
+			else if(!(f & TF_SEETHRU))
+				break;
+		}
+	}
+	// At pos itself, too:
+	if((pc_it = any_pc_at(pos)) != PCs.end()
+		&& pc_it->get_owner()->cl != C_ASSASSIN)
+		pc_it->get_owner()->own_vp->blind();
+	add_sound(pos, S_SPLASH);
+}
+
 
 void move_player_to(const list<Player>::iterator p, const Coords &c,
 	const bool do_flags); // (This needs to call trigger_trap needs to call this)
@@ -234,32 +274,99 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		}
 		break;
 	case TRAP_LIGHT:
-		// TODO: call blinding sub-routine
+		flash_at(pos);
 		break;
 	case TRAP_TELE:
 	{
-		// Get a random tile that's walkable and not occupied:
-		Coords tar(1 + random()%(Game::curmap->get_size()-1),
-			1 + random()%(Game::curmap->get_size()-1));
-		init_nearby(tar);
-		unsigned short f = Game::curmap->get_tile(tar).flags;
-		while(!(f & TF_WALKTHRU) || (f & TF_OCCUPIED))
-			f = Game::curmap->get_tile((tar = next_nearby())).flags;
-		// Jump there:
-		event_set.insert(pos);
-		move_player_to(pit, tar, true);
-		// NOTE: do not clear axn queue like in blinking
-		return false; // do not make teleportation traps seen
+		if(pit->nomagicres())
+		{
+			// Get a random tile that's walkable and not occupied:
+			Coords tar(1 + random()%(Game::curmap->get_size()-1),
+				1 + random()%(Game::curmap->get_size()-1));
+			init_nearby(tar);
+			unsigned short f = Game::curmap->get_tile(tar).flags;
+			while(!(f & TF_WALKTHRU) || (f & TF_OCCUPIED))
+				f = Game::curmap->get_tile((tar = next_nearby())).flags;
+			// Jump there:
+			event_set.insert(pos);
+			move_player_to(pit, tar, true);
+			// NOTE: do not clear axn queue like in blinking
+			return false; // do not make triggered teleportation traps seen
+		}
+		else
+			add_action_ind(pos, A_MISS);
+		break;
 	}
 	case TRAP_BOOBY:
-		// TODO: boobytrap trigger (check if tr->owner is a player (even self?))
+		if(test_hit(pit, 9, 2, 6, 0) // 2d6+0, +9 tohit
+			&& pit->cl_props.hp <= 0)
+		{
+			string msg = " died to a trap.";
+			if(tr->get_owner() != cur_players.end())
+			{
+				msg = " failed to notice ";
+				if(tr->get_owner() == pit)
+					msg += "her own";
+				else
+				{
+					if(tr->get_owner()->team == pit->team)
+						msg += teammate_str;
+					msg += tr->get_owner()->nick + "\'s";
+				}
+				msg += " boobytrap.";
+			}
+			player_death(pit, msg, true);
+		}
+		add_sound(pos, S_CREAK);
+		// Boobytraps are always destroyed:
+		traps.erase(tr);
+		Game::curmap->mod_tile(pos)->flags &= ~(TF_TRAP);
+		if(!pit->is_alive())
+			return true;
 		break;
 	case TRAP_FIREB:
-		// TODO: fireball trap trigger
+	{
+		Coords c;
+		list<PCEnt>::iterator pc_it;
+		char ch;
+		string msg;
+		for(c.x = min(pos.x+2, Game::curmap->get_size()-2); c.x >= max(1, pos.x-2); c.x--)
+		{
+			for(c.y = min(pos.y+2, Game::curmap->get_size()-2); c.y >= max(1, pos.y-2); c.y--)
+			{
+				add_sound(c, S_BOOM);
+				if((Game::curmap->get_tile(c).flags & TF_OCCUPIED)
+					&& (pc_it = any_pc_at(c)) != PCs.end())
+				{
+					// damage is (3-radius)d6:
+					for(ch = 0; ch < 3 - pos.dist_walk(c); ++ch)
+						pc_it->get_owner()->cl_props.hp -= 1 + random()%6;
+					if(pc_it->get_owner()->cl_props.hp <= 0) // died
+					{
+						if(pc_it->get_owner() == pit)
+							player_death(pit, " fried to a trap.", false);
+						else
+						{
+							msg = " was taken to the flames by ";
+							if(pc_it->get_owner()->team == pit->team)
+								msg += teammate_str;
+							msg += pit->nick + '.';
+							player_death(pc_it->get_owner(), msg, false);
+						}
+					}
+					else
+						pc_it->get_owner()->needs_state_upd = true;
+				}
+			}
+		}
+		fball_centers.push_back(pos);
+		if(!pit->is_alive())
+			return true;
 		break;
+	}
 	//default: anything else is an error!
 	}
-	// If here, PC survived; and all except teleport traps are made known:
+	// If here, trap should be made known:
 	tr->set_seen_by(pit->team);
 	return false;
 }
@@ -715,7 +822,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	case XN_FLASH:
 		if(pit->limiter) // have flashbombs left
 		{
-			// TODO: do the flash
+			flash_at(pit->own_pc->getpos());
 			pit->limiter--;
 		}
 		break;
@@ -890,7 +997,9 @@ void player_death(const list<Player>::iterator pit, const string &way,
 
 void kill_player(const list<Player>::iterator pit)
 {
-	pit->cl_props.hp = pit->doing_a_chore = 0;
+	if(pit->cl_props.hp > 0)
+		pit->cl_props.hp = 0; // if they're negative, we don't overwrite that
+	pit->doing_a_chore = 0;
 	event_set.insert(pit->own_pc->getpos());
 	Tile* tp = Game::curmap->mod_tile(pit->own_pc->getpos());
 	// if was carrying item, drop it

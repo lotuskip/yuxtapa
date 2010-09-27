@@ -4,6 +4,7 @@
 #include "../common/los_lookup.h"
 #include "../common/col_codes.h"
 #include <cstring>
+#include <cstdlib>
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -86,12 +87,10 @@ namespace Game { extern Map *curmap; }
 char ViewPoint::loslittbl[VIEWSIZE][VIEWSIZE];
 
 
-ViewPoint::ViewPoint() : LOSrad(SPEC_LOS_RAD)
+ViewPoint::ViewPoint() : LOSrad(SPEC_LOS_RAD), blinded(0)
 {
 	newmap();
 }
-
-ViewPoint::~ViewPoint() {}
 
 
 void ViewPoint::newmap()
@@ -116,8 +115,21 @@ void ViewPoint::newmap()
 	poschanged = true;
 }
 
+
 short ViewPoint::render(char *target, vector<string> &shouts)
 {
+	// If the viewpoint is blinded, just render an empty view:
+	if(blinded)
+	{
+		for(int i = 0; i < VIEWSIZE*VIEWSIZE; ++i)
+		{
+			*(target++) = EMPTY_TILE.cpair;
+			*(target++) = EMPTY_TILE.symbol;
+		}
+		*(target++) = 0; // number of titles
+		return VIEWSIZE*VIEWSIZE*2+1;
+	}
+
 	char x, y, line, ind;
 	Tile *tp;
 	Coords c;
@@ -292,6 +304,18 @@ void ViewPoint::set_pos(const Coords newpos)
 		pos = newpos;
 		poschanged = true;
 	}
+}
+
+void ViewPoint::blind()
+{
+	blinded = 4 + random()%5; // 4-8 turns
+	poschanged = true;
+}
+
+void ViewPoint::reduce_blind()
+{
+	if(blinded && !(--blinded))
+		poschanged = true; // to force a re-render
 }
 
 void ViewPoint::add_watcher(const std::list<Player>::iterator i)
