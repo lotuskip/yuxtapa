@@ -1261,7 +1261,7 @@ bool missile_coll(OwnedEnt* mis, const Coords &c)
 		add_action_ind(c, A_MISS);
 		return true;
 	}
-	else if(tar->flags & TF_OCCUPIED)
+	/*else*/ if(tar->flags & TF_OCCUPIED)
 	{
 		// There is something. A boulder?
 		list<OccEnt>::iterator bl_it = any_boulder_at(c);
@@ -1290,6 +1290,7 @@ bool missile_coll(OwnedEnt* mis, const Coords &c)
 			missile_hit_PC(pc_it->get_owner(), mis, false);
 			return true;
 		}
+		// else: reaching this line would be an error!!
 	}
 	return false; // no collision or bounced
 }

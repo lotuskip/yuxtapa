@@ -88,6 +88,8 @@ Arrow::Arrow(Coords t, const list<Player>::iterator o)
 
 void Arrow::update()
 {
+	if(madevoid)
+		return;
 	event_set.insert(pos); // in any event, arrow moves away
 	Game::curmap->mod_tile(pos)->flags &= ~(TF_OCCUPIED);
 
@@ -122,7 +124,9 @@ MM::MM(const std::list<Player>::iterator o, const e_Dir dir)
 
 void MM::update()
 {
-	// Don't move the first turn (often that's the same turn we're created)
+	if(madevoid)
+		return;
+	// Don't move the first turn (that's practically always the same turn we're created)
 	if(!turns_moved)
 	{
 		++turns_moved;
@@ -192,6 +196,8 @@ Zap::Zap(const std::list<Player>::iterator o, const e_Dir d)
 
 void Zap::update()
 {
+	if(madevoid)
+		return;
 	if(bounces == -1) // indicates the first call to update()
 		++bounces;
 	else // not the first move; should vacate position:
