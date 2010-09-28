@@ -73,7 +73,7 @@ void add_id_info_for_server(const string &serverip)
 	unsigned short sh;
 	while(file)
 	{
-		// NOTE: not very error tolerant; users should not mess withthe file
+		// NOTE: not very error tolerant; users should not mess with the file
 		file >> ipstr;
 		file >> sh;
 		file >> passw;
@@ -98,9 +98,8 @@ void store_id_for_server(const unsigned short id,
 	ifstream ifile((Config::configdir() + serversfile_name).c_str());
 	string tmp;
 	bool not_replaced = true;
-	while(ifile)
+	while(getline(ifile, tmp))
 	{
-		getline(ifile, tmp);
 		if(not_replaced && tmp.find(serverip) == 0) // this is the server
 		{
 			tmp = line2add;

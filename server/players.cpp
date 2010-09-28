@@ -174,6 +174,15 @@ list<Player>::const_iterator find_pl_by_sas(const sockaddr_storage &sas)
 	return i;
 }
 
+unsigned short add_and_register_player(const string &nick, string &passw,
+	sockaddr_storage &sas)
+{
+	list<PlayerStats>::iterator newpl = new_player();
+	register_player(nick, sas, newpl);
+	passw.assign(newpl->password);
+	return newpl->ID;
+}
+
 } // end local namespace
 
 list<PlayerStats> known_players;
@@ -325,9 +334,6 @@ void store_known_players()
 	for(list<Player>::iterator pit = cur_players.begin();
 		pit != cur_players.end(); ++pit)
 	{
-		if(pit->stats_i->bot)
-			known_players.erase(pit->stats_i);
-
 		pit->stats_i->total_time += time(NULL) - pit->stats_i->last_seen;
 		time(&(pit->stats_i->last_seen));
 		
@@ -335,6 +341,16 @@ void store_known_players()
 			pit->stats_i->time_played[pit->cl] += time(NULL) - pit->last_switched_cl;
 		else if(pit->team == T_SPEC && !intermission)
 			pit->stats_i->time_specced += time(NULL) - pit->last_switched_cl;
+	}
+
+	// Remove bots so that they are not stored:
+	list<PlayerStats>::iterator ps_it = known_players.begin();
+	while(ps_it != known_players.end())
+	{
+		if(ps_it->bot)
+			ps_it = known_players.erase(ps_it);
+		else
+			++ps_it;
 	}
 
 	// Now start actually storing the player statistics:
@@ -415,12 +431,7 @@ unsigned short player_hello(const unsigned short id, string &passw,
 	}
 
 	if(id == 0xFFFF) // a new player
-	{
-		list<PlayerStats>::iterator newpl = new_player();
-		register_player(nick, sas, newpl);
-		passw.assign(newpl->password);
-		return newpl->ID;
-	}
+		return add_and_register_player(nick, passw,sas);
 
 	// Check if ID is already playing:
 	for(it = cur_players.begin(); it != cur_players.end(); ++it)
@@ -443,9 +454,7 @@ unsigned short player_hello(const unsigned short id, string &passw,
 		}
 	}
 	// If here, we have forgotten about this player, most likely
-	list<PlayerStats>::iterator newpl = new_player();
-	register_player(nick, sas, newpl);
-	return newpl->ID;
+	return add_and_register_player(nick, passw,sas);
 }
 
 
