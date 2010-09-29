@@ -1,6 +1,7 @@
 // Please see LICENSE file.
 #include "view.h"
 #include "base.h"
+#include "class_cpv.h"
 #include "../common/constants.h"
 #include "../common/col_codes.h"
 #include "../common/los_lookup.h"
@@ -36,7 +37,10 @@ void draw_titles()
 		x = *pos;
 		y = *(pos+1); // pos&pos+1 are x/y pair, string begins at pos+2.
 		len = strlen(pos+2);
-		Base::print_str(pos+2, TITLE_CPAIR, x-num_syms(string(pos+2))/2, y, VIEW_WIN);
+		// If we are alive, don't draw any title coming to the center (that
+		// would be our OWN title)
+		if(x != VIEWSIZE/2 || y != VIEWSIZE/2 || !ClassCPV::im_alive())
+			Base::print_str(pos+2, TITLE_CPAIR, x-num_syms(string(pos+2))/2, y, VIEW_WIN);
 		pos += len+3; // lenght of string + '\0' + 2 chars
 	}
 }

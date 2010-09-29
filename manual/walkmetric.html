@@ -1,0 +1,28 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Walk metric</h2>
+
+<p>Distances in yuxtapa are often considered in the so-called 'walk metric', i.e., how
+many steps it takes to walk from a point to point. Since diagonal steps can be taken,
+this makes the field of vision seemingly a square, but in fact it is a circle
+in the walk metric!</p>
+
+<p>In fact, the often seen 'round' field of vision of many
+roguelikes is quite odd: it looks seemingly right, but it has the semi-hidden
+effect that you see further away in non-diagonal directions!</p>
+
+<p>What intuitively looks more or less round, eg.:
+<pre>
+    ***
+   *   *
+  *     *
+ *       *
+ *   C   *A
+ *       *
+  *     *
+   *   *B
+    ***</pre>
+actually looks, when translated into the normal Euclidian metric, something like this:<br>
+<img src="walk_euclid.png"><br>
+(Consider the <em>distance</em> between the points 'C', 'A', and 'B'.)</p>
+
+</body></html>

@@ -17,6 +17,8 @@ namespace ClassCPV
 	void state_change(const unsigned char cl, const unsigned char t);
 	// received new hp/2hit/dam:
 	void state_upd(SerialBuffer &data);
+
+	bool im_alive();
 }
 
 #endif

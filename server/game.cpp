@@ -442,8 +442,8 @@ void Game::init_game()
 			it->draw(miniview + 2*(tmpc.y*VIEWSIZE+tmpc.x), true);
 		}
 		miniview[VIEWSIZE*VIEWSIZE*2] = 1; // num of titles
-		miniview[VIEWSIZE*VIEWSIZE*2 + 1]
-			= miniview[VIEWSIZE*VIEWSIZE*2 + 2] = VIEWSIZE/2;
+		miniview[VIEWSIZE*VIEWSIZE*2 + 1] = VIEWSIZE/2; // x-pos
+		miniview[VIEWSIZE*VIEWSIZE*2 + 2] = VIEWSIZE/2-1; // y-pos
 		switch(gamemode)
 		{
 		case GM_DOM:

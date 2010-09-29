@@ -24,7 +24,7 @@ basic movement method of yuxtapa. By default, you move using the numpad keys 1-4
 into it; to attack someone you simply <em>walk at them</em>, etc.</p>
 
 <p>Due to the real-timedness, there are some peculiarities that players of
-roguelikes probably are not used to. These are explained below.</p>
+roguelikes probably are not used to. These are explained later on this page.</p>
 
 
 <h3>Terrain</h3>
@@ -37,7 +37,7 @@ stepping on such tiles (unless your class is <a href="trapper.html">Trapper</a> 
 damage, and walking into a chasm (just emptiness: ' ') will instantly kill you.</p>
 
 <p>It is possible to <strong>swim</strong> through water without drowning. This, however,
-requires quite perfect timing. The details are explained in <a href="rulemech.html">Rule mechanics</a>.
+requires good timing. The details are explained in <a href="rulemech.html">Rule mechanics</a>.
 Stepping on water squares makes noise unless your class is <a href="scout.html">Scout</a> or
 <a href="assassin.html">Assassin</a>.</p>
 
@@ -50,11 +50,11 @@ have a feature with a similar name, but in yuxtapa it's different.</p>
 something else, this same step in the same direction is repeated over
 and over again. So, if you hit 'w' to toggle walk mode on, then hit '8'
 to move up, and just wait doing nothing, your character will walk up
-one step per turn. <em>Until you do something</em>, there is no condition
+one step per turn. <em>Until you do something</em>, there is <em>absolutely</em> no condition
 to <em>automatically</em> stop. Also, the direction does not change; the walk
 mode will not steer you along a corridor like in many roguelikes.</p>
 
-<p>To stop without leaving the walk mode, press '5' (default keybinding).</p>
+<p>To stop without turning off the walk mode, press '5' (default keybinding).</p>
 
 <p>The purpose of the walk mode is mainly to ease the stress that yuxtapa
 causes on your keyboard. If nothing is going on and you need to walk
@@ -79,15 +79,15 @@ understand why, read the page <a href="timesystem.html">Time system</a>).</p>
 turn, you will occupy her place:
 <pre>
 #####   both hit '6'  #####
-.@@..      --->       ..@@.
+.@@..      ---&gt;       ..@@.
 #####                 #####
  AB                     AB
 </pre>
 If the teammate is walking at you on the same turn, you swap places:
 <pre>
    ...   A hits '2'   ...
-A->.@.      --->      .@.<-B
-B->.@.   B hits '8'   .@.<-A
+A-&gt;.@.      ---&gt;      .@.&lt;-B
+B-&gt;.@.   B hits '8'   .@.&lt;-A
    ...                ...
 </pre>
 If the teammate hasn't acted for 8 turns (on normal settings that's
@@ -102,11 +102,8 @@ room, and if there isn't and if they don't seem to notice, you can
 and be courteous to teammates who might want to pass <em>you</em> in a
 tight spot.</p>
 
-<p>Observer that when swapping places, no other actions are taken. In
-particular, if one of the PCs was standing on a trap, swapping places
-won't cause the trap to be triggered by the other PC. The same goes
-for portals: the swapping PC won't enter the portal. Also, swapping
-into a swamp/rough tile won't slow you down, like just walking into
-one does.</p>
+<p>Observe that when swapping places, actions that usually are caused by
+movement are not always taken. Roughly speaking, besides moving, the
+<em>passive party</em> in the swap won't do anything she didn't intend to do.</p>
 
 </body></html>

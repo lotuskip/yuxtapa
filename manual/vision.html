@@ -15,7 +15,8 @@ areas outside of LOS dimmer and with less saturation.</p>
 <p>The map can feature <em>torches</em> (see <a href="objects.html">Objects in the game</a>)
 that light the area around them. Many player characters can carry <a href="pctorch.html">portable
 torches</a> with them. In addition, the spells of <a href="wizard.html">wizards</a> and
-<a href="combatmage.html">combat magi</a> create small temporary lights.</p>
+<a href="combatmage.html">combat magi</a> create small temporary lights, as do triggered
+fireball <a href="traps.html">traps</a>.</p>
 
 
 <h3>Line of sight</h3>
@@ -29,14 +30,8 @@ the LOS-algorithm).</p>
 
 <p>The LOS radius given in <a href="classov.html">Class overview</a> determines the furthest the PC
 can see <em>to lit areas</em>. Things that are in non-lit areas are only seen
-if within (LOS-rad + 5)/3 of the LOS radius.</p>
-
-<p><em>Note</em>: the radius is given in the so-called 'walk-metric', i.e., how many steps
-it takes to walk from a point to point, assuming diagonal steps can be taken.
-This makes the field of vision seemingly a square, but in fact it is a circle
-in the walk-metric! (In fact the often seen 'round' field of vision of many
-roguelikes is entirely wrong: it looks seemingly right, but it has the semi-hidden
-effect that you see further away in non-diagonal directions!) In particular:</p>
+if within a radius (LOS-rad + 5)/3. Note that the radius is given in the
+so-called <a href="walkmetric.html">walk metric</a>.
 
 <p>Consider the following example. Tiles that are lit are marked with an
 'L' above them, and below are the distances from the PC, the '@'. Assume
@@ -46,7 +41,7 @@ lit:  LLLLL  LL
       @...xyyz.
 dist: 0   4  7
 </pre>
-Now the PC <em>can</em> see an object at 'x' or 'z', but <em>not</em> an object at 'y'.</p>
+Now the PC <em>can</em> see an object at 'x' or 'z', but <em>not</em> an object at either of the 'y's.</p>
 
 <p>A second example, about the 'eyesight accuracy' issue:
 <pre>
@@ -55,11 +50,11 @@ Now the PC <em>can</em> see an object at 'x' or 'z', but <em>not</em> an object 
 dist:  0   4
 </pre>
 Here the '#' is a wall or a pillar or something that anyway prevents seeing
-through it. Assume, for simplicity, that the entire area is lit. Now a PC
+through it. Assume, for simplicity, that the entire area shown here is lit. Now a PC
 with a LOS radius 5 cannot see an enemy at 'x', even though that is within
 the radius. But a PC with LOS radius 6 or more <em>can</em> see to 'x'! Hence
-the statement that <em>LOS radius also measures eyesight accuracy, not just the
-furthest you can see.</em></p>
+the statement that the LOS radius also measures eyesight <em>accuracy</em>, not just how
+<em>far</em> you can see.</p>
 
 
 <h3>Sounds</h3>
@@ -73,7 +68,7 @@ from, and the colour describes the sound.</p>
 <li>blue !, 'a splash': someone hit by a water trap, or someone swimming</li>
 <li>brown !, 'a creak': a door opened or closed, or a boobytrap going off</li>
 <li>red !, 'a boom': a fireball trap went off (also indicates the area affected by the explosion)</li>
-<li>yellow !, 'a zap': a zap of a <a href="combatmage.html">combat mage</a> bounces of a wall</li>
+<li>yellow !, 'a zap': a zap of a <a href="combatmage.html">combat mage</a> bounced off of a wall</li>
 <li>white !, 'a voice': see <a href="chatting.html">Chatting and shouting</a></li>
 <li>green !, 'a whoosh': someone entering or exiting a portal</li>
 <li>gray !, 'a rumble': a miner is digging or carving a block here</li>
@@ -89,7 +84,7 @@ possible indicators are the following:
 <li><strong>red</strong>: an attack succesfully landed here (it did not necessarily deal any damage!)</li>
 <li><strong>gray</strong>: an attack missed here (melee, arrow, magic missile, zap), or someone resisted a <a href="traps.html">
 teleportation trap</a></li>
-<li><strong>brown</strong>: a <a href="trapper.html">trapper</a> was/is setting a trap here; or someone carrying the
+<li><strong>brown</strong>: a <a href="trapper.html">trapper</a> was/is setting a trap here; or someone is carrying the
 <a href="gametypes.html">objective item</a></li>
 <li><strong>green</strong>: a player was poisoned here by an enemy <a href="healer.html">healer</a></li>
 <li><strong>yellow</strong>: a <a href="scout.html">scout</a> was/is disguising here</li>

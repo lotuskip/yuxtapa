@@ -240,7 +240,7 @@ void ClassCPV::five()
 
 void ClassCPV::space()
 {
-	if(myclass == NO_CLASS || hp <= 0)
+	if(!im_alive())
 		Network::send_action(XN_FOLLOW_SWITCH);
 	else
 	{
@@ -303,8 +303,8 @@ void ClassCPV::space()
 
 void ClassCPV::suicide()
 {
-	// ignore if spectating or hp<=0
-	if(myclass != NO_CLASS && hp > 0)
+	// ignore if dead
+	if(im_alive())
 	{
 		Network::send_action(XN_SUICIDE);
 		clientstate = CS_NORMAL;
@@ -353,4 +353,7 @@ void ClassCPV::state_upd(SerialBuffer &data)
 
 	reprint_pcinfo();
 }
+
+
+bool ClassCPV::im_alive() { return (myclass != NO_CLASS && hp > 0); }
 

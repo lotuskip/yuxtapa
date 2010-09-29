@@ -230,7 +230,7 @@ void flash_at(const Coords &pos)
 	if((pc_it = any_pc_at(pos)) != PCs.end()
 		&& pc_it->get_owner()->cl != C_ASSASSIN)
 		pc_it->get_owner()->own_vp->blind();
-	add_sound(pos, S_SPLASH);
+	add_sound(pos, S_ZAP);
 }
 
 
@@ -274,11 +274,10 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 			unsigned short f = Game::curmap->get_tile(tar).flags;
 			while(!(f & TF_WALKTHRU) || (f & TF_OCCUPIED))
 				f = Game::curmap->get_tile((tar = next_nearby())).flags;
-			// Jump there:
-			event_set.insert(pos);
+			event_set.insert(pos); // necessary if 'T'riggering the trap
 			move_player_to(pit, tar, true);
 			// NOTE: do not clear axn queue like in blinking
-			return false; // do not make triggered teleportation traps seen
+			return true; // do not make triggered teleportation traps seen
 		}
 		else
 			add_action_ind(pos, A_MISS);
@@ -393,7 +392,7 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 		{
 			if(trigger_trap(p, tr_it))
 			{
-				// if returned true, PC died!
+				// if returned true, PC died or teleported
 				Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
 				return;
 			}
@@ -429,7 +428,7 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 	// Whenever a PC moves, we check if they spot some hiding enemies.
 	// The requirement for this is that the tile this PC is facing to is at
 	// a distance <= 1 from a hiding enemy.
-	opos = opos.in(p->facing); // reusing opos
+	opos = c.in(p->facing); // reusing opos
 	for(list<PCEnt>::iterator pc_it = PCs.begin(); pc_it != PCs.end(); ++pc_it)
 	{
 		if(!pc_it->isvoid() && !pc_it->visible_to_team(p->team)
@@ -560,11 +559,15 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				return; // do not move
 			// Pushing to a chasm destroys the block:
 			if(pushtar->flags & TF_KILLS)
-				boulders.erase(bl_it); // PC will replace block; no need to unset occ flag
+			{
+				boulders.erase(bl_it);
+				tar->flags &= ~(TF_OCCUPIED);
+			}
 			// Pushing to water makes a "bridge":
 			else if(pushtar->flags & TF_DROWNS)
 			{
-				boulders.erase(bl_it); // PC will replace block; no need to unset occ flag
+				boulders.erase(bl_it);
+				tar->flags &= ~(TF_OCCUPIED);
 				*pushtar = T_FLOOR;
 				add_sound(pushtarpos, S_SPLASH);
 			}
@@ -1062,8 +1065,7 @@ void process_swaps()
 		if(it->is_alive() && it->wants_to_move_to != MAX_D)
 		{
 			Coords tarpos = it->own_pc->getpos().in(it->wants_to_move_to);
-			Tile *tar = Game::curmap->mod_tile(tarpos);
-			if(tar->flags & TF_OCCUPIED)
+			if(Game::curmap->get_tile(tarpos).flags & TF_OCCUPIED)
 			{
 				// Check if there is teammate willing to swap:
 				list<PCEnt>::iterator pc_it = any_pc_at(tarpos);
