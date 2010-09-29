@@ -90,10 +90,7 @@ void Config::read_config(const string servername)
 			ss >> noskipws >> ch;
 			e_Key_binding kb = convert_key(ch);
 			if(kb != MAX_KEY_BINDING)
-			{
 				ss >> key_bindings[kb];
-				/*DEBUG*/ cout << "Mapped \'" << ch << "\' to \'" << key_bindings[kb] << '\'' << endl;
-			}
 			else
 				cerr << "Unknown original key-binding \'" << ch << "\' in config." << endl;
 			continue;

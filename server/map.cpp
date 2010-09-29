@@ -924,7 +924,7 @@ Map::Map(const short size, const short variation, const short players)
 		c.y++;
 	}
 
-	/*DEBUG*/
+	/*DEBUG; print out the map (or at least a part of it) to stderr. */
 #if 0
 	string str;
 	for(rowit it = data.begin(); it != data.end(); ++it)

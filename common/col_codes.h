@@ -6,8 +6,8 @@
  *
  * First, there are three "lighting conditions"; normal, dim, and lit.
  * Dim means things outside of the LOS. Normal means things that are
- * in the LOS but in dark, and lit means things that are in the LOS
- * and lit. (Outside of LOS and lit is just outside of LOS -- you can't
+ * in the LOS but dark, and lit means things that are in the LOS
+ * and lit. (Outside of LOS + lit is just outside of LOS -- you can't
  * see that it's lit!)
  *
  * Not anything can be dim, normal, or lit. Some things, e.g. torches,
@@ -35,15 +35,15 @@
  * Do make clear to yourself the distinction between "a colour" (RGB-triplet)
  * and a "color pair" (NCurses concept).
  *
- * ATM we need 63 colours and 92 colour pairs. The aim is to keep the
+ * ATM we need 62 colours and 91 colour pairs. The aim is to keep the
  * amounts within the limits of the 88-colour urxvt (88 colours, 256 pairs).
  * Moreover, we'd like to not touch the default colours (first 16), so that
- * means we've used up 63+16=79 colours and 92+16 = 108 pairs.
+ * means we've used up 62+16=78 colours and 91+16 = 107 pairs.
  *
- * Finally, in an environment that has only 16 colours (xterm), we do a
+ * Finally, in an environment that has only 16 colours (like xterm), we do a
  * simple reduction of colours: everything that has some shade of green
  * becomes green (not lit) or light green (lit), etc. Everything outside
- * of LOS is just gray.
+ * of LOS is just gray. All this logic takes place only in the client end.
  *
  */
 const char BASE_COLOURS = 16;
@@ -82,48 +82,19 @@ enum {
 // we identify "non-base-color X" == "X on black background".
 enum {
 	C_GREEN_ON_HEAL = C_BG_HEAL,
-	C_PURPLE_ON_HEAL,
-	C_BROWN_ON_HEAL,
-	C_GRAY_ON_HEAL,
-	C_BLUE_ON_HEAL,
-	C_RED_ON_HEAL,
-	C_YELLOW_ON_HEAL,
-	C_GREEN_ON_TRAP,
-	C_PURPLE_ON_TRAP,
-	C_BROWN_ON_TRAP,
-	C_GRAY_ON_TRAP,
-	C_BLUE_ON_TRAP,
-	C_RED_ON_TRAP,
-	C_YELLOW_ON_TRAP,
-	C_GREEN_ON_POIS,
-	C_PURPLE_ON_POIS,
-	C_BROWN_ON_POIS,
-	C_GRAY_ON_POIS,
-	C_BLUE_ON_POIS,
-	C_RED_ON_POIS,
-	C_YELLOW_ON_POIS,
-	C_GREEN_ON_DISG,
-	C_PURPLE_ON_DISG,
-	C_BROWN_ON_DISG,
-	C_GRAY_ON_DISG,
-	C_BLUE_ON_DISG,
-	C_RED_ON_DISG,
-	C_YELLOW_ON_DISG,
-	C_GREEN_ON_HIT,
-	C_PURPLE_ON_HIT,
-	C_BROWN_ON_HIT,
-	C_GRAY_ON_HIT,
-	C_BLUE_ON_HIT,
-	C_RED_ON_HIT,
-	C_YELLOW_ON_HIT,
-	C_GREEN_ON_MISS,
-	C_PURPLE_ON_MISS,
-	C_BROWN_ON_MISS,
-	C_GRAY_ON_MISS,
-	C_BLUE_ON_MISS,
-	C_RED_ON_MISS,
-	C_YELLOW_ON_MISS,
-	C_UNKNOWN,
+	C_PURPLE_ON_HEAL, C_BROWN_ON_HEAL, C_GRAY_ON_HEAL, C_BLUE_ON_HEAL,
+	C_RED_ON_HEAL, C_YELLOW_ON_HEAL, // heals
+	C_GREEN_ON_TRAP, C_PURPLE_ON_TRAP, C_BROWN_ON_TRAP, C_GRAY_ON_TRAP,
+	C_BLUE_ON_TRAP, C_RED_ON_TRAP, C_YELLOW_ON_TRAP, // traps
+	C_GREEN_ON_POIS, C_PURPLE_ON_POIS, C_BROWN_ON_POIS, C_GRAY_ON_POIS,
+	C_BLUE_ON_POIS, C_RED_ON_POIS, C_YELLOW_ON_POIS, // poisons
+	C_GREEN_ON_DISG, C_PURPLE_ON_DISG, C_BROWN_ON_DISG, C_GRAY_ON_DISG,
+	C_BLUE_ON_DISG, C_RED_ON_DISG, C_YELLOW_ON_DISG, // disguises
+	C_GREEN_ON_HIT, C_PURPLE_ON_HIT, C_BROWN_ON_HIT, C_GRAY_ON_HIT,
+	C_BLUE_ON_HIT, C_RED_ON_HIT, C_YELLOW_ON_HIT, // hits
+	C_GREEN_ON_MISS, C_PURPLE_ON_MISS, C_BROWN_ON_MISS, C_GRAY_ON_MISS,
+	C_BLUE_ON_MISS, C_RED_ON_MISS, C_YELLOW_ON_MISS, // misses
+	C_UNKNOWN, // unexplored area or outside of map
 	MAX_PREDEF_CPAIR };
 
 #endif

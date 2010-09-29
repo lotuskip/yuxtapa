@@ -322,7 +322,9 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 			for(c.y = min(pos.y+2, Game::curmap->get_size()-2); c.y >= max(1, pos.y-2); c.y--)
 			{
 				add_sound(c, S_BOOM);
-				if((Game::curmap->get_tile(c).flags & TF_OCCUPIED)
+				if((c == pos /* occupied flag might not be set for the triggerer
+					yet, and this is perhaps faster, too. */
+					|| (Game::curmap->get_tile(c).flags & TF_OCCUPIED))
 					&& (pc_it = any_pc_at(c)) != PCs.end())
 				{
 					// damage is (3-radius)d6:
@@ -577,10 +579,24 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 		}
 		else // no block, must be arrow/zap/mm
 		{
+			// A nasty hack needed. If the PC should die to the missile, that calls
+			// player_death, which generates a corpse to pit->own_pc->getpos(), which
+			// is the *wrong* place for it! Hence we move the PC (just the PC, nothing
+			// else) already here:
+			pit->own_pc->setpos(tarpos);
 			missile_hit_PC(pit, any_missile_at(tarpos), true);
 			if(pit->cl_props.hp <= 0) // died; don't walk!
+			{
+				// missile_hit_PC has called kill_player, which has unset the
+				// occupied-flag of PC's position (which we just set with our
+				// hack), but now we must unset the flag for the originating
+				// position, too!
+				Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
 				return;
-			// else survived; let walk
+			}
+			// else survived; let walk; but so that the flags are updated
+			// correctly, put the PC back where he's walking from:
+			pit->own_pc->setpos(opos);
 		}
 	} // target tile is occupied
 
@@ -1272,17 +1288,6 @@ bool missile_coll(OwnedEnt* mis, const Coords &c)
 			add_action_ind(c, A_MISS);
 			return true;
 		}
-		// else: other missile?
-		OccEnt* omis = any_missile_at(c);
-		if(omis)
-		{
-			// Missile hits missile: both are destroyed:
-			mis->makevoid();
-			omis->makevoid();
-			Game::curmap->mod_tile(c)->flags &= ~(TF_OCCUPIED);
-			add_action_ind(c, A_MISS);
-			return true;
-		}
 		//else: PC?
 		list<PCEnt>::iterator pc_it = any_pc_at(c);
 		if(pc_it != PCs.end())
@@ -1290,7 +1295,13 @@ bool missile_coll(OwnedEnt* mis, const Coords &c)
 			missile_hit_PC(pc_it->get_owner(), mis, false);
 			return true;
 		}
-		// else: reaching this line would be an error!!
+		// else may assume it's another missile.
+		// Missile hits missile -- both are destroyed:
+		mis->makevoid();
+		any_missile_at(c)->makevoid();
+		Game::curmap->mod_tile(c)->flags &= ~(TF_OCCUPIED);
+		add_action_ind(c, A_MISS);
+		return true;
 	}
 	return false; // no collision or bounced
 }

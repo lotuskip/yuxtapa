@@ -136,7 +136,7 @@ void MM::update()
 	event_set.insert(pos); // in any event, moves away
 	Game::curmap->mod_tile(pos)->flags &= ~(TF_OCCUPIED);
 
-	if(turns_moved < 3)
+	if(turns_moved < 2)
 		++turns_moved; // and don't change lmd
 	else
 	{

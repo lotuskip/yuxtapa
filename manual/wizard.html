@@ -25,7 +25,10 @@ there is a wall, a boulder, an enemy, or something else there, no missile is cre
 The missiles behave in the following way:
 <ul>
 <li>They move 1 tile per turn (as fast as PCs, but aren't slown down by terrain)</li>
-<li>First they move straight for 2 turns in the direction they were shot</li>
+<li>First they move straight for 1 turns in the direction they were shot</li>
+<ul>
+<li>They won't travel on the turn they were created; hence it is in principle possible to <em>run into your own mm</em> right after casting it</li>
+</ul>
 <li>After this they will automatically move towards the nearest enemy</li>
 <ul>
 <li>If there is no enemy within 15 tiles, they keep moving straight</li>
