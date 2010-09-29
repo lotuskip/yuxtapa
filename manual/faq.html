@@ -47,5 +47,7 @@ and reconnect. This will lose your stats on that server, sadly.</dd>
 <dt><em>How do I shutdown a server that is running on a remove machine?</em></dt>
 <dd>Send a SIGINT to the process through ssh: 'killall -INT yuxtapa_sv'</dd>
 
+<dt><em>The server won't start up, it says: &quot;Failed to bind socket!&quot;</em></dt>
+<dd>One possible reason: the server was uncleanly shut down while bots were active. Do 'killall [bot executable name]' and try again?</dd>
 </dl>
 </body></html>

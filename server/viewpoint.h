@@ -33,7 +33,7 @@ public:
 	bool pos_changed() const { return poschanged; }
 
 	void move(const e_Dir d);
-	void set_pos(const Coords newpos);
+	void set_pos(const Coords &newpos);
 	Coords get_pos() const { return pos; }
 
 	void blind();

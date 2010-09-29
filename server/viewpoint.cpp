@@ -297,7 +297,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 
 void ViewPoint::move(const e_Dir d) { set_pos(pos.in(d)); }
 
-void ViewPoint::set_pos(const Coords newpos)
+void ViewPoint::set_pos(const Coords &newpos)
 {
 	if(!Game::curmap->point_out_of_map(newpos))
 	{

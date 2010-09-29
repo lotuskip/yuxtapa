@@ -954,6 +954,8 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			pit->own_vp->set_losr(SPEC_LOS_RAD);
 		}
 
+		// place own viewpoint at the location of the viewn viewpoint:
+		pit->own_vp->set_pos(pit->viewn_vp->get_pos());
 		follow_change(pit, pit);
 	}
 	else if(newcl != pit->cl)

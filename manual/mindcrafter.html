@@ -2,11 +2,12 @@
 <h2>Mindcrafter</h2>
 
 <p>pros: pretty good in all respects except:<br>
-cons: low HPs, no torch</p>
+cons: lowish HPs, no torch</p>
 
 <h3>Abilities</h3>
 <ul>
 <li>Blink (random teleport)</li>
+<li>can push boulders</li>
 </ul>
 
 <p>The Mindcrafters can <em>blink</em> themselves away (or into) danger by
@@ -14,24 +15,24 @@ simply hitting space. This will effectively teleport the mindcrafter
 instantly to a random square which is:
 <ul>
 <li>not occupied</li>
-<li>walkable</li>
+<li>passable</li>
 <li>within the mindcrafter's line of sight, or just outside of it</li>
 </ul>
-The target position will be the furthest possible, or a random one of
+The target position will be the furthest one possible, or a random one of
 those if there are several options.</p>
 
 <p>Some points to consider, though:</p>
 
 <p>The blinking really is instantaneous; consider the following example.
 <pre>
-@ <-- the Mc
+@ &lt;-- the Mc
 
-    @ <-- enemy PC
-   X <-- point where the Mc blinks
+    @ &lt;-- enemy PC
+   X &lt;-- point where the Mc blinks
 </pre>
 Here we assume that the enemy PC is moving SW on the same turn, but that the
 blinking action takes place before the move. The result: the enemy PC gets to
-attack the Mc for free. On the other hand, if the move took place first, the
+attack the Mc for free. On the other hand, if the enemy's move took place first, the
 blinking destination could not be at 'X'; the enemy PC would now be there!</p>
 
 <p>Another thing to keep in mind is that the destination square only needs to

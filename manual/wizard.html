@@ -21,13 +21,26 @@ either    @     or   *@*
 Note that a missile can only be created at a non-occupied location. Hence, if
 there is a wall, a boulder, an enemy, or something else there, no missile is created.</p>
 
+<p>To fire a MM, you must:
+<ul>
+<li>hit space to go into spell casting mode</li>
+<li>hit the directional keys 1-4,6-9 in a sequence that makes a circle around the 5 in the numpad</li>
+<ul>
+<li>you must start from the direction of your previous move</li>
+<li>eg. 12369874 if you moved SW last turn, or 47896321 if you moved W</li>
+<li>extra keys in between mess you up and you need to start over</li>
+</ul>
+</ul>
+You will know that you screwed up the casting sequence if your
+PC starts to take steps before any spell is released!</p>
+
 <p>
 The missiles behave in the following way:
 <ul>
 <li>They move 1 tile per turn (as fast as PCs, but aren't slown down by terrain)</li>
 <li>First they move straight for 1 turns in the direction they were shot</li>
 <ul>
-<li>They won't travel on the turn they were created; hence it is in principle possible to <em>run into your own mm</em> right after casting it</li>
+<li>They won't travel on the turn they were created; hence it is in principle possible to <em>run into your own MM</em> right after casting it</li>
 </ul>
 <li>After this they will automatically move towards the nearest enemy</li>
 <ul>
@@ -53,19 +66,6 @@ turn 1   turn 2   turn 3   turn 4   turn 5 ... hits on turn 7
 ..*....  .......  .......  .......  .......
 </pre></p>
 
-<p>To fire a MM, you must:
-<ul>
-<li>hit space to go into spell casting mode</li>
-<li>hit the directional keys 1-4,6-9 in a sequence that makes a circle around the 5 in the numpad</li>
-<ul>
-<li>you must start from the direction of your previous move</li>
-<li>eg. 12369874 if you moved SW last turn, or 47896321 if you moved W</li>
-<li>extra keys in between mess you up and you need to start over</li>
-</ul>
-</ul></p>
-
-<p>You will know that you screwed up the casting sequence if your
-PC starts to take steps before any spell is released!</p>
 
 <p>Another ability of the wizards is to light their <a href="pctorch.html">torch</a> whenever,
 not just when standing on a static torch (see <a href="objects.html">Objects in the game</a>)

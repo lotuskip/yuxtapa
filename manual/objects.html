@@ -3,71 +3,77 @@
 
 <h3>Boulders</h3>
 
-<p>Symbol: 'O'</p>
-
-<p>Boulders are inanimate objects that some PC's can push around. To push a boulder, simple
-walk against it. Boulder can only be pushed on level ground, not on rough terrain or
+<p>
+<pre><font style="background-color:black;color:gray">O</font></pre>
+Boulders are inanimate objects that some PCs can push around. To push a boulder, simply
+walk against it. Boulders can only be pushed on level ground, not on rough terrain or
 in swamp. <a href="classov.html">Classes</a> that can push boulders are <a href="fighter.html">Fighter</a>,
 <a href="mindcrafter.html">Mindcrafter</a>, <a href="miner.html">Miner</a>, and
 <a href="trapper.html">Trapper</a>. Pushing a boulder takes twice as long as regular movement.</p>
 
-<p>Miners can also destroy boulders, by mining them. This requires that the boulder is 'blocked'
-from the other side; otherwise it will be pushed instead. Destroying all the boulders in a
-certain area can be the mission objective; see <a href="gametypes.html">Game types</a>. In a dungeon, a boulder can
-also be destroyed by pushing it into a chasm.</p>
+<p>Miners can also destroy boulders, by mining them. This requires that the boulder is 'blocked'. Destroying all the boulders in a
+certain area can be the mission objective; see <a href="gametypes.html">Game types</a>. In a dungeon (see <a href="maptypes.html">Map types</a>),
+a boulder can also be destroyed by pushing it into a chasm.</p>
 
 <p>Arrows or spells will not pass boulders, and you cannot walk over a boulder that you cannot push.
 Boulders, however, do not block sight or light.</p>
 
 <p>Boulders cannot be pushed through doorways or on top of flags. Pushing a boulder into water
 destroys the boulder and creates a bridge (appears as a floor tile). Boulders can be used
-to block portal exits, preventing the usage of the portal (and effectively also <em>hiding</em>
+to block portal exits (see below), preventing the usage of the portal (and effectively also <em>hiding</em>
 the portal from sight).</p>
 
 
 <h3>Boulder sources</h3>
 
-<p>Symbol: '_'</p>
-
-<p>If a <a href="miner.html">Miner</a> mines a boulder source, a new boulder is created. For other classes a boulder source
+<p>
+<pre><font style="background-color:black;color:gray">_</font></pre>
+If a <a href="miner.html">Miner</a> mines a boulder source, a new boulder is created. For other classes a boulder source
 has no actual effect. However, if a PC is standing on the boulder source
 when a miner finishes carving a boulder, that PC is killed and the miner gets the kill.</p>
 
 
 <h3>Corpses</h3>
 
-<p>Symbol: '%' (green or purple)</p>
+<p>
+<pre><font style="background-color:black;color:green">%</font>, <font style="background-color:black;color:purple">%</font></pre>
+These are often left when PCs die (see <a href="waystodie.html">ways to die</a>). They will vanish quite quickly, so seeing them is
+usually a sign of a recent battle. They are of particular importance to <a href="scout.html">scouts</a>.</p>
 
 
 <h3>Doors</h3>
 
-<p>Symbol: '\' (open) or '+' (closed)</p>
-
-<p>Doors are basically 'walls that you can open and close'. When closed, they are
+<p>
+<pre><font style="background-color:black;color:brown">\</font> (open)
+<font style="background-color:black;color:brown">+</font> (closed)</pre>
+Doors are basically 'walls that you can open and close'. When closed, they are
 inpassable and cannot be seen through. When open, they are just like any ground
 or floor tile, except that boulders cannot pass them.</p>
 
 <p>A closed door is opened simply by walking against it.</p>
 
 <p>To close a door, use the command 'c' (default). This will close any door <em>next to you</em>.
-If there are several doors next to you, the one closest to your facing direction (see
-<a href="facing.html">Facing</a>) is picked. If two doors are equally possible, you will close either one
+If there are several doors next to you, the one closest to your <a href="facing.html">facing</a>
+direction is picked. If two doors are equally possible, you will close either one
 (not at random, but according to certain logic not worth being explained here).</p>
 
 
 <h3>Flags</h3>
 
-<p>Symbol: '&amp;'</p>
-
-<p>Flags are where player characters spawn. See <a href="limbo.html">Limbo and Spawning</a> and
+<p>
+<pre><font style="background-color:black;color:gray">&amp;</font>, <font style="background-color:black;color:green">&amp;</font>, <font
+style="background-color:black;color:purple">&amp;</font></pre>
+Flags are where player characters spawn. See <a href="limbo.html">Limbo and Spawning</a> and
 <a href="gametypes.html">Game types</a>.</p>
 
 
 <h3>Portals</h3>
 
-<p>Symbols: '0' (2-way), 'A' (1-way entry), 'V' (1-way exit)</p>
-
-<p>When you walk into a portal other than 1-way exit, you are instantly teleported to
+<p>
+<pre><font style="background-color:black;color:blue">0</font> (two-way)
+<font style="background-color:black;color:blue">A</font> (one-way entry)
+<font style="background-color:black;color:gray">V</font> (one-way exit)</pre>
+When you walk into a portal other than 1-way exit, you are instantly teleported to
 another portal. You must actually <em>walk</em> in; blinking onto a portal or moving there
 by switcing position won't teleport you. You also won't be teleported if there is
 no exit available (an exit is unavailable if someone is standing on it or has pushed
@@ -81,24 +87,24 @@ exit, if there are unblocked ones left.</p>
 
 <h3>Torches</h3>
 
-<p>Symbol: 't'</p>
-
-<p>These light a certain radius (see <a href="vision.html">Vision and hearing</a>). They can be used
+<p>
+<pre><font style="background-color:black;color:orange">t</font></pre>
+These light a certain radius (see <a href="vision.html">Vision and hearing</a>). They can be used
 to light a <a href="pctorch.html">portable torch</a> carried by a PC (stand on the 't' and hit the appropriate
 key, 'u' by default).</p>
 
 
 <h3>Traps</h3>
 
-<p>Symbol: '^' (if seen)</p>
-
-<p>See <a href="traps.html">Traps</a>.</p>
+<p>
+<pre><font style="background-color:black;color:red">^</font> (several colours)</pre>
+See <a href="traps.html">Traps</a>.</p>
 
 
 <h3>Trees</h3>
 
-<p>Symbol: 'T'</p>
-
-<p><a href="trapper.html">Trappers</a> can hide on non-lit tree tiles.</p>
+<p>
+<pre><font style="background-color:black;color:green">T</font></pre>
+<a href="trapper.html">Trappers</a> can hide on non-lit tree tiles.</p>
 
 </body></html>

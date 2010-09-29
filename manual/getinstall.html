@@ -10,38 +10,42 @@
 
 
 <h3>Requirements</h3>
-<p>The client program needs the <em>NCurses library</em> (the package is typically called
-'libncurses' or just 'ncurses' on most Linux distros). For compiling,
-you need the development package, too, if it is separate (e.g. 'libncurses-devel').
-The library should be built with support to 256 colours (nowadays it
-most likely is, so don't worry about this unless you face colour
-issues).</p>
-
-<p>Both the client and the server need the <em>C++ boost library</em> (typically
-named 'boost'; 'boost-devel' for the separate development package),
-and <em>zlib</em>.</p>
+<p>Here is a list of what libraries you need to build yuxtapa. Refer to the documentation of your Linux distribution
+to find out how to install them.
+<ul>
+<li>NCurses (typically called <em>ncurses</em> or <em>libncurses</em>)</li>
+<li>C++ boost (<em>boost</em>)</li>
+<li>ZLib (<em>zlib</em>)</li>
+</ul>
+You will also need a sane C++ compiling environment full with the GNU <em>autotools</em>.</p>
 
 <p>Please see the <a href="terminals.html">Terminals</a> page for information about what yuxtapa
 requires from the terminal emulator.</p>
 
 
 <h3>Compiling the source</h3>
-<p>You can compile the server, the client, or both. Furthermore, you can compile with debug either enabled or disabled. (Debug being enabled
+<p>yuxtapa has a separate executable for the server and the client. You can compile either or both.
+Furthermore, you can compile with debug either enabled or disabled. (Debug being enabled
 results in a larger binary and perhaps a tiny performance drop.) <em>By default</em> both the server and the client are built, and
 debugging is disabled.</p>
 
 <p><em>If you use AUR</em>, these defaults are followed (but perhaps you know enough to change that). The following instructions
 are intended for people not using AUR:</p>
 
-<p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', where XX is a version number,
-run configure (one of the following, for instance):
+<p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', where XX is a version number, run
+the autools:
+<pre>
+autoconf
+automake
+</pre>
+These shouldn't print anything if everything goes smoothly. Next, run configure (one of the following, for instance):
 <pre>
 ./configure                                   [default: client + server, no debug]
 ./configure --enable-debug                    [client + server, with debug]
 ./configure --disable-client                  [just the server, no debug]
 ./configure --enable-debug --disable-server   [just the client, with debug]
 </pre>
-etc., you get the idea. If that runs smoothly without complaints, you can continue with
+etc., you get the idea. If that runs okay without complaints, you can continue with
 <pre>
 make
 </pre>
