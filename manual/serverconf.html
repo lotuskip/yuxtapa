@@ -44,13 +44,13 @@ This is because the server, for instance, <em>renders the views</em> for all the
 (Okay, rendering a view in yuxtapa is not the same as rendering a 3D world in an FPS game,
 but with 50+ players it can be a considerable workload.)</p>
 
-<p>It is often asked what kind of a connection the server needs. A rough formula, assuming
+<p><strong>What kind of a connection does the server need?</strong> A rough formula, assuming
 you follow the default 'pace' of 250ms per turn, is
-<blockquote>[TODO] kb/s out</blockquote>
-where N is the number of connected players. This is the value during gameplay, and has
-been obtained <em>partially</em> through testing, partially through theoretical computation.
-There can be occasional peaks and variation (if lots of new players connect or if the
-players chat a lot). Incoming network traffic to the server is much smaller, insignificant
-compared to the out-going amount.</p>
+<blockquote>1.2*N kb/s out</blockquote>
+where N is the number of connected players. This is the value during gameplay (not much traffic
+during the intermission), and has been obtained <em>partially</em> through testing, partially
+through theoretical computation, partially through estimates of the whim. There can be occasional
+peaks and variation (if lots of new players connect or if the players chat a lot). Incoming network
+traffic to the server is usually much smaller, insignificant compared to the out-going amount.</p>
 
 </body></html>

@@ -600,7 +600,7 @@ bool Game::process_turn()
 				if(pc_it->get_owner()->burn_torch())
 				{
 					string msg = "Suddenly your torch burns out.";
-					Network::construct_msg(msg, 3);
+					Network::construct_msg(msg, C_TORCH);
 					Network::send_to_player(*(pc_it->get_owner()));
 					pc_it->toggle_torch();
 					event_set.insert(pc_it->getpos());
@@ -674,7 +674,7 @@ bool Game::process_turn()
 				else if(it->action_queue.empty())
 				{
 					it->turns_without_axn++;
-					if(it->cl == C_MINDCRAFTER && it->limiter)
+					if(it->cl != C_ASSASSIN && it->limiter)
 						it->limiter--;
 					trap_detection(it);
 				}
@@ -723,7 +723,7 @@ bool Game::process_turn()
 			// Send possible shouts:
 			while(!shouts.empty())
 			{
-				Network::construct_msg(shouts.back(), 7);
+				Network::construct_msg(shouts.back(), DEF_MSG_COL);
 				for(vector< list<Player>::iterator >::const_iterator wi =
 					it->own_vp->foll_beg(); wi != it->own_vp->foll_end(); ++wi)
 					Network::send_to_player(**wi);

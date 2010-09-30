@@ -23,6 +23,8 @@ namespace
 using namespace std;
 using boost::lexical_cast;
 
+const unsigned char cmd_respond_msg_col = 12;
+
 const string ad_lvl_name[4] = { "guest", "regular", "trusted user",
 	"admin" };
 const string team_balance_str[] = { "no", "passive", "active" };
@@ -120,7 +122,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				keyw = nit->nick + " has admin level "
 					+ lexical_cast<string>(short(nit->stats_i->ad_lvl))
 					+ admin_lvl_str[nit->stats_i->ad_lvl];
-				Network::construct_msg(keyw, 7); 
+				Network::construct_msg(keyw, cmd_respond_msg_col); 
 				Network::send_to_player(*pit);
 			}
 		}
@@ -181,7 +183,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			{
 				nit->muted = true;
 				string msg = "You have been muted by " + pit->nick + '.';
-				Network::construct_msg(msg, 7);
+				Network::construct_msg(msg, cmd_respond_msg_col);
 				Network::send_to_player(*nit);
 			}
 		}
@@ -196,7 +198,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			{
 				nit->muted = false;
 				string msg = "You were unmuted by " + pit->nick + '.';
-				Network::construct_msg(msg, 7);
+				Network::construct_msg(msg, cmd_respond_msg_col);
 				Network::send_to_player(*nit);
 			}
 		}
@@ -220,7 +222,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 						known_players.front().ad_lvl = al;
 						keyw = "You are now the Super-Admin of this server. Your player ID is "
 							+ lexical_cast<string>(known_players.front().ID) + '.';
-						Network::construct_msg(keyw, 7);
+						Network::construct_msg(keyw, cmd_respond_msg_col);
 						Network::send_to_player(*pit);
 						return true;
 					}
@@ -231,7 +233,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					nit->stats_i->ad_lvl = al;
 					keyw = "You have been made a *" + ad_lvl_name[al]
 						+ "* by " + pit->nick + '!';
-					Network::construct_msg(keyw, 7);
+					Network::construct_msg(keyw, cmd_respond_msg_col);
 					Network::send_to_player(*nit);
 				}
 			} // player identified

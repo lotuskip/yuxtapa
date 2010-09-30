@@ -18,10 +18,6 @@ using namespace std;
 
 e_Dir last_dir = MAX_D; // for walkmode
 
-e_Dir prev_d; // for spellcasting
-char num_spell_keys;
-bool clockwise;
-
 e_Class myclass = NO_CLASS;
 e_Team myteam = T_SPEC;
 
@@ -75,48 +71,7 @@ void reprint_pcinfo()
 	Base::print_str(torch_sym, C_TORCH, 1, 8, PC_WIN, false);
 }
 
-
-// Validate next input key for spellcasting
-bool incorrect_next_d(const e_Dir d)
-{
-	if(clientstate == CS_CASTING_Z)
-	{
-		// Next dir must be the previous one turned twice clockwise:
-		++(++prev_d);
-		return (d != prev_d);
-	}
-	// else clientstate must be CS_CASTING_M:
-	if(!num_spell_keys) // first dir must match last_move_dir
-		return ((prev_d = d) != last_dir);
-	if(num_spell_keys == 1) // this is the second key input; determines dir
-	{
-		e_Dir tmpdir = prev_d;
-		++tmpdir;
-		if(d == tmpdir)
-		{
-			clockwise = true;
-			++prev_d;
-			return false;
-		} // else
-		tmpdir = prev_d;
-		--tmpdir;
-		if(d == tmpdir)
-		{
-			clockwise = false;
-			--prev_d;
-			return false;
-		}
-		return true; // neither next clock- nor anticlockwise
-	}
-	// else direction has been determined:
-	if(clockwise)
-		++prev_d;
-	else
-		--prev_d;
-	return (d != prev_d);
-}
-
-}
+} // end local namespace
 
 Coords aimer;
 
@@ -136,73 +91,6 @@ void ClassCPV::move(const e_Dir d)
 		else if(aimer.y < -VIEWSIZE/2) aimer.y++;
 		redraw_view();
 		break;
-	case CS_CASTING_Z: // casting zap
-		if(!num_spell_keys)
-			prev_d = d; // first dir is arbitrary
-		else
-		{
-			// Next dir must be the previous one turned twice clockwise:
-			++(++prev_d);
-			if(d != prev_d)
-			{
-				clientstate = CS_NORMAL; // messed up!
-				break;
-			}
-		}
-		if(++num_spell_keys == 4)
-		{
-			// Cast succesfully!
-			Network::send_action(XN_ZAP, d);
-			clientstate = CS_NORMAL;
-		}
-		break;
-	case CS_CASTING_M:
-		if(!num_spell_keys) // first dir must match last_move_dir
-		{
-			if((prev_d = d) != last_dir)
-				clientstate = CS_NORMAL; // incorrect
-			else
-				++num_spell_keys;
-			break;
-		} // else
-		if(num_spell_keys == 1) // this is the second key input; determines dir
-		{
-			e_Dir tmpdir = prev_d;
-			++tmpdir;
-			if(d == tmpdir)
-			{
-				clockwise = true;
-				++prev_d;
-				++num_spell_keys;
-				break;
-			} // else
-			tmpdir = prev_d;
-			--tmpdir;
-			if(d == tmpdir)
-			{
-				clockwise = false;
-				--prev_d;
-				++num_spell_keys;
-				break;
-			}
-			// neither next clock- nor anticlockwise:
-			clientstate = CS_NORMAL;
-			break;
-		}
-		// else direction has been determined:
-		if(clockwise)
-			++prev_d;
-		else
-			--prev_d;
-		if(d != prev_d)
-			clientstate = CS_NORMAL;
-		else if(++num_spell_keys == 8)
-		{
-			// Cast succesfully!
-			Network::send_action(XN_MM);
-			clientstate = CS_NORMAL;
-		}
-		break;
 	case CS_DIR: // waiting for dir input (and now got it!)
 		if(myclass == C_FIGHTER)
 			Network::send_action(XN_CIRCLE_ATTACK, d);
@@ -210,6 +98,8 @@ void ClassCPV::move(const e_Dir d)
 			Network::send_action(XN_HEAL, d);
 		else if(myclass == C_MINER)
 			Network::send_action(XN_MINE, d);
+		else if(myclass == C_COMBAT_MAGE)
+			Network::send_action(XN_ZAP, d);
 		clientstate = CS_NORMAL;
 		break;
 	}
@@ -234,8 +124,7 @@ void ClassCPV::five()
 			clientstate = CS_NORMAL;
 		}
 	}
-	else if(clientstate == CS_CASTING_Z || clientstate == CS_CASTING_M)
-		clientstate = CS_NORMAL; // messed up!
+	// else ignore
 }
 
 void ClassCPV::space()
@@ -264,20 +153,6 @@ void ClassCPV::space()
 		case C_ASSASSIN:
 			Network::send_action(XN_FLASH);
 			break;
-		case C_COMBAT_MAGE:
-			if(clientstate == CS_CASTING_Z)
-				clientstate = CS_NORMAL; // messed up casting
-			else
-			{
-				clientstate = CS_CASTING_Z;
-				num_spell_keys = 0;
-			}
-			break;
-		case C_FIGHTER:
-		case C_HEALER:
-		case C_MINER:
-			clientstate = CS_DIR;
-			break;
 		case C_MINDCRAFTER:
 			Network::send_action(XN_BLINK);
 			break;
@@ -288,13 +163,10 @@ void ClassCPV::space()
 			Network::send_action(XN_SET_TRAP);
 			break;
 		case C_WIZARD:
-			if(clientstate == CS_CASTING_M)
-				clientstate = CS_NORMAL; // messed up casting
-			else
-			{
-				clientstate = CS_CASTING_M;
-				num_spell_keys = 0;
-			}
+			Network::send_action(XN_MM);
+			break;
+		default: //C_FIGHTER, C_HEALER, C_MINER, C_COMBAT_MAGE
+			clientstate = CS_DIR;
 			break;
 		}
 	} // not spectator or dead
@@ -334,7 +206,7 @@ void ClassCPV::state_change(const unsigned char cl, const unsigned char t)
 	Base::print_str("", team_col[0], 3, 0, PC_WIN, true);
 
 	// class/team change requires any class-specific action to end:
-	if(clientstate >= CS_CASTING_Z)
+	if(clientstate >= CS_AIMING)
 	{
 		clientstate = CS_NORMAL;
 		redraw_view();

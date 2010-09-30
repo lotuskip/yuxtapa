@@ -30,7 +30,7 @@ const string spell_kill_msg[2][3] = {
 const char IDLE_TURNS_TO_AUTOSWAP = 8; /* NOTE: this should be larger than
 	the amount of turns it takes to complete any of the "chores" (trap, dig,
 	disguise) */
-const char MAX_BLINK_LIMITER = 10;
+const char MAX_LIMITER = 10;
 const char MAX_BLK_DIST = 4;
 const char SCARED_TO_DEATH_DIST = 3;
 const char CORPSE_DECAY_TURNS = 60; // 15 seconds on normal settings
@@ -637,7 +637,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				// so actually the map won't until the next purple spawning:
 				team_flags[1].clear();
 				string msg = "The green team has secured the treasure!";
-				Network::construct_msg(msg, 7);
+				Network::construct_msg(msg, C_ZAP);
 				Network::broadcast();
 				pl_with_item = cur_players.end();
 				the_item.setpos(pit->own_pc->getpos());
@@ -689,6 +689,9 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 			pl_with_item = pit;
 			item_moved = true;
 			Game::send_team_upds(cur_players.end());
+			string msg = "The green team has stolen the treasure!";
+			Network::construct_msg(msg, C_ZAP);
+			Network::broadcast();
 		}
 	}
 
@@ -717,6 +720,14 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 
 	// If we ever arrive here, we are to move the PC:
 	move_player_to(pit, tarpos, true);
+}
+
+
+void limiter_upd(const list<Player>::iterator pit)
+{
+	if(pit->limiter < MAX_LIMITER)
+		pit->limiter++;
+	pit->wait_turns += 2*pit->limiter;
 }
 
 } // end local namespace
@@ -845,6 +856,8 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		}
 		break;
 	case XN_ZAP:
+		limiter_upd(pit);
+
 		pit->facing = e_Dir(axn.var1);
 		zaps.push_back(Zap(pit, pit->facing));
 		pit->stats_i->cm_shots++;
@@ -875,9 +888,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		break;
 	case XN_BLINK:
 	{
-		if(pit->limiter < MAX_BLINK_LIMITER)
-			pit->limiter++; // always, even if cannot blink
-		pit->wait_turns += 2*pit->limiter;
+		limiter_upd(pit);
 
 		// Determine a point to blink to, if any:
 		Coords c;
@@ -971,6 +982,8 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	}
 	case XN_MM:
 	{
+		limiter_upd(pit);
+
 		Coords pos;
 		e_Dir d;
 		unsigned short flgs;
@@ -996,7 +1009,7 @@ void player_death(const list<Player>::iterator pit, const string &way,
 	const bool corpse)
 {
 	string msg = pit->nick + way;
-	Network::construct_msg(msg, 7);
+	Network::construct_msg(msg, DEF_MSG_COL);
 	Network::broadcast();
 	pit->stats_i->deaths++;
 	pit->needs_state_upd = true;
@@ -1040,6 +1053,9 @@ void kill_player(const list<Player>::iterator pit)
 		the_item.setpos(pit->own_pc->getpos());
 		tp->flags |= TF_NOCCENT;
 		Game::send_team_upds(cur_players.end());
+		string msg = "Treasure dropped!";
+		Network::construct_msg(msg, C_ZAP);
+		Network::broadcast();
 	}
 	
 	tp->flags &= ~(TF_OCCUPIED);

@@ -1,0 +1,26 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Ability limiting logic</h2>
+<p>The following logic is used to limit the usage of the blinking ability of <a href="mindcrafter.html">
+mindcrafters</a>, and the spellcasting of <a href="wizard.html">wizards</a> and
+<a href="combatmage.html">combat magi</a>.</p>
+
+<p>There is a counter, call it C, attached to each PC. It is initially
+at value 0. When you use a limited ability, C is increased by one and you lose the next
+2C turns. If you don't do anything (just wait; a lost turn doesn't count here!), C is decreased
+by one (down to zero).</p>
+
+<p>So, usually you can use your ability whenever you need to, and you lose two turns. But if you
+try to use it all of the time, this is what happens:
+<ul>
+<li>you use it at turn 0</li>
+<li>you lose turns 1-2 (C=1)</li>
+<li>you use it again at turn 3</li>
+<li>you lose turns 4-7 (C=2)</li>
+<li>you use it again at turn 8</li>
+<li>you lose turns 9-14 (C=3)</li>
+<li>etc.</li>
+</ul></p>
+
+<p>The value of C cannot rise higher than to 10.</p>
+</body></html>
+

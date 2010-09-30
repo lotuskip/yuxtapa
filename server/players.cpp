@@ -220,6 +220,8 @@ void Player::set_class()
 	cl_props = classes[(cl = next_cl)];
 	if(cl == C_ASSASSIN)
 		limiter = NUM_FLASHBOMBS;
+	else
+		limiter = 0;
 	time(&last_switched_cl);
 }
 

@@ -194,7 +194,7 @@ bool Network::receive_n_handle()
 			do_send_to(&them, addr_len);
 			// Send greeting: (reuse pl_nick as a tmp string):
 			pl_nick = Config::greeting_str();
-			construct_msg(pl_nick, 7);
+			construct_msg(pl_nick, DEF_MSG_COL);
 			do_send_to(&them, addr_len);
 			list<Player>::iterator pit = (--cur_players.end());
 			if(intermission) // send the miniview to the new player

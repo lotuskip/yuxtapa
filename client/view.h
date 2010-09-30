@@ -10,8 +10,6 @@ enum e_ClientState {
 	CS_TYPE_SHOUT, // typing a shout
 	CS_LIMBO, // viewing the limbo menu
 	// class specifics:
-	CS_CASTING_Z, // casting a zap
-	CS_CASTING_M, // casting an mm
 	CS_AIMING, // archer aiming
 	CS_DIR // waiting for direction input
 };
