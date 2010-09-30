@@ -2,17 +2,15 @@
 <h2>Sending bug reports</h2>
 
 <p>Bug reports can be sent via email to onnir <em>at sign</em> iki <em>dot</em> fi, or anonymously
-at the game's <a href="http://tempoanon.net/lotuskip/yuxtapa/">homepage</a>.</p>
-
-<p>The bottom of this page lists known bugs; please check them first before submitting
-anything! Make sure you also check the <a href="faq.html">Frequently asked</a>.</p>
+through the yuxtapa <a href="http://tempoanon.net/lotuskip/yuxtapa/">homepage</a>,
+or in any other way you can think of to reach the author (forum threads and PMs spring to mind).</p>
 
 <p>
-Some guidelines to sending bug reports:
+Some guidelines for constructing bug reports:
 <ul>
-<li>Make sure you are running the latest version of the game, or what you report might already be fixed</li>
+<li>Make sure you are running the latest version of the game; otherwise what you report might already be fixed or irrelevant</li>
 <li>If you are not quite sure it's a bug you've found, ask around the forums/IRC before submitting a report</li>
-<li>Check the list of known bugs at the bottom of this page, and the <a href="faq.html">FAQ</a></li>
+<li>Check the list of known issues at the bottom of this page, and the <a href="faq.html">FAQ</a></li>
 <li>What some people seem to consider bugs are merely <em>counterintuitive features</em>, eg.:</li>
 <ul>
 <li>Yes, I know that in the game arrows fly only 3 times as fast as people run; it's a game, not a real-life simulation!</li>
@@ -27,7 +25,8 @@ Some guidelines to sending bug reports:
 </ul>
 <li>But most importantly, <em>always</em> provide a good description:</li>
 <ul>
-<li>a good general description of the situation where the problem occured</li>
+<li>a general description of the situation where the problem occured</li>
+<li>better to include everything you can think of than to omit something as 'seemingly irrelevant'</li>
 <li>always mention if you know a definite way of reproducing the bug</li>
 </ul>
 </ul></p>
@@ -63,7 +62,7 @@ If a wall is dug out, and the tile that is uncovered is lit, you will not see th
 tile until you're close enough to see it even if it was not lit.
 If this bothers you, just think about it like this: after a wall is dug out, a
 cloud of dust remains behind, making it difficult to see. On the other hand, if you
-didn't even understand the bug by the above explanation, then surely it hasn't
+didn't even understand the bug by the preceding explanation, then surely it hasn't
 bothered you!</p>
 
 <p><em><u>The 'thin walls have many holes' bug</u></em><br>
@@ -72,7 +71,7 @@ see the wall as lit even when standing on the dark side:
 <pre>
            wall
          ...#...
-torch--> .t.#..@ <-- this PC sees the wall as lit
+torch--&gt; .t.#..@ &lt;-- this PC sees the wall as lit
          ...#...
 tile lit:1111000
 </pre>
@@ -82,7 +81,7 @@ really see the torch light shining through.</p>
 
 <p><em><u>The 'classlimitless shuffling' bug</u></em><br>
 After a '!shuffle' command (see <a href="chatting.html">Chatting and shouting</a>), the classes
-of the PCs aren't checked, so the <em>classlimit setting</em> (see <a href="serverconf.html">Server configuration</a>)
+of the PCs aren't checked, so the <em>classlimit setting</em> (see the server configuration file 'server.conf')
 might be violated. You still can't change your class into any 'fully taken' class, but you can
 retain your own 'fully taken' class as long as you wish.
 The problem here is partly about fairness: some players could be forced to switch their class,

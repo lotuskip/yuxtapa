@@ -1,6 +1,6 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Chatting and shouting</h2>
-<p>The commands <strong>c</strong> and <strong>s</strong> (default) put you in <em>typing mode</em> where
+<p>The commands <strong>C</strong> and <strong>s</strong> (default) put you in <em>typing mode</em> where
 you can type something to say; hit enter to say it, or tab/esc to cancel (hitting
 enter when you haven't typed anything also cancels, so you won't 'say nothing'.)</p>
 
@@ -23,8 +23,8 @@ These always start with an exclamation mark.</p>
 
 <p>Usable by anyone, anytime:
 <ul>
-<li><strong>!serverinfo</strong> prints information about the server's settings into the chat</li>
-<li><strong>!adminlvl [nick]</strong> prints the <a href="adminlevels.html">admin level</a> of the player with the specified nick</li>
+<li><strong>!serverinfo</strong> prints information about the settings of the server into the chat</li>
+<li><strong>!adminlvl [nick]</strong> prints the <a href="adminlevels.html">admin level</a> (AL) of the player with the specified nick</li>
 <li><strong>!teams</strong> prints the current teams</li>
 <li><strong>!dontstatme</strong>: tell the server not to save your statistics; works per-session only (this is not intended so much for
 shy human players to keep their performance secret, but is used by the <a href="bots.html">Bots</a>)</li>
@@ -41,7 +41,7 @@ shy human players to keep their performance secret, but is used by the <a href="
 <li><strong>!kick [nick]</strong> kicks a player off of the server</li>
 <li><strong>!mute [nick]</strong> prevents the chat messages of a player from showing (not just to the issuer but to anyone)</li>
 <li><strong>!unmute [nick]</strong> remove a mute</li>
-<li><strong>!setal [nick] [value]</strong> sets a player's admin level; see <a href="adminlevels.html">Admin levels</a></li>
+<li><strong>!setal [nick] [value]</strong> sets a player's AL</li>
 </ul>
 </p>
 
@@ -49,10 +49,10 @@ shy human players to keep their performance secret, but is used by the <a href="
 <ul>
 <li><strong>!ban [nick]</strong> kicks a player and bans their IP</li>
 <li><strong>!clearbans</strong> removes all bans (otherwise they remain until server restart)</li>
+<li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9 at a time</li>
+<li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
 <li><strong>!teambal [o/a/p]</strong> sets the <a href="teambalance.html">Team balance</a> option ([o]ff, [a]ctive, [p]assive)</li>
 <li><strong>!servermsg [new serverinfo]</strong> sets the serverinfo</li>
-<li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9</li>
-<li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
 </ul>
 The last two commands only affect a session; they do not overwrite the settings in the <a href="serverconf.html">Server configuration</a>.</p>
 

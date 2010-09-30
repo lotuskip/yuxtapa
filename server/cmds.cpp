@@ -386,9 +386,27 @@ void shuffle_teams()
 
 bool drop_a_bot()
 {
-	if(botpids.empty())
+	if(!num_bots())
 		return false; // no bots to drop
 	kill(botpids.front(), SIGINT);
 	botpids.pop_front();
 	return true;
 }
+
+
+short num_bots()
+{
+	int ces;
+	// First, remove from the list those bots who are there no longer:
+	list<pid_t>::iterator bit = botpids.begin();
+	while(bit != botpids.end())
+	{
+		if(waitpid(*bit, &ces, WNOHANG) == *bit
+			&& (WIFEXITED(ces) || WIFSIGNALED(ces)))
+			bit = botpids.erase(bit);
+		else
+			++bit;
+	}
+	return botpids.size();
+}
+

@@ -463,8 +463,12 @@ void usage_update()
 	if(!cur_players.empty())
 	{
 		short n = cur_players.size();
-		usage_per_30min.push_back(n);
-		timed_log(boost::lexical_cast<string>(n) + " players");
+		short nbots = num_bots();
+		usage_per_30min.push_back(n - nbots);
+		string msg = boost::lexical_cast<string>(n - nbots) + " players";
+		if(nbots)
+			msg += " (+ " + boost::lexical_cast<string>(nbots) + " bots)";
+		timed_log(msg);
 	}
 }
 

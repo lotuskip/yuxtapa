@@ -307,9 +307,7 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		// Boobytraps are always destroyed:
 		traps.erase(tr);
 		Game::curmap->mod_tile(pos)->flags &= ~(TF_TRAP);
-		if(!pit->is_alive())
-			return true;
-		break;
+		return !pit->is_alive(); // cannot set the destroyed trap as seen!
 	case TRAP_FIREB:
 	{
 		Coords c;

@@ -2,7 +2,7 @@
 <h2>Time system</h2>
 
 <p>yuxtapa is a <em>discrete time game</em>, which means that it's somewhere between
-regular realtime and turned based. You could say that yuxtapa has <em>turns</em>,
+regular real-time and turn-based. You could say that yuxtapa has <em>turns</em>,
 but they are of fixed (and very short) length.</p>
 
 <p>One <em>turn</em> in yuxtapa is a time interval of 250 milliseconds (typically,
@@ -13,11 +13,12 @@ updates every turn, assuming you did receive the server update.</p>
 
 <p>The server sends an update of the situation every turn, and inbetween
 these updates players can act. Their actions are processed in order
-of arrival, and, as far as possible, take effect simultaneously.</p>
+of arrival, and after 250ms have passed, the new situation is rendered..</p>
 
-<p>So, to reiterate, events occur 'simultaneously' (on the same turn!)
-but are processed in the order the server received them. This <em>might</em>
-render later events void, for example:
+<p>So, events occur in the order the server received them, but a unified description
+of the situation is sent to the clients only every turn. You could say the effects of
+the players' actions are <em>gathered</em> together every 250ms.
+The system <em>might</em> render later events void, for example:
 <ul>
 <li>A attacks B, but B, a <a href="mindcrafter.html">Mindcrafter</a>, blinks away first</li>
 <ul>
@@ -40,8 +41,8 @@ if there are any, always represent effects of last turn; see
 
 <p>Every time you press a key to take an action (eg. move around), the client
 delivers this request to the server &ndash; even if you somehow do it 10 times a turn.
-But since the server can process only one action per turn, it will store
-only a certain number of actions per client for processing.</p>
+But the server accepts only one action per turn per player, and it will queue
+only a certain number of additional actions per client for processing.</p>
 
 <p>If the storage is empty when a new action arrives, the action takes effect
 immediately (this is what the players should aim for: to take only one

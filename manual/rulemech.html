@@ -5,19 +5,20 @@
 information. Read only if truly interested.</p>
 
 <p>If you are unfamiliar with the <em>d</em>-notation, e.g. <em>1d6+1</em>, this means: roll a 6-sided die and
-add one to the result, or in other words, an evenly distributed random number between 1 and 7. <em>2d8-2</em> would
-mean: roll two 8-sided dice, sum the results and reduce 2.</p>
+add 1 to the result, or in other words, generate an evenly distributed random number between 1 and 7. <em>2d8-2</em> would
+mean: roll two 8-sided dice, sum the results and reduce 2, or, a random number between 0 and 14 (this time not quite evenly distributed!).</p>
 
 <h3>Tohit, PV, and DV</h3>
 
-<p>Let P := [target's DV] - [attacker's tohit].<br>
+<p>Determining whether an attack hits:<br>
+Let P := [target's DV] - [attacker's tohit].<br>
 Let R := 1d20-1 (random number 0..19).<br>
 If R &gt;= P, the attack hits.<br>
-If R/P (integer division) &gt;= 2 or R==19, the hit is critical.</p>
+If R/P (integer division) &gt;= 2 or R==19, the hit is <em>critical</em>.</p>
 
 <p>Next, roll the damage defined for the attack (see <a href="classov.html">Class overview</a>).
-Unless the hit was critical, reduce defender's PV. This is the amount
-of damage dealt.</p>
+Unless the hit was critical, reduce the defender's PV. This is the amount
+of damage dealt; reduce it from the defender's hitpoints.</p>
 
 <p>
 The above applies to all melee attacks, shooting arrows, <a href="fighter.html">fighters'</a>
@@ -26,7 +27,7 @@ circle-strike, and booby traps.
 <li>archery: damage 1d6, tohit +7</li>
 <li>circle-strike: damage 1d8, tohit +5 (hit tested separately for each target)</li>
 <li>booby-trap: damage 2d6, tohit +9</li>
-<li>assassins when hiding: damage is doubled, 2d4+4</li>
+<li>assassins when hiding: damage is 'doubled', 2d4+4</li>
 </ul>
 Archery damage and tohit are not affect by rusting (caused by <a href="traps.html">water traps</a>).</p>
 
