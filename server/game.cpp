@@ -984,6 +984,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 		// if here, okay to change class/team
 		if(pit->team == T_SPEC)
 		{
+			// Currently a spectator: join the weaker team (or green)
 			if(num_players[1] < num_players[0])
 			{
 				pit->team = T_PURPLE;
@@ -1003,6 +1004,9 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 				time(&(pit->last_switched_cl));
 			}
 			send_team_upds(cur_players.end());
+			// The ex-spectator might be following a now-enemy:
+			if(pit->viewn_vp->get_owner()->team != pit->team)
+				follow_change(pit, pit);
 		}
 
 		pit->next_cl = newcl; // will set pit->cl = pit->next_cl at spawn

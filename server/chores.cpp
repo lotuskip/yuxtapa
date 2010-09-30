@@ -636,9 +636,11 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				// Green wins. We ensure this by clearing the purple flags list,
 				// so actually the map won't until the next purple spawning:
 				team_flags[1].clear();
-				Network::to_chat("The green team has secured the treasure!");
+				string msg = "The green team has secured the treasure!";
+				Network::construct_msg(msg, 7);
+				Network::broadcast();
 				pl_with_item = cur_players.end();
-				// item won't be drawn any more
+				the_item.setpos(pit->own_pc->getpos());
 			}
 		}
 		else if((noe_it = any_noccent_at(tarpos, NOE_PORTAL_ENTRY))

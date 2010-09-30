@@ -125,7 +125,7 @@ void store_id_for_server(const unsigned short id,
 extern e_ClientState clientstate;
 
 
-bool Network::connect()
+bool Network::connect(string &errors)
 {
 	// determine ip and port
 	string sip = Config::get_server_ip(); // this is just what was read from the config; could be garbage!
@@ -138,7 +138,7 @@ bool Network::connect()
 	}
 	else
 	{
-		cerr << "Not a valid address: " << sip << endl;
+		errors = "Not a valid address: " + sip;
 		return false;
 	}
 
@@ -151,7 +151,7 @@ bool Network::connect()
 	// get server info:
 	if((rv = getaddrinfo(ip.c_str(), port.c_str(), &hints, &servinfo)))
 	{
-		cerr << "Error in getaddrinfo: " << gai_strerror(rv) << endl;
+		errors = string("Error in getaddrinfo: ") + gai_strerror(rv);
 		return false;
 	}
 	// initialize the_serv and make the socket based on its protocol info:
@@ -162,7 +162,7 @@ bool Network::connect()
 	}
 	if(!the_serv)
 	{
-		cerr << "Failed to create socket!" << endl;
+		errors = "Failed to create socket!";
 		freeaddrinfo(servinfo);
 		return false;
 	}
@@ -171,7 +171,7 @@ bool Network::connect()
 
 	last_sent_axn.update(); // must init this at some point
 
-	cout << "Connecting to " << sip << "..." << endl;
+	add_msg("Connecting to " + sip + "...", 7);
 	// construct a hello message:
 	send_buffer.add((unsigned char)MID_HELLO);
 	send_buffer.add(GAME_VERSION);
@@ -184,7 +184,7 @@ bool Network::connect()
 	{
 		if(do_send())
 		{
-			cerr << "Problem connecting to \'" << sip << "\'." << endl;
+			errors = "Problem connecting to \'" + sip + "\'.";
 			close(s_me);
 			freeaddrinfo(servinfo);
 			return false;
@@ -221,7 +221,7 @@ bool Network::connect()
 		} // received something
 		} while(time(NULL) - sendtime < 2);
 	}
-	cerr << "Did not get a reply from the server." << endl;
+	errors = "Did not get a reply from the server.";
 	close(s_me);
 	freeaddrinfo(servinfo);
 	return false;

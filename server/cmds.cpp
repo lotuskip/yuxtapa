@@ -327,8 +327,8 @@ void shuffle_teams()
 {
 	// Gather the players who are currently playing, and kill them all:
 	list<list<Player>::iterator> playing_players;
-	for(list<Player>::iterator it = cur_players.begin();
-		it != cur_players.end(); ++it)
+	list<Player>::iterator it;
+	for(it = cur_players.begin(); it != cur_players.end(); ++it)
 	{
 		if(it->team != T_SPEC)
 		{
@@ -381,6 +381,8 @@ void shuffle_teams()
 	Network::to_chat("The teams have been shuffled!");
 	Game::construct_team_msgs(cur_players.end());
 	Game::send_team_upds(cur_players.end());
+	for(it = cur_players.begin(); it != cur_players.end(); ++it)
+		Game::send_state_change(it);
 }
 
 

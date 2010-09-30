@@ -578,6 +578,13 @@ bool render_occent_at(const Coords &c, char *target, const bool lit)
 
 void render_noccent_at(const Coords &c, char *target, const bool lit)
 {
+	// The item, if present is drawn first:
+	if(gamemode == GM_STEAL && the_item.getpos() == c
+		&& pl_with_item == cur_players.end())
+	{
+		the_item.draw(target, lit);
+		return;
+	}
 	list<NOccEnt>::const_iterator it;
 	// NOTE: do not draw traps here.
 	for(char i = NOE_CORPSE; i < NOE_TORCH; ++i)
@@ -601,10 +608,6 @@ void render_noccent_at(const Coords &c, char *target, const bool lit)
 			return;
 		}
 	}
-	// No occents found so far, so it must be our item:
-	/*if(gamemode == GM_STEAL && the_item.getpos() == c
-		&& pl_with_item == cur_players.end())*/
-		the_item.draw(target, lit);
 }
 
 

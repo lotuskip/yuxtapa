@@ -6,7 +6,7 @@
 
 namespace Network
 {
-	bool connect(); // connect to IP set in config
+	bool connect(std::string &errors); // connect to IP set in config
 	void disconnect();
 
 	bool receive_n_handle(); // returns true if should exit

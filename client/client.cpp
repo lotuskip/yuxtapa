@@ -24,10 +24,17 @@ int main(int argc, char *argv[])
 		}
 	}
 	Config::read_config(server);
-	if(!Network::connect() || !Base::init_ncurses())
+	if(!Base::init_ncurses())
 		return 1;
-
 	init_msgs();
+	// reuse server-string for connection errors:
+	if(!Network::connect(server))
+	{
+		Base::deinit_ncurses();
+		cerr << server << endl;
+		return 1;
+	}
+
 	bool server_disconnect = false;
 	for(;;)
 	{
