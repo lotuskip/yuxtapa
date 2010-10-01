@@ -231,7 +231,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					&& pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 				{
 					nit->stats_i->ad_lvl = al;
-					keyw = "You have been made a *" + ad_lvl_name[al]
+					keyw = "Your AL was set to *" + ad_lvl_name[al]
 						+ "* by " + pit->nick + '!';
 					Network::construct_msg(keyw, cmd_respond_msg_col);
 					Network::send_to_player(*nit);

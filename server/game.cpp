@@ -559,11 +559,15 @@ bool Game::process_turn()
 		for(it = cur_players.begin(); it != cur_players.end(); ++it)
 		{
 			// a valid poisoner implies player is dead!
-			if(it->poisoner != cur_players.end()
-				&& (--(it->cl_props.hp) <= 0))
+			if(it->poisoner != cur_players.end())
 			{
-				it->poisoner->stats_i->kills++;
-				player_death(it, " poisoned by " + it->poisoner->nick + '.', true);
+				if(--(it->cl_props.hp) <= 0)
+				{
+					it->poisoner->stats_i->kills++;
+					player_death(it, " was poisoned by " + it->poisoner->nick + '.', true);
+				}
+				else
+					it->needs_state_upd = true;
 			}
 		}
 	}

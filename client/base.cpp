@@ -15,7 +15,7 @@ namespace
 using namespace std;
 
 const char MIN_SCREEN_X = 80;
-const char MIN_SCREEN_Y = 25;
+const char MIN_SCREEN_Y = 24;
 
 short scr_x, scr_y;
 

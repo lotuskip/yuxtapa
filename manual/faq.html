@@ -50,6 +50,7 @@ and reconnect. This will lose your stats on that server, sadly.</dd>
 <dd>Send a SIGINT to the process through ssh: 'killall -INT yuxtapa_sv'</dd>
 
 <dt><em>The server won't start up, it says: &quot;Failed to bind socket!&quot;</em></dt>
-<dd>One possible reason: the server was uncleanly shut down while bots were active. Do 'killall [bot executable name]' and try again?</dd>
+<dd>Do you have one server instance running already? Or did a previous instance shut down uncleanly while bots were active?
+Do 'killall yuxtapa_sv' and/or 'killall [bot executable name]' and try again.</dd>
 </dl>
 </body></html>

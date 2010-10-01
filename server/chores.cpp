@@ -809,29 +809,26 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		break;
 	case XN_SUICIDE:
 	{
-		// Check for "scared to death" conditions:
-		if(pit->cl_props.hp <= 2*classes[pit->cl].hp/3) // <= 2/3 hp
+		// Check for "scared to death" possibility:
+		// Go through the PCs looking for any visible enemy <= 3 tiles away
+		list<PCEnt>::iterator it = PCs.begin();
+		while(it != PCs.end())
 		{
-			// Go through the PCs looking for any visible enemy <= 3 tiles away
-			list<PCEnt>::iterator it = PCs.begin();
-			while(it != PCs.end())
+			// not void, visible, enemy, close enough:
+			if(!it->isvoid() && it->visible_to_team(pit->team)
+				&& it->get_owner()->team != pit->team
+				&& Game::curmap->LOS_between(it->getpos(), pit->own_pc->getpos(),
+					SCARED_TO_DEATH_DIST))
 			{
-				// not void, visible, enemy, close enough:
-				if(!it->isvoid() && it->visible_to_team(pit->team)
-					&& it->get_owner()->team != pit->team
-					&& Game::curmap->LOS_between(it->getpos(), pit->own_pc->getpos(),
-						SCARED_TO_DEATH_DIST))
-				{
-					player_death(pit, " was scared to death by "
-						+ it->get_owner()->nick + '.', true);
-					it->get_owner()->stats_i->kills++;
-					break;
-				}
-				++it;
-			}
-			if(it != PCs.end()) // was broken
+				player_death(pit, " was scared to death by "
+					+ it->get_owner()->nick + '.', true);
+				it->get_owner()->stats_i->kills++;
 				break;
+			}
+			++it;
 		}
+		if(it != PCs.end()) // was broken
+			break;
 		// If here, just suicide:
 		player_death(pit, " suicided.", true);
 		break;
@@ -1227,6 +1224,9 @@ void progress_chore(const list<Player>::iterator pit)
 			traps.back().set_seen_by(pit->team);
 			Game::curmap->mod_tile(c)->flags |= TF_TRAP;
 			event_set.insert(c);
+			string msg = "You set a boobytrap.";
+			Network::construct_msg(msg, C_BOOBY_TRAP_LIT);
+			Network::send_to_player(*pit);
 		}
 		break;
 	//default: break; // Reaching this is an error!

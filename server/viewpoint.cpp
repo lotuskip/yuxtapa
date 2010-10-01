@@ -346,6 +346,7 @@ void ViewPoint::move_watchers()
 	{
 		if(*it != owner)
 		{
+			(*it)->own_vp->set_pos(pos);
 			((*it)->viewn_vp = (*it)->own_vp)->add_watcher((*it));
 			it = followers.erase(it);
 		}

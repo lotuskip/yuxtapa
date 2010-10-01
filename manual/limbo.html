@@ -47,6 +47,25 @@ this makes you a free spectator (see <a href="spectating.html">Spectating</a>).<
 
 
 <h3>Spawning</h3>
-<p>...</p>
+<p>Both teams have a spawning moment at regular intervals. The green team spawn
+happens at the middle point between two purple spawns, and vice versa. The players
+only see the time in seconds to their team's next spawn (see
+<a href="clientscreen.html">Client screen</a>).</p>
+
+<p>When the spawn moment is reached, all currently dead players in that team
+are respawned: they have full hitpoints and all hindered effects such as being poisoned
+or having a rusty weapon are removed.</p>
+
+<p>Spawning happens at the most recently captured flag (on flags, see <a href="gametypes.html">Game types</a>),
+but only nine PCs at a time are spawned at a single flag. They appear somewhere in the vicinity of the flag,
+as close to it as possible. If more than 9 players need to be spawned,
+the rest will spawn at the <em>next most recently</em> captured flag, and so on until there are no more flags
+unused, at which point any remaining PCs are spawned at the first flag again.</p>
+
+<p>It is generally forbidden to stalk near an enemy flag in order to easily kill newly
+spawned enemies. This behaviour is called <em>spawn killing</em> (SK). Either capture the enemy
+flag, or, if you can't, move away from it. If you happen to be close by when enemy spawning occurs,
+refrain from attacking immediately. If spawn killing for some reason is accepted on
+the server, this should be clearly stated somewhere.</p>
 
 </body></html>
