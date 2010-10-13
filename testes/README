@@ -22,5 +22,6 @@ mrbrown.cpp
 	the server shutdowns. If anyone wants to write actual bots for yuxtapa,
 	this is the starting point: all it needs is a bit of AI!
 
-The provided Makefile is only to compile mrbrown.
+The provided Makefile is only to compile mrbrown. See the manual page on
+bots for installation information.
 

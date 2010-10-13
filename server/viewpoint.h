@@ -38,6 +38,7 @@ public:
 
 	void blind();
 	void reduce_blind();
+	bool is_blind() const { return blinded; }
 	void set_losr(const char nr) { LOSrad = nr; }
 
 private:

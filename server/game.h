@@ -37,6 +37,9 @@ namespace Game
 	std::list<Player>::iterator remove_player(std::list<Player>::iterator pit,
 		const std::string &reason);
 
+	// Remove all entities owned by the given player
+	void del_owneds(const std::list<Player>::const_iterator pit);
+
 	SerialBuffer &get_miniview();
 
 	extern unsigned short curturn;

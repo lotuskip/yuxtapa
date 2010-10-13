@@ -334,6 +334,7 @@ void shuffle_teams()
 	{
 		if(it->team != T_SPEC)
 		{
+			Game::del_owneds(it);
 			if(it->is_alive())
 				kill_player(it);
 			playing_players.push_back(it);

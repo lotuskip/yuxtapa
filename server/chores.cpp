@@ -39,6 +39,7 @@ const char TRAP_TURNS = 6;
 const char DISGUISE_TURNS = 7;
 const char BASE_TURNS_TO_DETECT_TRAPS = 10;
 const char DETECT_TRAPS_RAD = 3;
+const char SNEAK_RADIUS = 3;
 const char CHANCE_RUST = 65;
 const char RUST_MOD = 2;
 
@@ -702,12 +703,14 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 		|| (pit->cl == C_TRAPPER && tar->symbol == 'T'))
 		&& !is_dynlit(tarpos))
 	{
-		// No enemy may see here:
+		// No enemy may see here; note that we use a fixed radius 3,
+		// not the LOS radius of the respective enemy!
 		for(them = cur_players.begin(); them != cur_players.end(); ++them)
 		{
 			if(them->team != pit->team && them->is_alive()
+				&& !them->own_vp->is_blind()
 				&& Game::curmap->LOS_between(them->own_pc->getpos(),
-					tarpos, classes[them->cl].losr))
+					tarpos, SNEAK_RADIUS))
 				break; // seen by an enemy
 		}
 		if(them == cur_players.end()) // seen by no-one!

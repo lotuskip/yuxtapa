@@ -24,4 +24,19 @@ Also, the server machine now has to run not only the server but all the bots; dr
 cause the server to lose 'frames'.</p>
 
 <p>If the server is full and new players try to connect, bots, if there are any, are automatically dropped to make room.</p>
+
+
+<h3>Installing Mr. Brown</h3>
+<p>At least at the moment, the bot executable is not built along with the server and the client, but
+you must build it yourself. If at some point the bots get an AI and become generally <em>useful</em>,
+they will be added to the release as a third component, just like the client and the server are now.</p>
+
+<p>Go to the directory 'yuxtapa-XX/testes', where 'XX' is the version number. There, run 'make'. This
+should build an executable called 'mrbrown' in the 'yuxtapa-XX' directory. You can move this executable
+to some accessible directory (such as '/usr/bin'), but the important thing is that you point the server
+configuration to it (see the server configuration file).</p>
+
+<p>After this, bots should be runnable from within the game. They can also be executed stand-alone (but
+most people probably don't want this).</p>
+
 </body></html>

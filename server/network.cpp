@@ -206,6 +206,7 @@ bool Network::receive_n_handle()
 
 			Game::send_state_change(pit);
 			Game::send_team_upds(pit);
+			to_chat(pit->nick + " connected.");
 			break;
 		}
 		case MID_QUIT:

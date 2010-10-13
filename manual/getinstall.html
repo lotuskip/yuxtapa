@@ -32,20 +32,22 @@ debugging is disabled.</p>
 <p><em>If you use AUR</em>, these defaults are followed (but perhaps you know enough to change that). The following instructions
 are intended for people not using AUR:</p>
 
-<p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', where XX is a version number, run
-the autools:
+<p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', run the following
+commands:
 <pre>
+aclocal
+automake --add-missing
 autoconf
-automake
 </pre>
-These shouldn't print anything if everything goes smoothly. Next, run configure (one of the following, for instance):
+This should create a bunch of files and print only a few messages. Next, run the create configure script
+(one of the following, for instance):
 <pre>
 ./configure                                   [default: client + server, no debug]
 ./configure --enable-debug                    [client + server, with debug]
 ./configure --disable-client                  [just the server, no debug]
 ./configure --enable-debug --disable-server   [just the client, with debug]
 </pre>
-etc., you get the idea. If that runs okay without complaints, you can continue with
+etc., you get the idea. Running './configure -h' prints more options. If that runs okay without complaints, you can continue with
 <pre>
 make
 </pre>

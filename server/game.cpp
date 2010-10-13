@@ -120,62 +120,6 @@ void active_teambal_check()
 }
 
 
-void del_owneds(const list<Player>::const_iterator pit)
-{
-	// Note: this function is only called at instances when it is safe
-	// to "simply remove" the entities instead of voiding them so that
-	// they'd be removed later.
-	list<Arrow>::iterator a_it = arrows.begin();
-	while(a_it != arrows.end())
-	{
-		if(a_it->get_owner() == pit)
-		{
-			if(!a_it->isvoid())
-				Game::curmap->mod_tile(a_it->getpos())->flags &= ~(TF_OCCUPIED);
-			a_it = arrows.erase(a_it);
-		}
-		else
-			++a_it;
-	}
-	list<MM>::iterator m_it = MMs.begin();
-	while(m_it != MMs.end())
-	{
-		if(m_it->get_owner() == pit)
-		{
-			if(!m_it->isvoid())
-				Game::curmap->mod_tile(m_it->getpos())->flags &= ~(TF_OCCUPIED);
-			m_it = MMs.erase(m_it);
-		}
-		else
-			++m_it;
-	}
-	list<Zap>::iterator z_it = zaps.begin();
-	while(z_it != zaps.end())
-	{
-		if(z_it->get_owner() == pit)
-		{
-			if(!z_it->isvoid())
-				Game::curmap->mod_tile(z_it->getpos())->flags &= ~(TF_OCCUPIED);
-			z_it = zaps.erase(z_it);
-		}
-		else
-			++z_it;
-	}
-	list<Trap>::iterator tr_it = traps.begin();
-	while(tr_it != traps.end())
-	{
-		if(tr_it->get_owner() == pit)
-		{
-			// (traps are never voided)
-			Game::curmap->mod_tile(tr_it->getpos())->flags &= ~(TF_TRAP);
-			tr_it = traps.erase(tr_it);
-		}
-		else
-			++tr_it;
-	}
-}
-
-
 void send_state_upd(const list<Player>::iterator it)
 {
 	Network::send_buffer.clear();
@@ -238,7 +182,7 @@ void player_left_team(const list<Player>::iterator pit)
 	{
 		if(pit->is_alive())
 			kill_player(pit);
-		del_owneds(pit);
+		Game::del_owneds(pit);
 		Game::send_times(pit);
 	}
 	post_join_msg(pit);
@@ -1118,5 +1062,61 @@ list<Player>::iterator Game::remove_player(list<Player>::iterator pit,
 		active_teambal_check();
 
 	return retval;
+}
+
+
+void Game::del_owneds(const list<Player>::const_iterator pit)
+{
+	// Note: this function is only called at instances when it is safe
+	// to "simply remove" the entities instead of voiding them so that
+	// they'd be removed later.
+	list<Arrow>::iterator a_it = arrows.begin();
+	while(a_it != arrows.end())
+	{
+		if(a_it->get_owner() == pit)
+		{
+			if(!a_it->isvoid())
+				curmap->mod_tile(a_it->getpos())->flags &= ~(TF_OCCUPIED);
+			a_it = arrows.erase(a_it);
+		}
+		else
+			++a_it;
+	}
+	list<MM>::iterator m_it = MMs.begin();
+	while(m_it != MMs.end())
+	{
+		if(m_it->get_owner() == pit)
+		{
+			if(!m_it->isvoid())
+				curmap->mod_tile(m_it->getpos())->flags &= ~(TF_OCCUPIED);
+			m_it = MMs.erase(m_it);
+		}
+		else
+			++m_it;
+	}
+	list<Zap>::iterator z_it = zaps.begin();
+	while(z_it != zaps.end())
+	{
+		if(z_it->get_owner() == pit)
+		{
+			if(!z_it->isvoid())
+				curmap->mod_tile(z_it->getpos())->flags &= ~(TF_OCCUPIED);
+			z_it = zaps.erase(z_it);
+		}
+		else
+			++z_it;
+	}
+	list<Trap>::iterator tr_it = traps.begin();
+	while(tr_it != traps.end())
+	{
+		if(tr_it->get_owner() == pit)
+		{
+			// (traps are never voided)
+			curmap->mod_tile(tr_it->getpos())->flags &= ~(TF_TRAP);
+			tr_it = traps.erase(tr_it);
+		}
+		else
+			++tr_it;
+	}
 }
 
