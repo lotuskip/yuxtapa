@@ -4,9 +4,10 @@
 <h3>Downloading</h3>
 <p>You have one or two options:
 <ul>
-<li>Download the yuxtapa source code (link on the <a href="http://tempoanon.net/lotuskip/yuxtapa/">homepage</a>) and compile it yourself</li>
+<li>Download the yuxtapa source code (link on the <a href="http://tempoanon.net/lotuskip/yuxtapa/">homepage</a>) to compile it manually</li>
 <li>If you are an Arch Linux user, just search for yuxtapa in the <a href="http://aur.archlinux.org">AUR</a></li>
-</ul></p>
+</ul>
+Contributions such as RPMs are welcome, and will be made available (or linked) if received.</p>
 
 
 <h3>Requirements</h3>
@@ -19,17 +20,18 @@ to find out how to install them.
 </ul>
 You will also need a sane C++ compiling environment full with the GNU <em>autotools</em>.</p>
 
-<p>Please see the <a href="terminals.html">Terminals</a> page for information about what yuxtapa
-requires from the terminal emulator.</p>
+<p>Please see the <a href="terminals.html">Terminals</a> page for information about what the yuxtapa
+client requires from the terminal emulator.</p>
 
 
 <h3>Compiling the source</h3>
 <p>yuxtapa has a separate executable for the server and the client. You can compile either or both.
 Furthermore, you can compile with debug either enabled or disabled. (Debug being enabled
-results in a larger binary and perhaps a tiny performance drop.) <em>By default</em> both the server and the client are built, and
+results in a larger binary and perhaps a tiny performance drop. Regular users probably don't need
+to enable it.) <em>By default</em> both the server and the client are built, and
 debugging is disabled.</p>
 
-<p><em>If you use AUR</em>, these defaults are followed (but perhaps you know enough to change that). The following instructions
+<p><em>If you use AUR</em>, these defaults are followed (but perhaps you know how to change that). The following instructions
 are intended for people not using AUR:</p>
 
 <p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', run the following
@@ -39,7 +41,7 @@ aclocal
 automake --add-missing
 autoconf
 </pre>
-This should create a bunch of files and print only a few messages. Next, run the create configure script
+This should create a bunch of files and print only a few messages. Next, run the created configure script
 (one of the following, for instance):
 <pre>
 ./configure                                   [default: client + server, no debug]
@@ -47,7 +49,7 @@ This should create a bunch of files and print only a few messages. Next, run the
 ./configure --disable-client                  [just the server, no debug]
 ./configure --enable-debug --disable-server   [just the client, with debug]
 </pre>
-etc., you get the idea. Running './configure -h' prints more options. If that runs okay without complaints, you can continue with
+etc., you get the idea. Running './configure -h' prints more options. If that ran okay without complaints, you can continue with
 <pre>
 make
 </pre>
@@ -65,5 +67,7 @@ that is done, you can run the client program with
 if you installed the game, or
 <pre>./yuxtapa_cl</pre>
 in the directory containing the executable otherwise.</p>
+
+<p>Some notes about setting up a server are in the <a href="serverconf.html">server configuration</a> page.</p>
 
 </body></html>

@@ -1,4 +1,3 @@
-AC_PREREQ([2.65])
 AC_INIT([yuxtapa], [1])
 AM_INIT_AUTOMAKE
 AC_OUTPUT(Makefile)
