@@ -57,7 +57,7 @@ bool do_send() // returns true if there was a problem
 }
 
 sockaddr them;
-size_t addr_len;
+socklen_t addr_len;
 short do_receive() // returns lenght of data received
 {
 	addr_len = sizeof(them);

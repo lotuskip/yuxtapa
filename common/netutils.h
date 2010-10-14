@@ -97,7 +97,7 @@ public:
 	void set_amount(const short n);
 
 private:
-	typename boost::array<char, BUFFER_SIZE>::iterator pos;
+	boost::array<char, BUFFER_SIZE>::iterator pos;
 	short num; // this would suffice, but we have pos for convenience, too
 	boost::array<char, BUFFER_SIZE> arr;
 };

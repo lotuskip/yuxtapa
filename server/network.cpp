@@ -44,7 +44,7 @@ void *get_in_addr(struct sockaddr *sa)
 
 
 // returns true on error
-bool do_send_to(sockaddr_storage *sas, size_t len,
+bool do_send_to(sockaddr_storage *sas, socklen_t len,
 	SerialBuffer &sb = Network::send_buffer)
 {
 	return sendto(s_me, sb.getr(), sb.amount(), 0, (sockaddr*)sas, len) == -1;
@@ -131,7 +131,7 @@ void Network::shutdown()
 bool Network::receive_n_handle()
 {
 	sockaddr_storage them;
-	size_t addr_len = sizeof(them);
+	socklen_t addr_len = sizeof(them);
 	unsigned char mid;
 	list<Player>::iterator pit;
 	char handled = 0;

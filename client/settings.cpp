@@ -133,7 +133,11 @@ void Config::read_config(const string servername)
 			serverip = "127.0.0.1:12360";
 		}
 		else
+		{
+			if(!servername.empty()) // some server *was* requested
+				cerr << "Could not find requested server \'" << servername << "\' in config!" << endl;
 			serverip = first_server;
+		}
 	}
 	// check for key-binding conflicts:
 	keyw = key_bindings; // tmp copy

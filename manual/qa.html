@@ -43,6 +43,10 @@ Otherwise, consider it a challenge. Also, note that better map generation is one
 
 <h3>Server issues</h3>
 <dl>
+<dt><em>No one can connect to my server!</em></dt>
+<dd>It might be a firewall issue. In your firewall configuration, enable UDP through the port that you
+defined in your <em>server.conf</em> file. See your distro-specific documentation for more info.</dd>
+
 <dt><em>I am getting a message about someone using my ID on the server and cannot connect!</em></dt>
 <dd>This should be extremely rare. If it happens often, something is wrong (a bug?). However, the remedy
 is to remove the line corresponding to this server from the 'servers' file in the config directory
