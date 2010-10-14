@@ -86,11 +86,8 @@ bool check_class_limit(const e_Team t, const e_Class c)
 		for(list<Player>::const_iterator it = cur_players.begin();
 			it != cur_players.end(); ++it)
 		{
-			// Note: checking according to current class, not next_cl!
-			// This can mean that if several players decide to become
-			// archers simultaneously, there might be more than the
-			// allowed number of archers after the next spawn.
-			if(it->team == t && it->cl == c
+			// Note: checking next_cl, not current class!
+			if((it->team == t || it->team == T_SPEC) && it->next_cl == c
 				&& ++num == int_settings[IS_CLASSLIMIT])
 				return true;
 		}

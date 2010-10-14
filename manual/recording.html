@@ -3,12 +3,39 @@
 
 <p>This is not really a feature of yuxtapa, but worth mentioning still.</p>
 
+<p>It is possible to record sessions of playing yuxtapa (on the client side). Obviously this can be achieved
+with any desktop capturing software, but ones that work in a terminal only produce
+much smaller files (the recordings are basically text, not video; they can be made <em>really</em> small
+if compressed).</p>
+
+<h3>The script way</h3>
+<p>For GNU/Linux users, the best choise is the 'script' command. Basic usage (see the
+man page, 'man script', for more information):
+<pre>
+script -t 2&gt; game.timing -a game.session
+</pre>
+records your sessions into the file 'game.session', with timing information in
+the file 'game.timing'. Two separate files are a necessity when using script; to share the recording
+just tar it together, e.g.:
+<pre>
+tar -czf gamerec.tar.gz game.timing game.session
+</pre>
+The command
+<pre>
+scriptreplay game.timing game.session
+</pre>
+replays the session.</p>
+
+<p>Note that script records everything that goes on in your terminal, so you must
+first invoke script (first of the above commands) and then run the yuxtapa client,
+and after playing, quit script to end the recording (either type 'exit' or hit CTRL+d).</p>
+
+
+<h3>The ttyrec way</h3>
+
 <p>Using the external program <a href="http://0xcc.net/ttyrec/index.html.en">ttyrec</a>
-it is possible to record
-sessions of playing yuxtapa (on the client side). These can be later
-viewn using either the viewer that comes with ttyrec or with
-some of the other viewer programs (these exist for Windows, too,
-and there are even online viewers).</p>
+you can record sessions into files that can be viewn with
+programs that exist for Windows, too, and there are even online viewers.</p>
 
 <p>It is assumed that you can manage installing ttyrec on your system.
 To record a session, instead of executing the client in the usual
@@ -22,4 +49,8 @@ to reset the normal speed.</p>
 
 <p>The command 'ttytime [file]' can be used to tell the length of a recording
 in seconds.</p>
+
+<p>The major downside of ttyrec is this: <em>you are limited to a screen size of 80x24</em>.
+yuxtapa is perfectly playable in such a small screen, but the chat space is only one line
+high...</p>
 </body></html>

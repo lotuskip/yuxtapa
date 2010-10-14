@@ -24,8 +24,8 @@ deque<unsigned char> availcpairs;
 
 // Messages are added (to the screen) at most every STAY_TIME ms.
 // Messages are moved away at least every MOVE_FREQ ms.
-const short MOVE_FREQ = 3600; // ms
-const short STAY_TIME = 800;
+const unsigned short MOVE_FREQ = 3600; // ms
+const unsigned short STAY_TIME = 800;
 msTimer last_move, last_add, reference;
 
 /*
