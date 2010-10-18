@@ -25,9 +25,11 @@ using namespace std;
 const char KEYCODE_ENTER = 13; // != '\n'
 const char KEYCODE_INT = 3; // ^C
 
+vector<string> prev_strs;
+vector<string>::const_iterator prev_str_it;
 string typed_str;
 short type_pos; // in *UTF-8 symbols*, not chars
-short num_syms;
+short str_syms;
 
 e_Dir last_dir = MAX_D;
 bool walkmode = false;
@@ -49,18 +51,24 @@ void walkmode_off()
 void init_type()
 {
 	typed_str.clear();
-	Base::type_cursor((type_pos = num_syms = 0));
+	Base::type_cursor((type_pos = str_syms = 0));
 }
 
 void typing_done()
 {
 	if(!typed_str.empty())
 	{
+		prev_strs.push_back(typed_str);
 		Config::do_aliasing(typed_str);
 		Network::send_line(typed_str, clientstate == CS_TYPE_CHAT);
 	}
 	Base::print_str("", 0, 0, MSG_WIN_Y-1, MSG_WIN, true);
 	Base::def_cursor();
+}
+
+void set_typed_str(const string &s)
+{
+	type_pos = str_syms = num_syms((typed_str = s));
 }
 
 bool check_typing()
@@ -83,14 +91,14 @@ bool check_typing()
 			{
 				del(typed_str, type_pos-1);
 				--type_pos;
-				--num_syms;
+				--str_syms;
 			}
 			break;
 		case KEY_DC: // delete key
-			if(type_pos < num_syms)
+			if(type_pos < str_syms)
 			{
 				del(typed_str, type_pos);
-				--num_syms;
+				--str_syms;
 			}
 			break;
 		case KEY_LEFT:
@@ -98,14 +106,35 @@ bool check_typing()
 				--type_pos;
 			break;
 		case KEY_RIGHT:
-			if(type_pos < num_syms)
+			if(type_pos < str_syms)
 				++type_pos;
 			break;
 		case KEY_HOME:
 			type_pos = 0;
 			break;
 		case KEY_END:
-			type_pos = num_syms;
+			type_pos = str_syms;
+			break;
+		case KEY_UP:
+			if(prev_str_it != prev_strs.begin())
+				set_typed_str(*(--prev_str_it));
+			else
+			{
+				prev_str_it = prev_strs.end();
+				set_typed_str("");
+			}
+			break;
+		case KEY_DOWN:
+			if(prev_str_it != prev_strs.end())
+			{
+				++prev_str_it;
+				if(prev_str_it != prev_strs.end())
+					set_typed_str(*prev_str_it);
+				else
+					set_typed_str("");
+			}
+			else if(!prev_strs.empty())
+				set_typed_str(*(prev_str_it = prev_strs.begin()));
 			break;
 		default: // unknown control key
 			return false;
@@ -127,7 +156,7 @@ bool check_typing()
 		}
 		// else
 		ins(typed_str, key, type_pos);
-		++num_syms; // string got longer
+		++str_syms; // string got longer
 		++type_pos;
 	}
 	else // no key at all
@@ -150,6 +179,7 @@ bool Input::inputhandle()
 		{
 			clientstate = CS_NORMAL;
 			Base::def_cursor();
+			prev_str_it = prev_strs.end();
 		}
 		return false;
 	}
