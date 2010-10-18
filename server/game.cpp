@@ -828,7 +828,7 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 			break;
 		case GM_DESTR:
 			obj_status_str = boost::lexical_cast<string>(boulders_left)
-				+ " boulders left";
+				+ " left";
 			break;
 		default: obj_status_str = ""; break;
 		}

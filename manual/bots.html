@@ -14,14 +14,15 @@ the name).</p>
 <li>Target practise. It can actually be difficult to beat them in melee.</li>
 </ul></p>
 
-<p>Admins (see <a href="adminlevels.html">Admin levels</a>) can spawn Mr. Browns in-game with the command '!spawnbot' (see
+<p>Admins (see <a href="adminlevels.html">Admin levels</a>) can spawn Mr. Browns in-game with the command '!spawnbots' (see
 <a href="chatting.html">Chatting and shouting</a>).
 All bots can be removed with the command '!dropbots'. (They don't disappear immediately, but like a player whose
 connection dies would be dropped after a while.)</p>
 
 <p>Note that spawning several bots can introduce a significant momentary delay as all the bot processes are initiated.
 Also, the server machine now has to run not only the server but all the bots; drop the bots if it seems that they
-cause the server to lose 'frames'.</p>
+cause the server to lose 'frames'. At the moment this is unlikely, but might become an issue if a more complicated AI
+is written for the bots one day.</p>
 
 <p>If the server is full and new players try to connect, bots, if there are any, are automatically dropped to make room.</p>
 
@@ -31,8 +32,8 @@ cause the server to lose 'frames'.</p>
 you must build it yourself. If at some point the bots get an AI and become generally <em>useful</em>,
 they will be added to the release as a third component, just like the client and the server are now.</p>
 
-<p>Go to the directory 'yuxtapa-XX/testes', where 'XX' is the version number. There, run 'make'. This
-should build an executable called 'mrbrown' in the 'yuxtapa-XX' directory. You can move this executable
+<p>Go to the directory 'yuxtapa/testes'. There, run 'make'. This
+should build an executable called 'mrbrown' in the 'yuxtapa' parent directory. You can move this executable
 to some accessible directory (such as '/usr/bin'), but the important thing is that you point the server
 configuration to it (see the server configuration file).</p>
 

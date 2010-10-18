@@ -48,6 +48,7 @@ This should create a bunch of files and print only a few messages. Next, run the
 ./configure --enable-debug                    [client + server, with debug]
 ./configure --disable-client                  [just the server, no debug]
 ./configure --enable-debug --disable-server   [just the client, with debug]
+./configure --prefix=/home/user/bin           [install in home dir]
 </pre>
 etc., you get the idea. Running './configure -h' prints more options. If that ran okay without complaints, you can continue with
 <pre>
@@ -57,14 +58,20 @@ to compile and, optionally,
 <pre>
 make install
 </pre>
-as root to install. Installing is not necessary to play or to run a server.
+(as root) to install (system-wide). Installing is not necessary to play or to run a server.
 </p>
+
+<h3>Grabbing anything else you need from the package</h3>
+<p>The source tarball contains other stuff that might be of interest to users, as well.
+Such as this manual (AUR users will have it installed in /usr/share/doc/yuxtapa/),
+the bot client (see the file 'testes/README' as well as the <a href="bots.html">manual page on bots</a>), and
+the template configuration files (see below).</p>
 
 <h3>Configuring and running</h3>
 <p>Next, in order to get playing, you must <a href="clientconf.html">configure the client</a>. After
 that is done, you can run the client program with
 <pre>yuxtapa_cl</pre>
-if you installed the game, or
+if you installed the game into your path, or with
 <pre>./yuxtapa_cl</pre>
 in the directory containing the executable otherwise.</p>
 
