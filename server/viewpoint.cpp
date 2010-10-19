@@ -239,6 +239,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 							*(target++) = ownview[c.y][c.x].cpair - NUM_DIM_COLS;
 						*(target++) = ownview[c.y][c.x].symbol;
 					}
+					else target += 2; // a scout-seen PC was rendered
 				}
 				// else (tile in LOS), if tile is occupied must see who's there
 				else if((tp->flags & TF_OCCUPIED) &&

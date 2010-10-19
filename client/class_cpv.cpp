@@ -220,6 +220,10 @@ void ClassCPV::state_upd(SerialBuffer &data)
 	torch_sym[0] = data.read_ch();
 
 	reprint_pcinfo();
+
+	// if died, abort any action in the client end:
+	if(hp <= 0 && (clientstate == CS_AIMING || clientstate == CS_DIR))
+		clientstate = CS_NORMAL;
 }
 
 
