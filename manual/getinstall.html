@@ -11,13 +11,15 @@ Contributions such as RPMs are welcome, and will be made available (or linked) i
 
 
 <h3>Requirements</h3>
-<p>Here is a list of what libraries you need to build yuxtapa. Refer to the documentation of your Linux distribution
+<p>Here is a list of what libraries you need in order to build yuxtapa. Refer to the documentation of your Linux distribution
 to find out how to install them.
 <ul>
 <li>NCurses (typically called <em>ncurses</em> or <em>libncurses</em>)</li>
 <li>C++ boost (<em>boost</em>)</li>
 <li>ZLib (<em>zlib</em>)</li>
 </ul>
+If your distribution makes the distinction, these need to be the <em>development</em> versions (eg. in Fedora: <em>ncurses-devel</em>,
+<em>boost-devel</em>, <em>zlib-devel</em>).
 You will also need a sane C++ compiling environment full with the GNU <em>autotools</em>.</p>
 
 <p>Please see the <a href="terminals.html">Terminals</a> page for information about what the yuxtapa
@@ -34,7 +36,7 @@ debugging is disabled.</p>
 <p><em>If you use AUR</em>, these defaults are followed (but perhaps you know how to change that). The following instructions
 are intended for people not using AUR:</p>
 
-<p>First extract the source package. Then, in a terminal, in the created directory 'yuxtapa-XX', run the following
+<p>First, extract the source package. Then, in a terminal, in the created directory named 'yuxtapa', run the following
 commands:
 <pre>
 aclocal

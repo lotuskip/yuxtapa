@@ -78,20 +78,19 @@ Coords aimer;
 
 void ClassCPV::move(const e_Dir d)
 {
-	switch(clientstate)
-	{
-	case CS_NORMAL: // regular movement
+	if(clientstate == CS_NORMAL) // regular movement
 		Network::send_action(XN_MOVE, (last_dir = d));
-		break;
-	case CS_AIMING: // moving the aimer
+	else if(clientstate == CS_AIMING) // moving the aimer
+	{
 		aimer = aimer.in(d);
 		if(aimer.x > VIEWSIZE/2) aimer.x--;
 		else if(aimer.x < -VIEWSIZE/2) aimer.x++;
 		if(aimer.y > VIEWSIZE/2) aimer.y--;
 		else if(aimer.y < -VIEWSIZE/2) aimer.y++;
 		redraw_view();
-		break;
-	case CS_DIR: // waiting for dir input (and now got it!)
+	}
+	else if(clientstate == CS_DIR) // waiting for dir input (and now got it!)
+	{
 		if(myclass == C_FIGHTER)
 			Network::send_action(XN_CIRCLE_ATTACK, d);
 		else if(myclass == C_HEALER)
@@ -101,8 +100,8 @@ void ClassCPV::move(const e_Dir d)
 		else if(myclass == C_COMBAT_MAGE)
 			Network::send_action(XN_ZAP, d);
 		clientstate = CS_NORMAL;
-		break;
-	}
+	}	
+	// else ignore
 }
 
 
@@ -116,13 +115,10 @@ void ClassCPV::five()
 			redraw_view();
 		}
 	}	
-	else if(clientstate == CS_DIR)
+	else if(clientstate == CS_DIR && myclass == C_HEALER) 
 	{
-		if(myclass == C_HEALER)
-		{
-			Network::send_action(XN_HEAL, MAX_D); // heal self
-			clientstate = CS_NORMAL;
-		}
+		Network::send_action(XN_HEAL, MAX_D); // heal self
+		clientstate = CS_NORMAL;
 	}
 	// else ignore
 }

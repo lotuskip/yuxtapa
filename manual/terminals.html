@@ -1,6 +1,10 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Terminals</h2>
 
+<p>Only the client program uses any necessary visual output; the server can be run even outside
+of any terminal whatsoever.</p>
+
+<h3>Colours</h3>
 <p>The yuxtapa client has mainly been tested on <em>urxvt</em> (rxvt-unicode)
 and <em>xterm</em>. It is designed for terminal emulators that provide at least 88 colours and
 256 colour pairs, and moreover allow changing the colour RGB values. There is a fall-back function for more simple terminals (16 fixed colours)
@@ -28,15 +32,21 @@ into something else than the default 'xterm':
 and many others, surely.
 For instance Konsole allows changing the terminal identification in the
 settings dialog, but you can also 'export TERM=[something]'. What exactly you
-should place instead of '[something]', depends.</p>
+should place instead of '[something]', depends on your system.</p>
 
 <p>Please tell about your experiences on other terminal emulators so they can be added.</p>
+
+
+<h3>Size and font</h3>
+<p>The absolute minimum terminal size for the client is 80x24. Anything larger goes, and <em>somewhat</em> larger is recommended,
+because with the minimum screen the chat box (see <a href="clientscreen.html">Client screen</a>) is only one line high, which
+makes the chat feature annoying to the point of being useless.</p>
 
 <p>If you find the 'tallness' of everything an issue, try changing the font
 of your terminal into something more square. This can help remove the illusion
 that things to the left and right appear to be 'closer' than things that are
 up or down. Unfortunately, good square fonts are hard to come by, especially
-if you want unicode support. One decent square option is the font called 'cursor',
-although it has the problem of being slightly large. Here is a screenshot:<br>
+if you want full unicode support. One decent square option is the font called 'cursor'.
+Here is a screenshot:<br>
 <img src="cursorfont.png" alt="screenshot of the cursor font"></p>
 </body></html>

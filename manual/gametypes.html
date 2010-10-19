@@ -7,12 +7,21 @@ and three where the green team attacks and the purple defends. Other than this, 
 are identical; it doesn't make a difference in which you play.</p>
 
 <p>The player characters spawn (see <a href="limbo.html">Limbo and spawning</a>) at
-<em>flags</em> which can be controlled by either or neither team. A character can only
+<em>flags</em>, '&amp;' symbols in the view, which can be controlled by either or neither team. A character can only
 spawn at a flag controlled by its team, and you can capture a flag to your team
-simply by walking over it. Some flags might not be capturable depending on the game mode.</p>
+simply by walking over it. Some flags might not be capturable depending on the game mode and situation.</p>
 
-<p>The maps are divided into sectors or areas, specified by directions: N, NW,
-W, SW, S, SE, and E for north, north-west, etc., and C for central.</p>
+<p>The maps are divided into sectors or areas, specified by directions:
+<pre>
+-----------
+|NW  N  NE|
+|         |
+|W   C   E|
+|         |
+|SW  S  SE|
+-----------
+</pre>
+The sector your PC is currently in is shown in the <a href="clientscreen.html">Client view</a>.</p>
 
 <p>The rest of this page describes the game modes.</p>
 
@@ -36,7 +45,7 @@ defensive stance. The differences in the rules, compared to dominion, are:
 has to take it to their initial flag; the purple team tries to prevent this.</p>
 
 <p>A green team player picks up the item by walking over it. A PC carrying the item
-has the trap indicator background colour trailing him (see <a href="vision.html">Vision and hearing</a>),
+has the 'trapping' indicator background colour trailing him (see <a href="vision.html">Vision and hearing</a>),
 but only if she has moved during the last few turns.</p>
 
 <p>If the carrying PC dies, the item is dropped to wherever she was at that time.
@@ -47,7 +56,10 @@ is lost into the chasm.</p>
 team cannot carry the item, but can only defend it and stall the green team.</p>
 
 <p>In this mode, any flag can be captured by either team, except that neither team can
-be left completely without a flag.</p>
+be left completely without a flag. <em>If the green team's original flag is captured by
+the purples</em>, the green team now needs to take the treasure to the flag they captured
+first! (More precisely: always to the flag that has been under constant green control for
+the longest time.)</p>
 
 <h3>Destroy</h3>
 <p>The green team attempts to destroy all the boulders (see <a href="objects.html">Objects in the game</a>) in

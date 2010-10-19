@@ -1,15 +1,17 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Client configuration</h2>
 
-<p>
-The yuxtapa client configuration, like the <a href="serverconf.html">Server configuration</a>, is
-typically in the file
-<blockquote>/home/username/.config/yuxtapa/client.conf</blockquote>
+<p>A template configuration file is contained in the yuxtapa tarball; it is under the
+directory 'yuxtapa/tmplates', and named '<strong>client.conf</strong>'. AUR users will find this file
+in '/usr/share/yuxtapa/' after installing.</p>
+
+<p>This configuration file, when in use, typically resides under
+<blockquote>/home/username/.config/yuxtapa/</blockquote>
 It is first looked for in '$XGD_CONFIG_HOME/yuxtapa/', and secondarily, if
 XGD_CONFIG_HOME is not defined, in '$HOME/.config/yuxtapa/'. <strong>You should
-create this directory and copy the file 'tmplates/client.conf' there.</strong></p>
+create this directory and copy the template file 'client.conf' there.</strong></p>
 
 <p>You can edit the file with your favourite text editor. The provided template
-file should be commented to be self-explanatory, see it.</p>
+should be commented to be self-explanatory, see it.</p>
 
 </body></html>
