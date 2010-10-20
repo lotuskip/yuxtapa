@@ -35,11 +35,11 @@ The system <em>might</em> render later events void, for example:
 <p>
 The symbols on the screen represent the situation on the current turn;
 where everything is in your field of vision. The <em>background colours</em>,
-if there are any, always represent effects of last turn; see
+if there are any, always represent effects of the few previous turns; see
 <a href="vision.html">Vision and hearing</a>.</p>
 
 <p>Every time you press a key to take an action (eg. move around), the client
-delivers this request to the server &ndash; even if you somehow do it 10 times a turn.
+delivers this request to the server &mdash; even if you somehow do it 10 times a turn.
 But the server accepts only one action per turn per player, and it will queue
 only a certain number of additional actions per client for processing.</p>
 
@@ -49,6 +49,7 @@ action per turn). If the storage for a client is full, further actions are
 ignored. If the storage is neither empty nor full, the newly arrived
 action is added to it. Actions in the queue are, in the server logic,
 processed <em>after</em> those that are processed immediately, and thus they
-take effect later, too.</p>
+take effect later, too. While this <em>might</em> be beneficial in some rare
+occasions, it is usually not desirable.</p>
 
 </body></html>

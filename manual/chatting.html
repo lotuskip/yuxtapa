@@ -1,7 +1,7 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Chatting and shouting</h2>
-<p>The commands <strong>C</strong> and <strong>s</strong> (default) put you in <em>typing mode</em> where
-you can type something to say; hit enter to say it, or tab/esc to cancel (hitting
+<p>The commands <strong>C</strong> and <strong>s</strong> (these are the defaults) put you in <em>typing mode</em> where
+you can type something to say; hit enter to say it, or <em>tab</em> to cancel (hitting
 enter when you haven't typed anything also cancels, so you won't 'say nothing'.)</p>
 
 <p>The difference between these commands is that <em>shouting</em> is an 'in-game'
@@ -10,7 +10,8 @@ sees what you say in the chat. But when you shout, it's not <em>you</em> who
 shouts but your character! Only the players whose characters are close enough
 to your character will see what you say. This includes spectators. Shouting
 also triggers a sound event, see <a href="vision.html">Vision and hearing</a>. If a PC shouts
-in your line of sight, her '@' is replaced by a '!' for one turn.</p>
+in your line of sight, her '@' is replaced by a '!' for one turn. A message containing
+the the text of the shout is sent to all nearby viewers.</p>
 
 <p>On occasion, shouts are generated automatically. At the moment this happens
 if someone falls into a chasm.</p>
@@ -26,7 +27,7 @@ These always start with an exclamation mark.</p>
 <li><strong>!serverinfo</strong> prints information about the settings of the server into the chat</li>
 <li><strong>!adminlvl [nick]</strong> prints the <a href="adminlevels.html">admin level</a> (AL) of the player with the specified nick</li>
 <li><strong>!teams</strong> prints the current teams</li>
-<li><strong>!dontstatme</strong>: tell the server not to save your statistics; works per-session only (this is not intended so much for
+<li><strong>!dontstatme</strong>: tell the server not to save your information at server shutdown (this is not intended so much for
 shy human players to keep their performance secret, but is used by the <a href="bots.html">Bots</a>)</li>
 </ul></p>
 
@@ -52,12 +53,14 @@ shy human players to keep their performance secret, but is used by the <a href="
 <li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9 at a time</li>
 <li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
 <li><strong>!teambal [o/a/p]</strong> sets the <a href="teambalance.html">Team balance</a> option ([o]ff, [a]ctive, [p]assive)</li>
-<li><strong>!servermsg [new serverinfo]</strong> sets the serverinfo</li>
+<li><strong>!servermsg [new server greeting]</strong> sets the server greeting string</li>
 </ul>
 The last two commands only affect a session; they do not overwrite the settings in the <a href="serverconf.html">Server configuration</a>.</p>
 
 <p>In all the commands that contain [nick], you can use a partial nick. For instance, if there is an 'anonymous' playing
 and you issue '!kick ano', and there is no other player with 'ano' in their name, 'anonymous' gets kicked.</p>
+
+<p>The following commands, and only the following, can be used when muted: !adminlvl, !teams, and !dontstatme.</p>
 
 <p>Note that banning really bans the entire IP. This can have an undesired side-effect of banning a whole
 subnet of people when one player from that IP gets a ban. Also, if you ban bots, that

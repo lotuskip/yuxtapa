@@ -11,6 +11,8 @@
 #include "../common/util.h"
 #ifdef DEBUG
 #include <iostream>
+#include <boost/lexical_cast.hpp>
+#include "log.h"
 #endif
 
 namespace Game { extern Map *curmap; }
@@ -105,7 +107,7 @@ bool test_hit(const list<Player>::iterator def, const char tohit,
 	Coords loc = def->own_pc->getpos();
 	char P = def->cl_props.dv - tohit;
 	char R = random()%20;
-	if(R >= P) // hit
+	if(R >= P || R == 19) // hit
 	{
 		char dam = dadd;
 		while(numdies--)
@@ -1232,7 +1234,12 @@ void progress_chore(const list<Player>::iterator pit)
 			Network::send_to_player(*pit);
 		}
 		break;
-	//default: break; // Reaching this is an error!
+#ifdef DEBUG
+	default: // Reaching this is an error!
+		to_log("Error: progress_chore called with class "
+			+ boost::lexical_cast<string>(short(pit->cl)));
+		break;
+#endif
 	}
 }
 

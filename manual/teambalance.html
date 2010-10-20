@@ -9,11 +9,8 @@ has three possible values:</p>
 the way they want. Even all on one side and no one on the other.</p>
 
 <p><strong>passive</strong>: the server prevents team changes that would make the teams unbalanced.
-In particular, if green team has less players than purple team, joining the purple
-team is not allowed, and switching from the green to the purple team is not allowed
-(leaving the green team in even more trouble by joining the spectators is allowed).
-And the same thing if the purples has less players. In other words, you can join only
-(or switch into) the team that less players.</p>
+In particular, if green team has less players than purple team, switching from green to purple is not allowed.
+And vice versa. In other words, you can only switch into the team that has less players.</p>
 
 <p><strong>active</strong>: in addition to the behaviour of the <em>passive</em> setting, in the active
 mode the server will react to severe inbalance. If one side has two players more than
@@ -22,6 +19,9 @@ the server will send everyone a warning message, telling someone to switch sides
 If the situation isn't remedied by the players in another 40 turns, the server
 will shuffle the teams, placing every non-spectator to a random team, equally many
 to both teams (or one more in the other).</p>
+
+<p>A player joining a team automatically joins the team with less players regardless of the team balance setting, but
+if team balance is off, that player can immediately switch team if she so wishes.</p>
 
 <p>Note that admins can also force a shuffle of the teams, see the list of commands in
 <a href="chatting.html">Chatting and shouting</a>.</p>

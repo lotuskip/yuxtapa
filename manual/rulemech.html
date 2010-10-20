@@ -13,7 +13,7 @@ mean: roll two 8-sided dice, sum the results and reduce 2, or, a random number b
 <p>Determining whether an attack hits:<br>
 Let P := [target's DV] - [attacker's tohit].<br>
 Let R := 1d20-1 (random number 0..19).<br>
-If R &gt;= P, the attack hits.<br>
+If R &gt;= P or R==19, the attack hits.<br>
 If R/P (integer division) &gt;= 2 or R==19, the hit is <em>critical</em>.</p>
 
 <p>Next, roll the damage defined for the attack (see <a href="classov.html">Class overview</a>).
@@ -31,8 +31,14 @@ circular attacks, and booby traps.
 </ul>
 Archery damage and tohit are not affect by rusting (caused by <a href="traps.html">water traps</a>).</p>
 
+<p>To give some idea: the highest probability to hit, when an assassin attacks a wizard, is 95% (with a 90% chance of a critical hit,
+but that makes no difference since wizards have 0 PV). The lowest probability to hit, when a healer attacks an assassin, is
+5% (and a hit is always critical, again meaninglessly in this case since assassins also have 0 PV).
+All other combinations reside somewhere in between. For instance, a fighter attacking a fighter (regular melee attacks):
+55% chance to hit, 10% chance of a critical. Since a fighter has PV 5, 37.5% of non-critical hits deal no damage in this case.</p>
 
-<h3>Spells</h3>
+
+<h3>Spells and magic resistance</h3>
 
 <p>Spells always hit and bypass armour (DV/PV play no role). Damage for a magic missile is 1d5.
 Damage for a zap is 2d5, rolled separately for each hit.</p>
