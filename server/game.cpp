@@ -349,11 +349,9 @@ void Game::init_game()
 			spawn_cycle = min(6*spawn_cycle/5, int(MAX_SPAWN_CYCLE));
 		else if(gamemode == GM_DOM) // Dominion has a shorter spawn_cycle:
 			spawn_cycle = max(5*spawn_cycle/6, int(MIN_SPAWN_CYCLE));
-		else if(gamemode == GM_STEAL)
-		{
-			item_moved = false;
-			pl_with_item = cur_players.end();
-		}
+		// Do these regardless of whether mode is steal or not:
+		item_moved = false;
+		pl_with_item = cur_players.end();
 		break;
 	case IPH_PLACEMENT:
 		do_placement();
@@ -892,8 +890,10 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 		if(pit->team != T_SPEC)
 		{
 			--num_players[pit->team - T_GREEN];
-			player_left_team(pit);
 			pit->team = T_SPEC;
+			kill_player(pit); /* see player_left_team; it won't call this after
+				we've set the team to spec! */
+			player_left_team(pit);
 			pit->cl = pit->next_cl = NO_CLASS;
 			send_state_change(pit);
 			pit->own_vp->set_losr(SPEC_LOS_RAD);

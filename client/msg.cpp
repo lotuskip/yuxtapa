@@ -4,6 +4,7 @@
 #include "../common/utfstr.h"
 #include "../common/constants.h"
 #include "../common/timer.h"
+#include "../common/col_codes.h"
 #include "boost/lexical_cast.hpp"
 
 namespace
@@ -35,7 +36,7 @@ const char CHAT_BUFFER_SIZE = 50;
 
 // cf. e_Team im ../server/players.h
 const string team_ind[4] = { "* ", ": ", " @: ", " @: " };
-const unsigned char team_cpair[4] = { 0, 4, 2, 5 };
+const unsigned char team_cpair[4] = { 0, C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
 
 deque<string> chatbuffer;
 deque<string> chatspeaker;
