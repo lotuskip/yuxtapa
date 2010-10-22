@@ -34,4 +34,11 @@ if test "x$debug" = "xyes"; then
 else
 	CXXFLAGS="-O2 -g0 -fsigned-char"
 fi
+AC_ARG_ENABLE([maptest],
+     [  --enable-maptest     Build server only to debug map generation],
+	 maptest="yes",
+	 maptest="no")
+if test "x$maptest" = "xyes"; then
+    CXXFLAGS+=" -DMAPTEST"
+fi
 AC_OUTPUT

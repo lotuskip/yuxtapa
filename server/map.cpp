@@ -7,7 +7,7 @@
 #include <map>
 #include <vector>
 #include <boost/lexical_cast.hpp>
-#ifdef DEBUG
+#ifdef MAPTEST
 #include <iostream>
 #endif
 #include "../common/constants.h"
@@ -924,8 +924,8 @@ Map::Map(const short size, const short variation, const short players)
 		c.y++;
 	}
 
-	/*DEBUG; print out the map (or at least a part of it) to stderr. */
-#if 0
+	// print out the map (or at least a part of it) to stderr.
+#ifdef MAPTEST
 	string str;
 	for(rowit it = data.begin(); it != data.end(); ++it)
 	{
@@ -933,7 +933,7 @@ Map::Map(const short size, const short variation, const short players)
 		for(vector<Tile>::iterator i = it->begin(); i != it->end(); ++i)
 		{
 			str += i->symbol;
-			if(str.size() > 139)
+			if(str.size() > 158) // this is how many symbols wide my widest xterm view is
 				break;
 		}
 		cerr << str << endl;

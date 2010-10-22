@@ -58,8 +58,20 @@ void next_map_forced()
 }
 
 
+#ifdef MAPTEST
+#include "map.h"
+#endif
 int main(int argc, char *argv[])
 {
+#ifdef MAPTEST
+	unsigned short size;
+	if(argc < 2 || (size = atoi(argv[1])) < 42 || size > 511)
+	{
+		std::cout << "Try: ./yuxtapa_sv [mapsize, 42--511]" << std::endl;
+		return 1;
+	}
+	Map a_map(size, 0, 10); // will generate and print the map	
+#else
 	string str = "";
 	if(argc >= 2)
 		str = argv[1];
@@ -154,5 +166,6 @@ int main(int argc, char *argv[])
 	usage_report();
 	to_log("---------------------------------");
 	store_known_players();
+#endif
 	return 0;
 }

@@ -39,7 +39,8 @@ const string keywords[Config::MAX_INT_SETTING] = {
 const unsigned int hard_lims[Config::MAX_INT_SETTING][2] = {
 { 2, 200 }, // max players
 { Config::TB_OFF, Config::TB_ACTIVE },
-{ 70, 365 }, // map size
+{ 70, 365 }, /* map size; applying the below maximum variance gives
+final map size span of 42--511 */
 { 0, 40 }, // variance
 { 0, 200 }, // classlimit; no real upper limit since 0 means "no limit"
 { 50, 2000 }, // turn ms
