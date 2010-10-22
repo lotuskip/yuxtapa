@@ -23,6 +23,8 @@ const string default_key_bds = "896321475 CscTXuwt+-lQ"; // cf. enum e_Key_bindi
 const string default_nick = "player";
 const string default_anim = "-\\|/";
 
+const string str_ctrl_error = "Config error: cannot use C^? where ? is not a letter!";
+
 string nick = default_nick;
 string anim = default_anim;
 string key_bindings = default_key_bds;
@@ -86,13 +88,45 @@ void Config::read_config(const string servername)
 		}
 		else if(keyw == "key")
 		{
-			ss.seekg(1, ios_base::cur);
-			ss >> noskipws >> ch;
+			keyw = ss.str();
+			if(keyw.size() < 6)
+			{
+				cerr << "Faulty line in config: \'" << keyw << "\'." << endl;
+				continue;
+			}
+			keyw = keyw.substr(4); // drop "key "
+			// Check for C^[x]: (keyw == "C^xA", for instance)
+			if(keyw[0] == 'C' && keyw[1] == '^' && keyw.size() > 3)
+			{
+				if(!isalpha(keyw[2]))
+				{
+					cerr << str_ctrl_error << endl;
+					continue;
+				} // else:
+				ch = tolower(keyw[2]) - 96; // 96 == 'a'-1
+				keyw.erase(0,2); // remove "C^", forcing the replacement to be at index 1
+			}
+			else
+				ch = keyw[0];
 			e_Key_binding kb = convert_key(ch);
 			if(kb != MAX_KEY_BINDING)
-				ss >> key_bindings[kb];
+			{
+				// The replacement could also be C^[x]:
+				if(keyw[1] == 'C' && keyw.size() > 3 && keyw[2] == '^')
+				{
+					if(!isalpha(keyw[3]))
+					{
+						cerr << str_ctrl_error << endl;
+						continue;
+					} // else:
+					ch = tolower(keyw[3]) - 96;
+				}
+				else
+					ch = keyw[1];
+				key_bindings[kb] = ch;
+			}
 			else
-				cerr << "Unknown original key-binding \'" << ch << "\' in config." << endl;
+				cerr << "Unknown original keybinding \'" << ch << "\' in config." << endl;
 			continue;
 		}
 		else if(keyw == "anim")

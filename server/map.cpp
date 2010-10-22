@@ -184,8 +184,8 @@ const float ug_thresholds[NUM_UG_TILES] = {
 	/*1.0...*/0.5f, // wall
 	/*...*/0.35f, // water
 	/*...*/0.1f, // floor (can be switched to rough)
-	/*...*/ -0.1f, // wall
-	/*...*/ -0.5f, //floor (can be switched to rough)
+	/*...*/ -0.15f, // wall
+	/*...*/ -0.6f, //floor (can be switched to rough)
 	/*...-1.0*/-2.0f // chasm
 };
 

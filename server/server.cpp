@@ -70,6 +70,7 @@ int main(int argc, char *argv[])
 		std::cout << "Try: ./yuxtapa_sv [mapsize, 42--511]" << std::endl;
 		return 1;
 	}
+	srandom(time(NULL));
 	Map a_map(size, 0, 10); // will generate and print the map	
 #else
 	string str = "";
