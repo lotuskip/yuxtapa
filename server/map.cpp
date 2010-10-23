@@ -7,7 +7,7 @@
 #include <map>
 #include <vector>
 #include <boost/lexical_cast.hpp>
-#ifdef MAPTEST
+#if defined MAPTEST || defined DEBUG
 #include <iostream>
 #endif
 #include "../common/constants.h"
@@ -105,10 +105,10 @@ void fill2DFractArray(float *fa, const int size, const float h)
 	// so we don't just randomize them (that can lead to maps that all almost
 	// completely flooded or contain almost solely rock...)
 	vector<float> seeds(4);
-	seeds[0] = .8f + fractRand(.2f);
-	seeds[1] = fractRand(.4f);
-	seeds[2] = fractRand(.4f);
-	seeds[3] = -.8f + fractRand(.2f);
+	seeds[0] = .8f + fractRand(.2f); // (0.6,1.0)
+	seeds[1] = fractRand(.4f); // (-0.4,0.4)
+	seeds[2] = fractRand(.4f); // (-0.4,0.4)
+	seeds[3] = -.8f + fractRand(.2f); //(-1.0,-0.6)
 
 	vector<float>::iterator it = seeds.begin()+random()%4;
 	fa[0] = *it;
@@ -162,6 +162,10 @@ void fill2DFractArray(float *fa, const int size, const float h)
 
 ///////////////////////////////////////////////////////////////////
 
+/* Once the random absract fractal (a table of floats!) is created using the
+ * above code, we paint it with map tiles, using the following threshold
+ * values (outdoor and dungeon separately): */
+
 const char NUM_OD_TILES = 9;
 const Tile outdoor_tiles[NUM_OD_TILES] = { T_WALL, T_WATER, T_SWAMP, T_TREE,
 	T_GROUND, T_ROAD, T_FLOOR, T_ROUGH, T_WALL };
@@ -177,16 +181,17 @@ const float od_thresholds[NUM_OD_TILES] = {
 	/*...-1.0*/-2.0f // wall
 };
 
-const char NUM_UG_TILES = 6;
+const char NUM_UG_TILES = 7;
 const Tile underground_tiles[NUM_UG_TILES] = { T_WALL, T_WATER, T_FLOOR,
-	T_WALL, T_FLOOR, T_CHASM };
+	T_WALL, T_FLOOR, T_CHASM, T_WALL };
 const float ug_thresholds[NUM_UG_TILES] = {
 	/*1.0...*/0.5f, // wall
 	/*...*/0.35f, // water
 	/*...*/0.1f, // floor (can be switched to rough)
-	/*...*/ -0.15f, // wall
-	/*...*/ -0.6f, //floor (can be switched to rough)
-	/*...-1.0*/-2.0f // chasm
+	/*...*/-0.1f, // wall
+	/*...*/-0.52f, //floor (can be switched to rough)
+	/*...*/-0.59f, // chasm
+	/*...-1.0*/-2.0f // wall
 };
 
 ///////////////////////////////////////////////////////////////////
@@ -195,13 +200,24 @@ const float ug_thresholds[NUM_UG_TILES] = {
  * The house building routines follow. These look horrible and
  * are probably too poorly commented. But it works! Somewhat.
  */
-const char MINSIZE = 4; // Minimum size of a house; DO NOT CHANGE
+const char MINSIZE = 4; // Minimum size of a house; DO NOT CHANGE!
 const char MAX_HOUSE_SIZE = 15; // Max size; should be at least MINSIZE+2
 const char CHANCE_NO_WALLS = 15; // % of having no interior walls whatsoever
 const char CHANCE_WINDOW = 20;
 const char CHANCE_DOOR = 35;
 
+// buffer to hold a house while it's being generated
 char house[MAX_HOUSE_SIZE*MAX_HOUSE_SIZE];
+/* Symbols used:
+ * '#*: outer wall
+ * 'H': inner wall
+ * '+': a door
+ * '_': a tile not covered by the house
+ * 'A': floor, "an inner wall could start here"
+ * 'B': floor, "an inner wall could end here"
+ * '.': fixed to be floor
+ * ',': interior, not yet fixed to be floor
+ */
 
 bool wall_space_check(e_Dir backdir, const Coords c)
 {
@@ -721,6 +737,126 @@ void gen_house(const bool outdoor)
 	} // add doors/windows loop
 } // gen_house
 
+///////////////////////////////////////////////////////////////////
+
+/* We'll typically generate a number of houses, and place them using
+ * one of the following algorithms. */
+
+// 'circular' places the house in a circle
+void fill_hc_circular(vector<Coords> &hc, const char num, const short size)
+{
+	// putting just one point onto a circle is silly:
+	if(num == 1)
+	{
+		hc[0].x = size/3 + random()%(size/3);
+		hc[0].y = size/3 + random()%(size/3);
+		return;
+	}
+	// The angle between the points, 2Pi/num:
+	float theta = 6.28318f/num;
+	// We want the points to be at a *walking* distance of MAX_HOUSE_SIZE+1:
+	short rad = (MAX_HOUSE_SIZE+1)/max(abs(1.0f-cos(theta)), abs(sin(theta)))+1;
+	/* NOTE: the maximum number of houses being limited by map size should
+	 * ensure that rad cannot be too large. If rad is too large the houses
+	 * will be put outside of the map... */
+	if(rad >= size/2 - MAX_HOUSE_SIZE)
+	{
+#ifdef DEBUG
+		cerr << "Debug warning: circular house placement has too big radius!" << endl;
+#endif
+		rad = size/2 - MAX_HOUSE_SIZE - 1;
+	}
+	for(char i = 0; i < num; ++i)
+	{
+		hc[i].x = size/2 + rad*cos(theta*i);
+		hc[i].y = size/2 + rad*sin(theta*i);
+	}
+}
+
+// 'old' because this was the only method used in version 1. It's been modified
+// since.
+void fill_hc_old(vector<Coords> &hc, const char num, const short size)
+{
+	hc[0].x = size/3 + random()%(size/3);
+	hc[0].y = size/3 + random()%(size/3);
+	for(char i = 1; i < num; ++i)
+	{
+		hc[i].x = hc[i-1].x + MAX_HOUSE_SIZE + 1 + random()%MAX_HOUSE_SIZE;
+		hc[i].y = hc[i-1].y + random()%7 - 3;
+		if(hc[i].x >= size - MAX_HOUSE_SIZE - 1) // wen't too far
+		{
+			hc[i].x = 2 + random()%10;
+			hc[i].y += MAX_HOUSE_SIZE + 1 + random()%MAX_HOUSE_SIZE;
+			if(hc[i].y >= size - MAX_HOUSE_SIZE - 1)
+				hc[i].y = 2 + random()%10;
+		}
+	}
+}
+
+// 'mainst' makes a "main street"; two lines of houses
+void fill_hc_mainst(vector<Coords> &hc, const char num, const short size)
+{
+	Coords c1, c2;
+	// random edge points, not too close to corners
+	if(random()%2)
+	{
+		c1.x = (random()%2)*(size-1);
+		c1.y = random()%(size/3)+size/3;
+	}
+	else
+	{
+		c1.y = (random()%2)*(size-1);
+		c1.x = random()%(size/3)+size/3;
+	}
+	// Place c2 on another edge:
+	if(!(c1.x % (size-1))) // opposite x-wise
+	{
+		c2.x = (c1.x + size-1)%(2*(size-1));
+		c2.y = random()%(size/3)+size/3;
+	}
+	else // opposite y-wise
+	{
+		c2.y = (c1.y + size-1)%(2*(size-1));
+		c2.x = random()%(size/3)+size/3;
+	}
+	// If necessary, switch so that c1 is closer to (0,0):
+	if(c1.dist_walk(Coords(0,0)) > c2.dist_walk(Coords(0,0)))
+	{
+		Coords tmp = c1;
+		c1 = c2;
+		c2 = tmp;
+	}
+	// The directional vector of the "street":
+	Coords v(c2.x - c1.x, c2.y - c1.y);
+	// The normal of the directional vector, shrunk:
+	Coords p(-v.y, v.x);
+	float len = p.dist_eucl(Coords(0,0));
+	p.x = p.x*2*MAX_HOUSE_SIZE/(3*len);
+	p.y = p.y*2*MAX_HOUSE_SIZE/(3*len);
+	// Determine step (how far "down the street" the next houses are):
+	v.x /= num+1;
+	if(v.x > 3*MAX_HOUSE_SIZE/2)
+		v.x = 3*MAX_HOUSE_SIZE/2;
+	v.y /= num+1;
+	if(v.y > 3*MAX_HOUSE_SIZE/2)
+		v.y = 3*MAX_HOUSE_SIZE/2;
+	// Place the coords:
+	for(char i = 0; i < num; i += 2)
+	{
+		hc[i].x = c1.x + (i+1)*v.x + p.x;
+		hc[i].y = c1.y + (i+1)*v.y + p.y;
+		if(i+1 < num)
+		{
+			hc[i+1].x = c1.x + (i+1)*v.x - p.x;
+			hc[i+1].y = c1.y + (i+1)*v.y - p.y;
+		}
+	}
+}
+
+// Use function pointers to easily pick a random algorithm:
+const char NUM_FHC_FUNCTIONS = 3;
+void (*fill_hcoord_func[NUM_FHC_FUNCTIONS])(vector<Coords> &hc, const char num,
+	const short size) = { fill_hc_circular, fill_hc_old, fill_hc_mainst };
 
 } // end local namespace
 
@@ -731,6 +867,7 @@ bool operator<(const Tile &lhs, const Tile &rhs)
 }
 
 
+// Here the map is generated.
 Map::Map(const short size, const short variation, const short players)
 {
 	// randomise map size
@@ -772,8 +909,9 @@ Map::Map(const short size, const short variation, const short players)
 	const Tile *tiles;
 	char num_tile_types;
 	// Determine whether we are making an outdoor map:
-	if((outdoor = random()%2)) // best values for h are in the range 0.08--0.2
+	if((outdoor = random()%2))
 	{
+		// best values for h are in the range 0.08--0.2:
 		h = 0.14f + fractRand(.06f);
 		thresholds = od_thresholds;
 		tiles = outdoor_tiles;
@@ -813,7 +951,7 @@ Map::Map(const short size, const short variation, const short players)
     }
 	delete[] mesh;
 
-	// If we are creating an underground map, we must randomly change
+	// If we are creating an underground map, we randomly change
 	// the floor tiles to rough tiles:
 	if(!outdoor)
 	{
@@ -827,77 +965,78 @@ Map::Map(const short size, const short variation, const short players)
 		}
 	}
 
-	// Next, we create some houses.
-	char num_houses = random()%(6 + 20*mapsize/450);
+	// Next, we create some houses. The map is inhabited if the number of houses
+	// is high enough.
+	char num_houses = random()%(6 + 20*mapsize/450); // rand()%(7...22)
 	inhabited = (num_houses >= 3 + 20*mapsize/900);
-	Coords c(mapsize/3 + random()%(mapsize/2), mapsize/3 + random()%(mapsize/2));
-	char ch;
-	for(; num_houses > 0; --num_houses)
+	if(num_houses)
 	{
-		gen_house(outdoor);
-		// That generated a "house pattern" to the table 'house'. Now we
-		// must apply this pattern to a location on the actual map.
-		// First loop blows up areas around doors&windows:
-		for(i = 0; i < MAX_HOUSE_SIZE; ++i)
+		vector<Coords> hcoords(num_houses);
+		fill_hcoord_func[rand()%NUM_FHC_FUNCTIONS](hcoords, num_houses, mapsize);
+		vector<Coords>::const_iterator ci;
+		char ch;
+		for(; num_houses > 0; --num_houses)
 		{
-			for(j = 0; j < MAX_HOUSE_SIZE; ++j)
+			ci = hcoords.begin();
+			/*if(ci->x < 0 || ci->y < 0)
+				continue;*/
+			gen_house(outdoor);
+			// That generated a "house pattern" to the table 'house'. Now we
+			// must apply this pattern to the location 'ci' on the actual map (with
+			// 'ci' giving the NW corner of, not the house, but the house buffer).
+			// First loop blows up areas around doors&windows:
+			for(i = 0; i < MAX_HOUSE_SIZE; ++i)
 			{
-				ch = house[j*MAX_HOUSE_SIZE+i];
-				if(ch == '+')
+				for(j = 0; j < MAX_HOUSE_SIZE; ++j)
 				{
-					if(outdoor)
-						add_patch(Coords(c.x+i, c.y+j), T_ROAD);
-					else
-						add_patch(Coords(c.x+i, c.y+j), T_FLOOR);
-				}
-				else if(ch == '|' || ch == '-')
-					add_patch(Coords(c.x+i, c.y+j), T_GROUND);
-			}
-		}
-		// Second run actually puts the house there:
-		for(i = 0; i < MAX_HOUSE_SIZE; ++i)
-		{
-			if(c.x+i >= mapsize)
-				break;
-			for(j = 0; j < MAX_HOUSE_SIZE; ++j)
-			{
-				if(c.y+j >= mapsize)
-					break;
-				tp = mod_tile(c.x + i, c.y + j);
-				switch(house[j*MAX_HOUSE_SIZE+i])
-				{
-				case 'A': case 'B': case ',': case '.':
-					*tp = T_FLOOR; break;
-				case 'H': case '#':
-					*tp = T_WALL; break;
-				case '+':
-					*tp = T_DOOR;
-					if(random()%2) // open instead of closed
+					ch = house[j*MAX_HOUSE_SIZE+i];
+					if(ch == '+')
 					{
-						tp->symbol = '\\';
-						tp->flags |= TF_WALKTHRU|TF_SEETHRU;
+						if(outdoor)
+							add_patch(Coords(ci->x+i, ci->y+j), T_ROAD);
+						else
+							add_patch(Coords(ci->x+i, ci->y+j), T_FLOOR);
 					}
-					break;
-				case '|': case '-':
-					*tp = T_WINDOW;
-					tp->symbol = house[j*MAX_HOUSE_SIZE+i];
-					break;
-				// default: do nothing
+					else if(ch == '|' || ch == '-')
+						add_patch(Coords(ci->x+i, ci->y+j), T_GROUND);
 				}
 			}
-		}
+			// Second run actually puts the house there:
+			for(i = 0; i < MAX_HOUSE_SIZE; ++i)
+			{
+				if(ci->x+i >= mapsize)
+					break;
+				for(j = 0; j < MAX_HOUSE_SIZE; ++j)
+				{
+					if(ci->y+j >= mapsize)
+						break;
+					tp = mod_tile(ci->x + i, ci->y + j);
+					switch(house[j*MAX_HOUSE_SIZE+i])
+					{
+					case 'A': case 'B': case ',': case '.':
+						*tp = T_FLOOR; break;
+					case 'H': case '#':
+						*tp = T_WALL; break;
+					case '+':
+						*tp = T_DOOR;
+						if(random()%2) // open instead of closed
+						{
+							tp->symbol = '\\';
+							tp->flags |= TF_WALKTHRU|TF_SEETHRU;
+						}
+						break;
+					case '|': case '-':
+						*tp = T_WINDOW;
+						tp->symbol = house[j*MAX_HOUSE_SIZE+i];
+						break;
+					// default: do nothing
+					}
+				}
+			}
 
-		// Set location for next house:
-		c.x += 3*MAX_HOUSE_SIZE/2 + random()%MAX_HOUSE_SIZE;
-		c.y += random()%7 - 3;
-		if(c.x >= mapsize - MAX_HOUSE_SIZE - 1) // wen't too far
-		{
-			c.x = 2 + random()%10;
-			c.y += 3*MAX_HOUSE_SIZE/2 + random()%MAX_HOUSE_SIZE;
-			if(c.y >= mapsize - MAX_HOUSE_SIZE - 1)
-				c.y = 2 + random()%10;
-		}
-	}
+			hcoords.erase(hcoords.begin());
+		} // loop creating houses
+	} // if create houses
 
 	// Always finish with the boundary:
 	rowit rit = data.begin();
@@ -912,6 +1051,7 @@ Map::Map(const short size, const short variation, const short players)
 
 	// Finally, initialize the BY_WALL flags (this might be doable faster, too)
 	// Note that no need to init for the edge since it's undiggable.
+	Coords c;
 	c.y = 1;
 	while(c.y < mapsize-1)
 	{
@@ -938,6 +1078,9 @@ Map::Map(const short size, const short variation, const short players)
 		}
 		cerr << str << endl;
 	}
+	cerr << "h=" << h;
+	if(inhabited) cerr << "; inhabited";
+	cerr << endl;
 #endif
 }
 
@@ -1002,6 +1145,7 @@ bool Map::point_out_of_map(const Coords &c) const
 }
 
 
+// Create a "circular" (the "wrong circular") patch with Tile t at c, rad. 2-4
 void Map::add_patch(const Coords c, const Tile t)
 {
 	char radius = random()%3 + 2; //2..4
