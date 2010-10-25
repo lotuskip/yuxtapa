@@ -84,17 +84,19 @@ int main(int argc, char *argv[])
 	}
 
 	using namespace Config;
-	read_config();
-	init_known_players(str == print_stats_handle);
-
 	if(str == print_stats_handle)
 	{
+		init_known_players(true);
 		output_stats();
 		return 0;
 	}
-	/*else*/if(!str.empty())
+	// else going to start the server for real
+	std::cout << "(__)uxtapa " << VERSION << std::endl;
+	std::cout << " ._)" << std::endl << std::endl;
+	if(!str.empty())
 		std::cout << "Uknown argument \"" << str << '\"' << std::endl;
-
+	read_config();
+	init_known_players(false);
 	SIGINT_Handler sigint_handler;
 	SIGQUIT_Handler sigquit_handler;
 	Signal_Handler::instance()->register_handler(SIGINT, &sigint_handler);

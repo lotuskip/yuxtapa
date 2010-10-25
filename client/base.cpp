@@ -108,9 +108,7 @@ bool Base::init_ncurses()
 	raw();
 	keypad(stdscr, TRUE);
 	noecho();
-	timeout(50); /* ms to wait for keyboard input upon a getch() call. Might
-	have to experiment with this. Zero is ridiculous (makes the client a CPU
-	hog), and too high might make it respond too slow. */
+	timeout(GETCH_TIMEOUT);
 	nonl();
 
 	// init base colours first: (with black background)

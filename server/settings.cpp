@@ -65,10 +65,7 @@ void Config::read_config()
 	for(i = 0; i < MAX_INT_SETTING; ++i)
 		int_settings[i] = default_sets[i];
 
-	string s;
-	confdir_str = s = get_conf_dir();
-	s += "server.conf";
-
+	string s = get_config_dir() + "server.conf";
 	ifstream file(s.c_str());
 	string keyw;
 	if(!file)
@@ -208,7 +205,13 @@ void Config::read_config()
 }
 
 
-string &Config::get_config_dir() { return confdir_str; }
+string &Config::get_config_dir()
+{
+	if(confdir_str.empty())
+		confdir_str = get_conf_dir();
+	return confdir_str;
+}
+
 string &Config::greeting_str() { return greeting; }
 void Config::set_greeting_str(const string &s) { greeting = s; }
 

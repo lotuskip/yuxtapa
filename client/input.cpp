@@ -23,7 +23,6 @@ using namespace std;
  * they don't, these constants should be defined separately for those
  * platforms (using precompiler #if .. #else if ... #else ... #endif) */
 const char KEYCODE_ENTER = 13; // != '\n'
-const char KEYCODE_INT = 3; // ^C
 
 vector<string> prev_strs;
 vector<string>::const_iterator prev_str_it;
@@ -135,6 +134,10 @@ bool check_typing()
 			}
 			else if(!prev_strs.empty())
 				set_typed_str(*(prev_str_it = prev_strs.begin()));
+			break;
+		case KEY_NPAGE: // pageDown
+			prev_str_it = prev_strs.end();
+			set_typed_str("");
 			break;
 		default: // unknown control key
 			return false;

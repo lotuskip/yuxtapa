@@ -22,12 +22,13 @@
 #include <vector>
 #include <ctime>
 #include <boost/lexical_cast.hpp>
+#include <ncurses.h>
 
 namespace
 {
 using namespace std;
 
-const short CONNECTION_ATTEMPTS = 5;
+const short CONNECTION_ATTEMPTS = 3;
 SerialBuffer recv_buffer, send_buffer;
 const string serversfile_name = "servers";
 
@@ -131,9 +132,11 @@ bool Network::connect(string &errors)
 	string sip = Config::get_server_ip(); // this is just what was read from the config; could be garbage!
 	string port = "", ip = "";
 	size_t i;
-	if((i = sip.find(':')) != string::npos)
+	if((i = sip.rfind(':')) != string::npos && i > 1 && i != sip.size()-1)
 	{
 		port = sip.substr(i+1);
+		if(sip.rfind(':', i-1) != string::npos) // two ':'s imply IPv6 (or garbage...)
+			--i; // there is "::", not just ":" before the port
 		ip = sip.substr(0, i);
 	}
 	else
@@ -174,12 +177,12 @@ bool Network::connect(string &errors)
 	add_msg("Connecting to " + sip + "...", 7);
 	// construct a hello message:
 	send_buffer.add((unsigned char)MID_HELLO);
-	send_buffer.add(GAME_VERSION);
+	send_buffer.add(INTR_VERSION);
 	add_id_info_for_server(sip);
 	send_buffer.add(Config::get_nick());
 	
 	// send hello message (repeatedly) and wait for a reply
-	time_t sendtime;
+	int k;
 	for(int j = 0; j < CONNECTION_ATTEMPTS; ++j)
 	{
 		if(do_send())
@@ -189,38 +192,42 @@ bool Network::connect(string &errors)
 			freeaddrinfo(servinfo);
 			return false;
 		}
-		// Wait for the reply up to 2 second before resending:
-		sendtime = time(NULL);
-		do
+		// Wait for the reply (the timeout on the getch() call will delay):
+		for(k = 0; k < 2000/GETCH_TIMEOUT; ++k) // aim for 2 seconds wait
 		{
-		if(do_receive() != -1)
-		{
-			// got *some* message
-			unsigned char mid = recv_buffer.read_ch();
-			switch(mid)
+			if(do_receive() != -1)
 			{
-			case MID_HELLO: return true;
-			case MID_HELLO_FULL:
-			case MID_HELLO_BANNED:
-			case MID_HELLO_VERSION:
-			case MID_HELLO_STEAL:
-				cout << hello_errors[mid - MID_HELLO_FULL] << endl;
-				close(s_me);
-				freeaddrinfo(servinfo);
+				// got *some* message
+				unsigned char mid = recv_buffer.read_ch();
+				switch(mid)
+				{
+				case MID_HELLO: return true;
+				case MID_HELLO_FULL:
+				case MID_HELLO_BANNED:
+				case MID_HELLO_VERSION:
+				case MID_HELLO_STEAL:
+					errors = hello_errors[mid - MID_HELLO_FULL];
+					close(s_me);
+					freeaddrinfo(servinfo);
+					return false;
+				case MID_HELLO_NEWID:
+				{
+					cur_id = recv_buffer.read_sh();
+					string passw;
+					recv_buffer.read_str(passw);
+					store_id_for_server(cur_id, sip, passw);
+					return true;
+				}
+				default: break; // some other message; our reply probably got lost on the way
+				}
+			} // received something
+			if(getch() == KEYCODE_INT)
+			{
+				errors = "Aborted by user.";
 				return false;
-			case MID_HELLO_NEWID:
-			{
-				cur_id = recv_buffer.read_sh();
-				string passw;
-				recv_buffer.read_str(passw);
-				store_id_for_server(cur_id, sip, passw);
-				return true;
 			}
-			default: break; // some other message; our reply probably got lost on the way
-			}
-		} // received something
-		} while(time(NULL) - sendtime < 2);
-	}
+		} // listen for connections loop
+	} // send connection requests loop
 	errors = "Did not get a reply from the server.";
 	close(s_me);
 	freeaddrinfo(servinfo);

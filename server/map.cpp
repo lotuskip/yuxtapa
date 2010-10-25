@@ -27,7 +27,13 @@ const Tile T_CHASM = { TF_WALKTHRU|TF_SEETHRU|TF_KILLS, ' ', C_FLOOR };
 const Tile T_SWAMP = { TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU, '\"', C_TREE };
 const Tile T_ROUGH = { TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU, ';', C_WALL };
 const Tile T_WATER = { TF_WALKTHRU|TF_SEETHRU|TF_DROWNS, '~', C_WATER };
-const Tile T_ROAD = { TF_WALKTHRU|TF_SEETHRU, '.', C_ROAD };
+const Tile T_ROAD = { TF_WALKTHRU|TF_SEETHRU,
+#ifdef MAPTEST
+','
+#else
+'.'
+#endif
+, C_ROAD };
 const Tile T_DOOR = { 0, '+', C_DOOR };
 const Tile T_WINDOW = { TF_SEETHRU, '|', C_WALL };
 
@@ -67,16 +73,16 @@ float avgDiamondVals(const int i, const int j, const int stride,
 	const int size, const int subSize, const float *fa)
 {
     if(!i)
-		return float(fa[(i*size) + j-stride] + fa[(i*size) + j+stride]
+		return (fa[(i*size) + j-stride] + fa[(i*size) + j+stride]
 		+ fa[((subSize-stride)*size) + j] + fa[((i+stride)*size) + j])*.25f;
     if(i == size-1)
-		return float(fa[(i*size) + j-stride] + fa[(i*size) + j+stride]
+		return (fa[(i*size) + j-stride] + fa[(i*size) + j+stride]
 		+ fa[((i-stride)*size) + j] + fa[((0+stride)*size) + j])*.25f;
     if(!j)
-		return float(fa[((i-stride)*size) + j] + fa[((i+stride)*size) + j]
+		return (fa[((i-stride)*size) + j] + fa[((i+stride)*size) + j]
 		+ fa[(i*size) + j+stride] +	 fa[(i*size) + subSize-stride])*.25f;
     if(j == size-1)
-		return float(fa[((i-stride)*size) + j] + fa[((i+stride)*size) + j]
+		return (fa[((i-stride)*size) + j] + fa[((i+stride)*size) + j]
 		+ fa[(i*size) + j-stride] + fa[(i*size) + 0+stride])*.25f;
     return float(fa[((i-stride)*size) + j] + fa[((i+stride)*size) + j]
 		+ fa[(i*size) + j-stride] + fa[(i*size) + j+stride])*.25f;
@@ -85,9 +91,8 @@ float avgDiamondVals(const int i, const int j, const int stride,
 float avgSquareVals(const int i, const int j, const int stride, const int size,
 	const float *fa)
 {
-    return float(fa[((i-stride)*size) + j-stride]
-		+ fa[((i-stride)*size) + j+stride] + fa[((i+stride)*size) + j-stride]
-		+ fa[((i+stride)*size) + j+stride])*.25f;
+    return (fa[((i-stride)*size) + j-stride] + fa[((i-stride)*size) + j+stride]
+		+ fa[((i+stride)*size) + j-stride] + fa[((i+stride)*size) + j+stride])*.25f;
 }
 
 /*
@@ -103,13 +108,17 @@ void fill2DFractArray(float *fa, const int size, const float h)
 
 	// Initialize the corner values. This greatly affects the final outcome,
 	// so we don't just randomize them (that can lead to maps that all almost
-	// completely flooded or contain almost solely rock...)
+	// completely flooded or contain almost solely rock (which, admittedly,
+	// still happens now but less often! I have not been able to find fixed
+	// seeds that would (a) yield interesting maps, and (b) never result in
+	// stupid maps.))
 	vector<float> seeds(4);
-	seeds[0] = .8f + fractRand(.2f); // (0.6,1.0)
-	seeds[1] = fractRand(.4f); // (-0.4,0.4)
-	seeds[2] = fractRand(.4f); // (-0.4,0.4)
-	seeds[3] = -.8f + fractRand(.2f); //(-1.0,-0.6)
+	seeds[0] = 0.75f + fractRand(0.25f); // (0.5,1.0)
+	seeds[1] = fractRand(0.5f); // (-0.5,0.5)
+	seeds[2] = fractRand(0.5f); // (-0.5,0.5)
+	seeds[3] = -0.75f + fractRand(0.25f); //(-1.0,-0.5)
 
+	// Assign those randomly to the four corners:
 	vector<float>::iterator it = seeds.begin()+random()%4;
 	fa[0] = *it;
 	seeds.erase(it);
@@ -166,31 +175,40 @@ void fill2DFractArray(float *fa, const int size, const float h)
  * above code, we paint it with map tiles, using the following threshold
  * values (outdoor and dungeon separately): */
 
-const char NUM_OD_TILES = 9;
-const Tile outdoor_tiles[NUM_OD_TILES] = { T_WALL, T_WATER, T_SWAMP, T_TREE,
-	T_GROUND, T_ROAD, T_FLOOR, T_ROUGH, T_WALL };
+const char NUM_OD_TILES = 13;
+const Tile outdoor_tiles[NUM_OD_TILES] = { T_WALL, T_WATER, T_GROUND, T_WATER,
+	T_SWAMP, T_TREE, T_GROUND, T_TREE, T_ROAD, T_GROUND, T_FLOOR, T_ROUGH,
+	T_WALL };
 const float od_thresholds[NUM_OD_TILES] = {
-	/*1.0...*/0.8f, // wall
-	/*...*/0.5f, // water
-	/*...*/0.4f, // swamp
+	/*1.0...*/0.72f, // wall
+	/*...*/0.64f, // water
+	/*...*/0.5f, // ground (grass)
+	/*...*/0.42f, // water
+	/*...*/0.31f, // swamp
 	/*...*/0.25f, // tree
-	/*...*/-0.1f, // ground (grass)
-	/*...*/-0.2f, // road
-	/*...*/-0.35f, // floor (rock)
-	/*...*/-0.5f, // rough
+	/*...*/0.1f, // ground
+	/*...*/0.02f, // tree
+	/*...*/-0.1f, // road
+	/*...*/-0.28f, // ground
+	/*...*/-0.36f, // floor (rock)
+	/*...*/-0.50f, // rough
 	/*...-1.0*/-2.0f // wall
 };
 
-const char NUM_UG_TILES = 7;
-const Tile underground_tiles[NUM_UG_TILES] = { T_WALL, T_WATER, T_FLOOR,
-	T_WALL, T_FLOOR, T_CHASM, T_WALL };
+const char NUM_UG_TILES = 11;
+const Tile underground_tiles[NUM_UG_TILES] = { T_WALL, T_WATER, T_WALL, T_FLOOR,
+	T_WATER, T_FLOOR, T_WALL, T_FLOOR, T_CHASM, T_FLOOR, T_WALL };
 const float ug_thresholds[NUM_UG_TILES] = {
-	/*1.0...*/0.5f, // wall
-	/*...*/0.35f, // water
-	/*...*/0.1f, // floor (can be switched to rough)
-	/*...*/-0.1f, // wall
-	/*...*/-0.52f, //floor (can be switched to rough)
-	/*...*/-0.59f, // chasm
+	/*1.0...*/0.6f, // wall
+	/*...*/0.49f, // water
+	/*...*/0.2f, // wall
+	/*...*/0.3f, // floor (can be switched to rough)
+	/*...*/0.2f, // water
+	/*...*/0.12f, // floor (can be switched to rough)
+	/*...*/-0.3f, // wall
+	/*...*/-0.37f, //floor (can be switched to rough)
+	/*...*/-0.5f, // chasm
+	/*...*/-0.58f, //floor (can be switched to rough)
 	/*...-1.0*/-2.0f // wall
 };
 
@@ -867,12 +885,12 @@ bool operator<(const Tile &lhs, const Tile &rhs)
 }
 
 
-// Here the map is generated.
+// Here the whole map is generated.
 Map::Map(const short size, const short variation, const short players)
 {
 	// randomise map size
 	mapsize = size;
-	short sh = int(size)*variation/100;
+	unsigned short sh = int(size)*variation/100;
 	if(sh)
 		mapsize += (random() % (2*sh)) - sh;
 	
@@ -896,7 +914,7 @@ Map::Map(const short size, const short variation, const short players)
 	
 	// Now we start generating the map content. The first step is to generate
 	// the background using something like 2D-fractals. The algorith requires
-	// a square with side length a power of to. Figure out smallest possible:
+	// a square with side length a power of two. Figure out smallest possible:
 	sh = 64;
 	while(sh < mapsize)
 		sh <<= 1;
@@ -911,15 +929,15 @@ Map::Map(const short size, const short variation, const short players)
 	// Determine whether we are making an outdoor map:
 	if((outdoor = random()%2))
 	{
-		// best values for h are in the range 0.08--0.2:
-		h = 0.14f + fractRand(.06f);
+		// best values for h are in the range 0.28--0.34
+		h = 0.31f + fractRand(0.03f);
 		thresholds = od_thresholds;
 		tiles = outdoor_tiles;
 		num_tile_types = NUM_OD_TILES;
 	}
-	else // underground, best values for h seem to be 0.3--0.45
+	else // underground, best values for h seem to be 0.4--0.5
 	{
-		h = 0.375f + fractRand(.075f);
+		h = 0.45f + fractRand(0.05f);
 		thresholds = ug_thresholds;
 		tiles = underground_tiles;
 		num_tile_types = NUM_UG_TILES;
@@ -931,7 +949,6 @@ Map::Map(const short size, const short variation, const short players)
     short i, j;
 	char k;
 	Tile *tp;
-	--sh;
     for(i = 0; i < mapsize; ++i)
 	{
 		for(j = 0; j < mapsize; ++j)
@@ -939,9 +956,9 @@ Map::Map(const short size, const short variation, const short players)
 			tp = mod_tile(i, j);
 			for(k = 0; k < num_tile_types; ++k)
 			{
-				// The last test (when k = num_tile_types-1) always
+				// The last test (when k == num_tile_types-1) always
 				// succeeds, since the mesh values are -1...1!
-				if(mesh[(i*sh)+j] > thresholds[k])
+				if(mesh[(j*sh)+i] > thresholds[k])
 				{
 					*tp = tiles[k];
 					break;
@@ -951,10 +968,67 @@ Map::Map(const short size, const short variation, const short players)
     }
 	delete[] mesh;
 
-	// If we are creating an underground map, we randomly change
-	// the floor tiles to rough tiles:
+	// If we are creating an underground map, we add corridors and randomly
+	// change the floor tiles to rough tiles:
+	char ch;
 	if(!outdoor)
 	{
+		// Corridor algorithm; kind of like maze generation:
+		ch = random()%8 + 8; // 8--15
+		sh = mapsize/ch;
+		Coords cell(random()%sh, random()%sh), cell2;
+		vector<Coords> mazed(1, cell);
+		bool widen;
+		e_Dir d;
+		for(;;)
+		{
+			// set cell2 to a rand neighbour of 'cell' which is not in 'mazed':
+			d = e_Dir(random()%MAX_D);
+			for(i = 0; i < MAX_D; ++i)
+			{
+				cell2 = cell.in(d);
+				if(cell2.x >= 0 && cell2.y >= 0 && cell2.x < sh && cell2.y < sh
+					&& find(mazed.begin(), mazed.end(), cell2) == mazed.end())
+					break; // this will do
+				++d;
+			}
+			if(i == MAX_D) // no suitable neighbours available!
+			{
+				// This means 'cell' is an end of a corridor; make a patch
+				// of floor there, possibly:
+				if(random()%2)
+					add_patch(Coords(cell.x*ch+ch/2, cell.y*ch+ch/2), T_FLOOR);
+				// see if have generated enough (5/8 a mapfull):
+				if(mazed.size() < 5u*sh*sh/8u) // no
+				{
+					// try again, with a different 'cell':
+					cell2 = cell; // store old value of 'cell'
+					do cell = mazed[random()%mazed.size()];
+					while(cell == cell2);
+					continue;
+				}
+				else // yes
+					break;
+			} // else:
+			mazed.push_back(cell2);
+			// make a corridor between 'cell' and 'cell2'
+			widen = random()%3; // every 3rd corridor is wide
+			cell.x = cell.x*ch + ch/2; // convert cells to middle pt coords
+			cell.y = cell.y*ch + ch/2;
+			cell2.x = cell2.x*ch + ch/2;
+			cell2.y = cell2.y*ch + ch/2;
+			while(!(cell == cell2))
+			{
+				data[cell.y][cell.x] = T_FLOOR;
+				if(widen)
+					data[cell.y+1][cell.x] = T_FLOOR;
+				cell = cell.in(d);
+			}
+			// prepare for next run:
+			cell = mazed[random()%mazed.size()];
+		}
+
+		// Change of floor->rough:
 		for(i = 0; i < mapsize; ++i)
 		{
 			for(j = 0; j < mapsize; ++j)
@@ -967,14 +1041,13 @@ Map::Map(const short size, const short variation, const short players)
 
 	// Next, we create some houses. The map is inhabited if the number of houses
 	// is high enough.
-	char num_houses = random()%(6 + 20*mapsize/450); // rand()%(7...22)
-	inhabited = (num_houses >= 3 + 20*mapsize/900);
+	char num_houses = random()%(19*(mapsize+42)/469); // rand()%(3...22)
+	inhabited = (num_houses >= 19*(mapsize+42)/938);
 	if(num_houses)
 	{
 		vector<Coords> hcoords(num_houses);
 		fill_hcoord_func[rand()%NUM_FHC_FUNCTIONS](hcoords, num_houses, mapsize);
 		vector<Coords>::const_iterator ci;
-		char ch;
 		for(; num_houses > 0; --num_houses)
 		{
 			ci = hcoords.begin();
@@ -1066,17 +1139,11 @@ Map::Map(const short size, const short variation, const short players)
 
 	// print out the map (or at least a part of it) to stderr.
 #ifdef MAPTEST
-	string str;
 	for(rowit it = data.begin(); it != data.end(); ++it)
 	{
-		str.clear();
 		for(vector<Tile>::iterator i = it->begin(); i != it->end(); ++i)
-		{
-			str += i->symbol;
-			if(str.size() > 158) // this is how many symbols wide my widest xterm view is
-				break;
-		}
-		cerr << str << endl;
+			cerr << i->symbol;
+		cerr << endl;
 	}
 	cerr << "h=" << h;
 	if(inhabited) cerr << "; inhabited";

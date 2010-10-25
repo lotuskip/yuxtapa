@@ -13,6 +13,12 @@ enum e_Win {
 	VIEW_WIN, // view window has the game view
 	MAX_WIN };
 
+const char KEYCODE_INT = 3; // ^C
+
+const char GETCH_TIMEOUT = 40; /* ms to wait for keyboard input upon a getch()
+	call. Might have to experiment with this. Zero is ridiculous (makes the
+	client a CPU hog), and too high might make it respond too slow. */
+
 namespace Base
 {
 	bool init_ncurses();

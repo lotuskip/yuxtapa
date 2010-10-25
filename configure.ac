@@ -1,4 +1,4 @@
-AC_INIT([yuxtapa], [1])
+AC_INIT([yuxtapa], [2])
 AM_INIT_AUTOMAKE
 AC_OUTPUT(Makefile)
 AC_LANG([C++])

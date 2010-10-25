@@ -31,7 +31,13 @@ enum {
 };
 // The empty tile is what is drawn for unknown places.
 const Tile EMPTY_TILE = { TF_SEETHRU, '?', C_UNKNOWN };
-const Tile T_FLOOR = { TF_WALKTHRU|TF_SEETHRU, '.', C_FLOOR };
+const Tile T_FLOOR = { TF_WALKTHRU|TF_SEETHRU,
+#ifdef MAPTEST
+'_'
+#else
+'.'
+#endif
+, C_FLOOR };
 
 
 class Map

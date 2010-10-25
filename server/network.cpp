@@ -146,8 +146,8 @@ bool Network::receive_n_handle()
 		case MID_HELLO:
 		{
 			send_buffer.clear();
-			unsigned short pl_vers = recv_buffer.read_sh();
-			if(pl_vers < REQ_CLIENT_VERSION || pl_vers > GAME_VERSION)
+			// Check that interaction versions match:
+			if(recv_buffer.read_sh() != INTR_VERSION)
 			{
 				send_buffer.add((unsigned char)MID_HELLO_VERSION);
 				do_send_to(&them, addr_len);
@@ -161,7 +161,7 @@ bool Network::receive_n_handle()
 			if(num_syms(pl_nick) > MAX_NICK_LEN)
 			{
 				/* Client passed version control but has too long nick??
-				 * That means it's a tampered client! Ignore the asshole. */
+				 * That means it's a tampered client! Ignore the bastard. */
 				break;
 			}
 			pl_id = player_hello(pl_id, pl_passw, pl_nick, them);

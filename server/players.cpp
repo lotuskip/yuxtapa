@@ -272,6 +272,7 @@ bool Player::nomagicres() const
 /////////////////////////////////////////////////////////
 
 
+// The nopurge argument indicates we are running the server with "--pstats"
 void init_known_players(const bool nopurge)
 {
 	string fname = Config::get_config_dir() + playerfilename;
@@ -289,8 +290,9 @@ void init_known_players(const bool nopurge)
 		to_log("Player datafile is corrupt! Ignoring the data!");
 		return;
 	}
-	to_log("Player data contains " + boost::lexical_cast<string>(numpl)
-		+ " entries;");
+	if(!nopurge)
+		to_log("Player data contains " + boost::lexical_cast<string>(numpl)
+			+ " entries;");
 	PlayerStats tmpstats;
 	short sh; char ch;
 	tmpstats.password[PASSW_LEN] = '\0';
@@ -324,7 +326,8 @@ void init_known_players(const bool nopurge)
 		if(!tooold || tmpstats.ad_lvl > AL_REG || (time(NULL) - tmpstats.last_seen) < tooold)
 			known_players.push_back(tmpstats);
 	}
-	to_log(boost::lexical_cast<string>(known_players.size()) + " entries accepted.");
+	if(!nopurge)
+		to_log(boost::lexical_cast<string>(known_players.size()) + " entries accepted.");
 }
 
 void store_known_players()

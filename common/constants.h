@@ -6,14 +6,12 @@ const unsigned char VIEWSIZE = 23;
 const unsigned char MSG_WIN_X = 47;
 const unsigned char MSG_WIN_Y = 15;
 
-// The architecture of yuxtapa is such that most changes take place in
-// the server code. Hence we don't necessarily require the client
-// version to *match* the server version, but instead keep a track
-// of backward-compatability, so that players don't need to update
-// their clients unnecessarily every time the server is updated.
-const unsigned short GAME_VERSION = 1; // The current version
-// The oldest version (of the client) this version is still compatible with:
-const unsigned short REQ_CLIENT_VERSION = 1;
+// The architecture of yuxtapa is such that most changes take place
+// independently on the client and server sides, without modifications
+// in the interaction between the two. Hence, in addition to the version
+// of the game, we have an "interaction version". For a server and a client
+// to be compatible, only their interaction versions need to match.
+const unsigned short INTR_VERSION = 1;
 
 const unsigned short BUFFER_SIZE = 2048; /* this is plenty for most purposes,
 	but can't be much lower for some */
