@@ -47,6 +47,9 @@ public:
 	Map(const short size, const short variation, const short players);
 	~Map();
 
+	bool load_from_file(const std::string &mapname);
+	bool save_to_file(const std::string &mapname);
+
 	void gen_miniview(char *target) const;
 
 	short get_size() const { return mapsize; }

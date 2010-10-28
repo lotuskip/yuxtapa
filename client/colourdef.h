@@ -50,7 +50,7 @@ const short colour[MAX_PREDEF_COLOUR-BASE_COLOURS][3] = {
 { 607, 450, 450 }, //  boobytrap, lit
 { 1000, 258, 0 }, //  firebtrap, lit
 { 847, 917, 941 }, //  neutrlflag, lit
-{ 309, 713, 8674 }, //  portal_in, lit
+{ 309, 713, 827 }, //  portal_in, lit
 { 482, 572, 600 }, //  portal_out, lit
 { 619, 439, 305 }, //  arrow, lit, last that can be normal
 { 910, 90, 510 }, //  mm1

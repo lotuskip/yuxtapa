@@ -301,7 +301,7 @@ namespace Game
 }
 
 
-void Game::next_map()
+void Game::next_map(const string &loadmap)
 {
 	// "fast-kill" all players and record playing times:
 	for(list<Player>::iterator it = cur_players.begin();
@@ -323,7 +323,15 @@ void Game::next_map()
 	send_team_upds(cur_players.end());
 
 	// ready for next generation:
-	init_phase = IPH_GEN_MAP;
+	if(loadmap.empty())
+		init_phase = IPH_GEN_MAP;
+	else if(!curmap->load_from_file(loadmap))
+	{
+		Network::to_chat("Could not load map by name \'" + loadmap + "\'!");
+		init_phase = IPH_GEN_MAP;
+	}
+	else // no need to generate map!
+		init_phase = IPH_GENERALS;
 }
 
 void Game::init_game()

@@ -12,7 +12,7 @@ const std::string str_team[2] = { "Green", "Purple" };
 // describes "one game", playing of a single map
 namespace Game
 {
-	void next_map(); // called when starting intermission
+	void next_map(const std::string &loadmap); // called when starting intermission
 	void init_game(); // processes next step in initialisation, or does nothing if ready
 	void start(); // game starts now, reset clock
 	bool process_turn(); /* most of the game logic happens here, returns

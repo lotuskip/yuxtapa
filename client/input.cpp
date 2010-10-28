@@ -13,6 +13,7 @@
 #include <cctype>
 
 e_ClientState clientstate = CS_NORMAL;
+bool walkmode = false;
 
 namespace
 {
@@ -31,7 +32,6 @@ short type_pos; // in *UTF-8 symbols*, not chars
 short str_syms;
 
 e_Dir last_dir = MAX_D;
-bool walkmode = false;
 
 void leave_limbo()
 {

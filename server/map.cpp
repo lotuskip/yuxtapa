@@ -1348,3 +1348,15 @@ bool Map::LOS_between(const Coords &c1, Coords c2, const char maxrad)
 	return false;
 }
 
+
+bool Map::load_from_file(const string &mapname)
+{
+	return false; // TODO
+}
+
+
+bool Map::save_to_file(const std::string &mapname)
+{
+	return false; // TODO
+}
+

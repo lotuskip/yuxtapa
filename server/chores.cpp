@@ -343,8 +343,13 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 							player_death(pc_it->get_owner(), msg, false);
 						}
 					}
-					else
+					else // survived
+					{
 						pc_it->get_owner()->needs_state_upd = true;
+						// light torch if any:
+						if(!pc_it->torch_is_lit() && pc_it->get_owner()->torch_left)
+							pc_it->toggle_torch();
+					}
 				}
 			}
 		}
@@ -839,7 +844,10 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		break;
 	}
 	case XN_MOVE:
-		try_move(pit, (pit->facing = e_Dir(axn.var1)));
+		// If player is in water and action queue is nonempty, do not allow swimming
+		if(pit->action_queue.empty() ||
+			!(Game::curmap->mod_tile(pit->own_pc->getpos())->flags & TF_DROWNS))
+			try_move(pit, (pit->facing = e_Dir(axn.var1)));
 		break;
 	case XN_SHOOT:
 	{

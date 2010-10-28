@@ -16,10 +16,16 @@ int main(int argc, char *argv[])
 	string server = "";
 	if(argc >= 2) // command line argument should be a server name
 	{
-		if((server = argv[1]) == "--help" || server == "-h"
-			|| server == "-v" || server == "--version")
+		if((server = argv[1]) == "--help" || server == "-h")
 		{
-			cout << PACKAGE << " client v. " << VERSION << endl;
+			cout << "Flag \'-v\' prints the version. Other than that, any command "
+				"line argument should be either a server address or a server name "
+				"defined in the configuration." << endl;
+			return 0;
+		}
+		if(server == "-v" || server == "--version")
+		{
+			cout << PACKAGE << " client v." << VERSION << endl;
 			return 0;
 		}
 	}

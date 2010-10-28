@@ -3,6 +3,7 @@
 #include "server.h"
 #include "log.h"
 #include "game.h"
+#include "map.h"
 #include "network.h"
 #include "players.h"
 #include "settings.h"
@@ -17,6 +18,8 @@
 #ifdef DEBUG
 #include <iostream>
 #endif
+
+extern bool intermission;
 
 namespace
 {
@@ -97,25 +100,25 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 		if(!pit->muted)
 		{
 			using namespace Config;
-			string info = "Max players: "
+			keyw = "Max players: "
 				+ lexical_cast<string>(int_settings[IS_MAXPLAYERS])
 				+ ", mapsize ";
 			short minmsize = (100 - int_settings[IS_MAPSIZEVAR])
 				*int_settings[IS_MAPSIZE]/100;
 			short maxmsize = (100 + int_settings[IS_MAPSIZEVAR])
 				*int_settings[IS_MAPSIZE]/100;
-			info += lexical_cast<string>(minmsize) + '-'
+			keyw += lexical_cast<string>(minmsize) + '-'
 				+ lexical_cast<string>(maxmsize) + ", classlim ";
-			info += lexical_cast<string>(int_settings[IS_CLASSLIMIT])
+			keyw += lexical_cast<string>(int_settings[IS_CLASSLIMIT])
 				+ ", turn " + lexical_cast<string>(int_settings[IS_TURNMS]);
-			info += "ms, intermission "
+			keyw += "ms, intermission "
 				+ lexical_cast<string>(int_settings[IS_INTERM_SECS]) + "s,";
-			Network::to_chat(info);
-			info = "statpurge "
+			Network::to_chat(keyw);
+			keyw = "statpurge "
 				+ lexical_cast<string>(int_settings[IS_STATPURGE]) + "h, "
 				+ team_balance_str[int_settings[IS_TEAMBALANCE]];
-			info += " teambalance, modes: " + game_modes_str();
-			Network::to_chat(info);
+			keyw += " teambalance, modes: " + game_modes_str();
+			Network::to_chat(keyw);
 			// may broadcast
 		}
 	}
@@ -146,31 +149,50 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			shuffle_teams();
 		// may broadcast
 	}
+	else if(keyw == "storemap") // req: AL >= 3 && not muted
+	{
+		if(!intermission && !pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
+			&& i != string::npos && i < cmd.size()-1)
+		{
+			if(Game::curmap->save_to_file(cmd.substr(i+1)))
+				keyw = "Current map saved as \'" + cmd.substr(i+1) + "\'.";
+			else
+				keyw = "Could not save the map!";
+			Network::to_chat(keyw);
+		}
+	}
 	else if(keyw == "nextmap") // req: AL >= 2 && not muted
 	{
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
-			next_map_forced();
+		{
+			// Check if requested a map by name:
+			if(i != string::npos && i < cmd.size()-1)
+				keyw = cmd.substr(i+1);
+			else
+				keyw.clear();
+			next_map_forced(keyw);
+		}
 		// may broadcast
 	}
 	else if(keyw == "teambal") // req: AL >= 3 && not muted
 	{
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
-			&& i < cmd.size()-1)
+			&& i != string::npos && i < cmd.size()-1)
 		{
 			using namespace Config;
-			switch(cmd[i+1])
+			switch(tolower(cmd[i+1]))
 			{
-			case 'a': case 'A':
+			case 'a':
 				int_settings[IS_TEAMBALANCE] = TB_ACTIVE; break;
-			case 'p': case 'P':
+			case 'p':
 				int_settings[IS_TEAMBALANCE] = TB_PASSIVE; break;
-			case 'o': case 'O':
+			case 'o':
 				int_settings[IS_TEAMBALANCE] = TB_OFF; break;
 			default: return false;
 			}
-			string info = "Team balance set to: \""
+			keyw = "Team balance set to: \""
 				+ team_balance_str[int_settings[IS_TEAMBALANCE]] + "\".";
-			Network::to_chat(info);
+			Network::to_chat(keyw);
 			// may broadcast
 		}
 	}
@@ -182,7 +204,12 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1));
 			if(nit != cur_players.end() &&
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
+			{
+				keyw = "You have been kicked from this server.";
+				Network::construct_msg(keyw, DEF_MSG_COL);
+				Network::send_to_player(*nit);
 				Game::remove_player(nit, " kicked by " + pit->nick + '.');
+			}
 			// may broadcast
 		}
 	}
@@ -195,8 +222,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
 				nit->muted = true;
-				string msg = "You have been muted by " + pit->nick + '.';
-				Network::construct_msg(msg, cmd_respond_msg_col);
+				keyw = "You have been muted by " + pit->nick + '.';
+				Network::construct_msg(keyw, cmd_respond_msg_col);
 				Network::send_to_player(*nit);
 			}
 			// may broadcast
@@ -211,8 +238,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
 				nit->muted = false;
-				string msg = "You were unmuted by " + pit->nick + '.';
-				Network::construct_msg(msg, cmd_respond_msg_col);
+				keyw = "You were unmuted by " + pit->nick + '.';
+				Network::construct_msg(keyw, cmd_respond_msg_col);
 				Network::send_to_player(*nit);
 			}
 			// may broadcast
@@ -263,6 +290,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(nit != cur_players.end() &&
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
+				keyw = "You have been banned from this server.";
+				Network::construct_msg(keyw, DEF_MSG_COL);
+				Network::send_to_player(*nit);
 				banlist().push_back(nit->address);
 				Game::remove_player(nit, " banned by " + pit->nick + '.');
 			}
@@ -289,8 +319,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	else if(keyw == "spawnbots") // req: AL >= 3 && not muted
 	{
 		using namespace Config;
-		if(!get_botexe().empty() && pit->stats_i->ad_lvl >= AL_ADMIN
-			&& !pit->muted && i < cmd.size()-1 && isdigit(cmd[i+1]))
+		if(!get_botexe().empty() && pit->stats_i->ad_lvl >= AL_ADMIN && !pit->muted
+			&& i != string::npos && i < cmd.size()-1 && isdigit(cmd[i+1]))
 		{
 			// Spawn as many as requested, as long as that won't make the
 			// server over-full:

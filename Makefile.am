@@ -36,5 +36,5 @@ yuxtapa_sv_SOURCES = server/server.cpp server/network.cpp server/network.h \
 	common/netutils.h common/netutils.cpp common/coords.h common/coords.cpp \
 	common/utfstr.h common/utfstr.cpp common/confdir.cpp common/confdir.h \
 	common/util.cpp common/util.h
-yuxtapa_sv_LDFLAGS = -lz -lrt
+yuxtapa_sv_LDFLAGS = -lz
 

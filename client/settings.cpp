@@ -78,7 +78,7 @@ void Config::read_config(const string servername)
 			if(!keyw.empty() && !tmp.empty())
 			{
 				/* if a server was given, we only match against it;
-				 * otherwise or if matching not possible, pick first server */
+				 * otherwise pick first server */
 				if(first_server.empty())
 					first_server = tmp;
 				if(serverip.empty() && servername == keyw)
@@ -161,17 +161,15 @@ void Config::read_config(const string servername)
 	// everything extracted (or failed altogether), check:
 	if(serverip.empty()) // no match for desired server
 	{
-		if(first_server.empty()) // no server given in file, either?
+		if(!servername.empty()) // some server *was* requested
+			serverip = servername; // try to connect to it "as-is"
+		else if(first_server.empty()) // no server given in file, either?
 		{
 			cerr << "Warning, no server given in config, defaulting to localhost!" << endl;
 			serverip = "127.0.0.1:12360";
 		}
-		else
-		{
-			if(!servername.empty()) // some server *was* requested
-				cerr << "Could not find requested server \'" << servername << "\' in config!" << endl;
+		else // No server requested; use first one found in config
 			serverip = first_server;
-		}
 	}
 	// check for key-binding conflicts:
 	keyw = key_bindings; // tmp copy

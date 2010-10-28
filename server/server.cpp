@@ -31,10 +31,10 @@ void goto_next_map()
 	last_clock.update();
 }
 
-void goto_intermission()
+void goto_intermission(const string &loadmap)
 {
 	intermission = true;
-	Game::next_map();
+	Game::next_map(loadmap);
 	if(turns_lagged)
 	{
 		string str = "Warning: the server lagged ";
@@ -49,12 +49,12 @@ void goto_intermission()
 
 } // end local namespace
 
-void next_map_forced()
+void next_map_forced(const string &loadmap)
 {
 	if(intermission)
 		goto_next_map();
 	else
-		goto_intermission();
+		goto_intermission(loadmap);
 }
 
 
@@ -77,9 +77,15 @@ int main(int argc, char *argv[])
 	if(argc >= 2)
 		str = argv[1];
 	
-	if(str == "--help" || str == "-h" || str == "-v" || str == "--version")
+	if(str == "--help" || str == "-h")
 	{
-		std::cout << PACKAGE << " server v. " << VERSION << std::endl;
+		std::cout << "Recognised options are: \'-v\' (print version) and \'"
+			<< print_stats_handle << "\' (print player stats)" << std::endl;
+		return 0;
+	}
+	if(str == "-v" || str == "--version")
+	{
+		std::cout << PACKAGE << " server v." << VERSION << std::endl;
 		return 0;
 	}
 
@@ -134,7 +140,7 @@ int main(int argc, char *argv[])
 				turns_lagged += (test_clock - last_clock)/int_settings[IS_TURNMS]-1;
 				last_clock.update();
 				if(Game::process_turn())
-					goto_intermission();
+					goto_intermission("");
 			}
 			else if(no_traffic) // micro-hibernation
 				usleep(int_settings[IS_TURNMS]*10); // sleep for 1/100th of a turn (2.5ms on normal config)
@@ -164,6 +170,7 @@ int main(int argc, char *argv[])
 		} // minute passed
 	} // for eva
 
+	std::cout << "Quitting..." << std::endl;
 	Network::shutdown();
 	timed_log("Shutdown");
 	usage_report();

@@ -11,12 +11,11 @@
 #endif
 
 extern e_ClientState clientstate;
+extern bool walkmode;
 
 namespace
 {
 using namespace std;
-
-e_Dir last_dir = MAX_D; // for walkmode
 
 e_Class myclass = NO_CLASS;
 e_Team myteam = T_SPEC;
@@ -79,7 +78,7 @@ Coords aimer;
 void ClassCPV::move(const e_Dir d)
 {
 	if(clientstate == CS_NORMAL) // regular movement
-		Network::send_action(XN_MOVE, (last_dir = d));
+		Network::send_action(XN_MOVE, d);
 	else if(clientstate == CS_AIMING) // moving the aimer
 	{
 		aimer = aimer.in(d);
@@ -222,8 +221,12 @@ void ClassCPV::state_upd(SerialBuffer &data)
 	reprint_pcinfo();
 
 	// if died, abort any action in the client end:
-	if(hp <= 0 && (clientstate == CS_AIMING || clientstate == CS_DIR))
-		clientstate = CS_NORMAL;
+	if(hp <= 0)
+	{
+		if(clientstate == CS_AIMING || clientstate == CS_DIR)
+			clientstate = CS_NORMAL;
+		Base::print_walk((walkmode = false));
+	}
 }
 
 
