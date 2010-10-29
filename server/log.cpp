@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "log.h"
 #include "settings.h"
 #include <fstream>
@@ -70,4 +71,4 @@ bool check_date_change(const int d)
 	return false;
 }
 
-
+#endif // not maptest build

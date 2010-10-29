@@ -1,4 +1,10 @@
 // Please see LICENSE file.
+#include <iostream>
+
+#ifdef MAPTEST
+#include "map.h"
+#include <cstdlib>
+#else
 #include "network.h"
 #include "settings.h"
 #include "players.h"
@@ -9,7 +15,6 @@
 #include <ctime>
 #include <unistd.h>
 #include <string>
-#include <iostream>
 #include <boost/lexical_cast.hpp>
 
 bool intermission = true;
@@ -57,21 +62,28 @@ void next_map_forced(const string &loadmap)
 		goto_intermission(loadmap);
 }
 
+#endif // not maptest build
 
-#ifdef MAPTEST
-#include "map.h"
-#endif
+
 int main(int argc, char *argv[])
 {
 #ifdef MAPTEST
 	unsigned short size;
-	if(argc < 2 || (size = atoi(argv[1])) < 42 || size > 511)
+	if(argc < 2 || (size = atoi(argv[1])) < MIN_MAP_SIZE || size > MAX_MAP_SIZE)
 	{
-		std::cout << "Try: ./yuxtapa_sv [mapsize, 42--511]" << std::endl;
+		std::cout << "Try: ./yuxtapa_sv [mapsize, " << MIN_MAP_SIZE
+			<< "--" << MAX_MAP_SIZE << ']' << std::endl;
+		std::cout << "Third argument, if present, is a filename to save the map as "
+			"(it will be saved in the working directory)." << std::endl;
 		return 1;
 	}
 	srandom(time(NULL));
-	Map a_map(size, 0, 10); // will generate and print the map	
+	Map a_map(size, 0, 10); // will generate and print the map
+	if(argc > 2)
+	{
+		if(!a_map.save_to_file(argv[2]))
+			std::cout << "Failed to save the map as \'" << argv[2] << "\'!" << std::endl;
+	}
 #else
 	string str = "";
 	if(argc >= 2)

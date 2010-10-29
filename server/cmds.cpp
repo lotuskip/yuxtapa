@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "cmds.h"
 #include "server.h"
 #include "log.h"
@@ -12,8 +13,10 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <dirent.h>
 #include <signal.h>
 #include <algorithm>
+#include <cstring>
 #include <boost/lexical_cast.hpp>
 #ifdef DEBUG
 #include <iostream>
@@ -152,6 +155,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	else if(keyw == "storemap") // req: AL >= 3 && not muted
 	{
 		if(!intermission && !pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
+			&& !Config::get_mapdir().empty()
 			&& i != string::npos && i < cmd.size()-1)
 		{
 			if(Game::curmap->save_to_file(cmd.substr(i+1)))
@@ -160,6 +164,34 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				keyw = "Could not save the map!";
 			Network::to_chat(keyw);
 		}
+		// may broadcast
+	}
+	else if(keyw == "listmaps") // req: AL >= 2 && not muted
+	{
+		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
+		{
+			DIR *dp;
+			if((dp = opendir(Config::get_mapdir().c_str())) != NULL)
+			{
+				keyw = "Stored maps:";
+    			struct dirent *dirp;
+				while((dirp = readdir(dp)) != NULL)
+				{
+					if(strcmp(dirp->d_name, ".") && strcmp(dirp->d_name, ".."))
+					{
+						keyw += ' ';
+						keyw += dirp->d_name;
+						keyw += ',';
+					}
+				}
+				if(keyw[keyw.size()-1] == ',')
+					keyw.erase(keyw.size()-1,1);
+				else
+					keyw += " [none]";
+				Network::to_chat(keyw);
+			}
+		}
+		// may broadcast
 	}
 	else if(keyw == "nextmap") // req: AL >= 2 && not muted
 	{
@@ -466,3 +498,4 @@ short num_bots()
 	return botpids.size();
 }
 
+#endif // not maptest build

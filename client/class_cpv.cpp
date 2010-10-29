@@ -3,6 +3,7 @@
 #include "view.h"
 #include "base.h"
 #include "network.h"
+#include "settings.h"
 #include "../common/constants.h"
 #include "../common/col_codes.h"
 #include <boost/lexical_cast.hpp>
@@ -211,7 +212,11 @@ void ClassCPV::state_change(const unsigned char cl, const unsigned char t)
 
 void ClassCPV::state_upd(SerialBuffer &data)
 {
+	char oldhp = hp;
 	hp = static_cast<char>(data.read_ch());
+	// if got hurt but not dead and ouch is defined, send ouch:
+	if(hp > 0 && hp < oldhp && Config::do_ouch())
+		Network::send_line(Config::get_ouch(), false);
 	tohit = static_cast<char>(data.read_ch());
 	dam_add = static_cast<char>(data.read_ch());
 	poisoned = bool(data.read_ch());

@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "ent.h"
 #include "../common/col_codes.h"
 
@@ -17,3 +18,5 @@ void Ent::draw(char *target, const bool lit) const
 	*target = cp;
 	*(++target) = symbol;
 }
+
+#endif // not maptest build

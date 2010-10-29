@@ -39,6 +39,8 @@ const Tile T_FLOOR = { TF_WALKTHRU|TF_SEETHRU,
 #endif
 , C_FLOOR };
 
+const short MIN_MAP_SIZE = 42;
+const short MAX_MAP_SIZE = 511;
 
 class Map
 {
@@ -48,7 +50,7 @@ public:
 	~Map();
 
 	bool load_from_file(const std::string &mapname);
-	bool save_to_file(const std::string &mapname);
+	bool save_to_file(const std::string &mapname) const;
 
 	void gen_miniview(char *target) const;
 

@@ -1,24 +1,37 @@
 // Please see LICENSE file.
 #include "map.h"
+#include "settings.h"
+#include "../common/util.h"
+#ifndef MAPTEST
 #include "log.h"
+#include "../common/constants.h"
+#include "../common/los_lookup.h"
+#include <boost/lexical_cast.hpp>
+#endif
 #include <cstdlib>
+#include <cctype>
 #include <cmath>
 #include <algorithm>
 #include <map>
 #include <vector>
-#include <boost/lexical_cast.hpp>
+#include <fstream>
 #if defined MAPTEST || defined DEBUG
 #include <iostream>
 #endif
-#include "../common/constants.h"
-#include "../common/util.h"
-#include "../common/los_lookup.h"
 
 namespace
 {
 using namespace std;
 
 const char CHANCE_ROUGH = 22; // how much of the floor in dungeons is rough, %
+
+// to reject maps saved with older specifications
+const unsigned char MAP_STORE_VERSION = 1;
+
+// The tile flags that are static and relevant in a "raw map" that gets saved
+// to a file:
+const unsigned short STATIC_TF =
+	TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU|TF_BYWALL|TF_KILLS|TF_DROWNS;
 
 const Tile T_TREE = { TF_WALKTHRU|TF_SEETHRU, 'T', C_TREE };
 const Tile T_GROUND = { TF_WALKTHRU|TF_SEETHRU, '.', C_GRASS };
@@ -38,7 +51,6 @@ const Tile T_DOOR = { 0, '+', C_DOOR };
 const Tile T_WINDOW = { TF_SEETHRU, '|', C_WALL };
 
 typedef vector< vector<Tile> >::iterator rowit;
-typedef vector< pair<Coords, Coords> >::const_iterator sectit;
 
 bool operator!=(const Tile &lhs, const Tile &rhs)
 {
@@ -50,11 +62,13 @@ bool operator==(const Tile &lhs, const Tile &rhs)
 	return !(lhs != rhs);
 }
 
+#ifndef MAPTEST
 //needed in minimap generation:
 bool pred(const pair<Tile, short> &lhs, const pair<Tile, short> &rhs)
 {
 	return lhs.second < rhs.second;
 }
+#endif
 
 ///////////////////////////////////////////////////////////////////
 /*
@@ -878,11 +892,13 @@ void (*fill_hcoord_func[NUM_FHC_FUNCTIONS])(vector<Coords> &hc, const char num,
 
 } // end local namespace
 
+#ifndef MAPTEST
 // also needed in minimap generation + needs to be outside of local namespace
 bool operator<(const Tile &lhs, const Tile &rhs)
 {
 	return lhs.symbol < rhs.symbol;
 }
+#endif
 
 
 // Here the whole map is generated.
@@ -900,8 +916,10 @@ Map::Map(const short size, const short variation, const short players)
 	if(mapsize < sh)
 	{
 		mapsize = sh;
+#ifndef MAPTEST
 		timed_log("Note: getting crowded, mapsize adjusted to "
 			+ boost::lexical_cast<string>(mapsize));
+#endif
 	}
 
 	// Allocate space for the map:
@@ -1175,6 +1193,7 @@ void Map::upd_by_wall_flag(const Coords &c)
 }
 
 
+#ifndef MAPTEST
 Coords Map::get_center_of_sector(const e_Dir d) const
 {
 	Coords c(mapsize/2, mapsize/2);
@@ -1188,6 +1207,7 @@ Coords Map::get_center_of_sector(const e_Dir d) const
 	c.y += shift.y;
 	return c;
 }
+#endif
 
 
 #if 0
@@ -1228,6 +1248,7 @@ void Map::add_patch(const Coords c, const Tile t)
 }
 
 
+#ifndef MAPTEST
 Tile Map::subsample_tile(const Tile &t) const
 {
 	// 't' is assumed to be a tile of a type of which there exists
@@ -1351,12 +1372,56 @@ bool Map::LOS_between(const Coords &c1, Coords c2, const char maxrad)
 
 bool Map::load_from_file(const string &mapname)
 {
-	return false; // TODO
+	ifstream file((Config::get_mapdir() + mapname).c_str(), ios_base::binary);
+	if(!file)
+		return false;
+	// else:
+	unsigned char mapvers;	
+	file.read(reinterpret_cast<char*>(&mapvers), 1);
+	if(mapvers > MAP_STORE_VERSION)
+		return false; // the map is of newer version; can't be certain it will work
+	file.read(reinterpret_cast<char*>(&mapsize), sizeof(short));
+	if(mapsize < MIN_MAP_SIZE || mapsize > MAX_MAP_SIZE)
+		return false; // a corrupt file or something
+	file.read(reinterpret_cast<char*>(&inhabited), sizeof(bool));
+	file.read(reinterpret_cast<char*>(&outdoor), sizeof(bool));
+	make_right_size(data);
+	vector<Tile>::iterator i;	
+	for(rowit it = data.begin(); it != data.end(); ++it)
+	{
+		for(i = it->begin(); i != it->end(); ++i)
+		{
+			file.read(reinterpret_cast<char*>(&(*i)), sizeof(Tile));
+			// ignore the "non-static" flags (these get saved along with the rest!)
+			i->flags |= STATIC_TF;
+			// validate other data:
+			if(!isprint(i->symbol) || i->cpair > C_WATER || i->cpair < C_TREE)
+				return false; // this is bogus data!
+		}
+		if(!file)
+			return false; // file corrupt or something else wrong
+	}
+	return true;
 }
+#endif // not maptest build
 
 
-bool Map::save_to_file(const std::string &mapname)
+bool Map::save_to_file(const std::string &mapname) const
 {
-	return false; // TODO
+	ofstream file((Config::get_mapdir() + mapname).c_str(), ios_base::binary);
+	if(!file)
+		return false;
+	// else:
+	file.write(reinterpret_cast<const char*>(&MAP_STORE_VERSION), 1);
+	file.write(reinterpret_cast<const char*>(&mapsize), sizeof(short));
+	file.write(reinterpret_cast<const char*>(&inhabited), sizeof(bool));
+	file.write(reinterpret_cast<const char*>(&outdoor), sizeof(bool));
+	vector<Tile>::const_iterator i;	
+	for(vector< vector<Tile> >::const_iterator it = data.begin(); it != data.end(); ++it)
+	{
+		for(i = it->begin(); i != it->end(); ++i)
+			file.write(reinterpret_cast<const char*>(&(*i)), sizeof(Tile));
+	}
+	return true;
 }
 

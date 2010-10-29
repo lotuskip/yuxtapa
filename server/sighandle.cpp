@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "sighandle.h"
 
 Signal_Handler *Signal_Handler::instance_ = 0;
@@ -37,3 +38,4 @@ void Signal_Handler::dispatcher(const int signum)
 		signal_handlers_[signum]->handle_signal(signum);
 }
  
+#endif // not maptest build

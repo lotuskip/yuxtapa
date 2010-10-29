@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "spiral.h"
 
 namespace
@@ -34,3 +35,4 @@ Coords next_nearby()
 	return pnt;
 }
 
+#endif // not maptest build

@@ -13,8 +13,13 @@ also triggers a sound event, see <a href="vision.html">Vision and hearing</a>. I
 in your line of sight, her '@' is replaced by a '!' for one turn. A message containing
 the the text of the shout is sent to all nearby viewers.</p>
 
-<p>On occasion, shouts are generated automatically. At the moment this happens
-if someone falls into a chasm.</p>
+<p>On occasion, shouts are generated automatically. The server generates a shout if a PC
+falls into a chasm. The players can define (in the <a href="clientconf.html">client configuration</a>)
+an automatic shout that is generated if they take damage. This can be very useful for warning
+nearby teammates, for instance.</p>
+
+<p>Players can also (again, in the client configuration) define <em>quick shouts</em> that they
+can utter without typing by just pressing one of the function keys F1&mdash;F12.</p>
 
 
 <h3>Chat commands</h3>
@@ -34,7 +39,14 @@ shy human players to keep their performance secret, but is used by the <a href="
 <p>Requiring <a href="adminlevels.html">AL</a> at least 2:
 <ul>
 <li><strong>!shuffle</strong> shuffles the teams, see <a href="teambalance.html">Team balance</a></li>
-<li><strong>!nextmap</strong> forces an <a href="intermission.html">Intermission</a>, or, if on one, forces it to end</li>
+<li><strong>!nextmap [name]</strong> forces an <a href="intermission.html">Intermission</a>, or, if on one, forces it to end. See also
+<a href="mapsaving.html">map saving</a></li>
+<li><strong>!listmaps</strong> prints a lists of previously saved maps</li>
+</ul></p>
+
+<p>Requiring AL at least 3:
+<ul>
+<li><strong>!storemap [name]</strong> saves the current map; see <a href="mapsaving.html">map saving</a></li>
 </ul></p>
 
 <p>Requiring AL higher than the target's:

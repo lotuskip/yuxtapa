@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "network.h"
 #include "settings.h"
 #include "game.h"
@@ -388,3 +389,5 @@ void Network::clocksync(const unsigned short time, const unsigned char spawn)
 	send_buffer.add(spawn);
 	broadcast();
 }
+
+#endif // not maptest build

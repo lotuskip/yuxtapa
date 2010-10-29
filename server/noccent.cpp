@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "noccent.h"
 #include "map.h"
 
@@ -33,7 +34,6 @@ Trap::Trap(const Coords &c, const unsigned char m,
 	const std::list<Player>::iterator o)
 	: NOccEnt(c, '^', 0, m), flags(0), owner(o)
 {
-	owner = cur_players.end();
 	set_col(C_WATER_TRAP + m);
 }
 
@@ -48,3 +48,4 @@ bool Trap::is_seen_by(const unsigned char t) const
 	return flags & (SEEN_BY_GREEN + char(t == T_PURPLE));
 }
 
+#endif // not maptest build

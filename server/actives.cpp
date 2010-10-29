@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "actives.h"
 #include "game.h"
 #include "map.h"
@@ -707,4 +708,5 @@ OwnedEnt* any_missile_at(const Coords &c)
 	}
 	return 0;
 }
+#endif // not maptest build
 

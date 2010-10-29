@@ -1,0 +1,38 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Map saving</h2>
+
+<p>It is possible to save the currently played map with a given name into a file and load a previously saved map to play. If the game happens to
+generate an awesome map, you can save it for a future replay instead of losing it.</p>
+
+<p>The saving is done with the command <em>!storemap [name]</em> where <em>[name]</em> is simultaneously the filename and an identifier for the
+map. In order to save maps, you must define a directory for them in the <a href="serverconf.html">server configuration</a>. A previously saved
+map can be recalled with the command <em>!nextmap [name]</em> (during actual play; if executed during the intermission, the argument has no effect).
+A list of saved maps is shown with the command <em>!listmaps</em> (although this simply prints out all the filenames in the map directory, all of which
+might not be actual map files if the map directory is poorly defined).</p>
+
+<p><strong>Remarks:</strong> not everything gets saved into the file. Actually only the &quot;raw map data&quot; is saved, which excludes at least:
+game mode, flag positions, boulders, boulder sources, and portals. Moreover, if a map is modified by pushing boulders into water or by mining away some
+walls, these modifications <em>are</em> saved along with the map.</p>
+
+<p>The saved maps <em>are not</em> compressed! The size of a saved map file is 5+4*N<sup>2</sup> bytes, where N is the size (height, width) of the map.
+For a map of size 120 this means about 56.2Kb. The filesize of the largest allowed maps nears one megabyte. Great compressions ratios are usually achieved
+by manual compression.</p>
+
+
+<h3>Generating maps without a running server&amp;client</h3>
+
+<p>By configuring the building process with
+<pre>./configure --enable-maptest</pre>
+you can build a server binary that only generates a random map and exits. (Add '--disable-client' to disable building the client, too.)</p>
+
+<p>The produced executable is still called 'yuxtapa_sv', but you might want to rename it to something else, like 'yuxtapa_mg' (map generator). Then run it
+with
+<pre>./yuxtapa_mg [N] [file]</pre>
+where <em>N</em> is the size of the map to generate (exact number, no randomisation takes place). The second argument is optional. If given, it is taken as
+the filename for the generated map (no argument: map is only printed on screen, not saved anywhere). Give full path if necessary; otherwise the file is
+placed in the working directory.</p>
+
+<p>It is planned that at some point there will be a simple map editor available to manually make modifications to stored maps. Modifications can already
+be done, but you have to understand the structure of the mapfiles (for now you'll just have to: see the source code).</p>
+
+</body></html>

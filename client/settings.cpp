@@ -19,7 +19,7 @@ using namespace std;
 const char MIN_ANIM_LEN = 2;
 const char MAX_ANIM_LEN = 15;
 
-const string default_key_bds = "896321475 CscTXuwt+-lQ"; // cf. enum e_Key_binding
+const string default_key_bds = "896321475 CscTXuwt+-lQo"; // cf. enum e_Key_binding
 const string default_nick = "player";
 const string default_anim = "-\\|/";
 
@@ -29,6 +29,9 @@ string nick = default_nick;
 string anim = default_anim;
 string key_bindings = default_key_bds;
 string serverip = "";
+string qshout[MAX_QUICK_SHOUTS] = { "", "", "", "", "", "", "", "", "", "", "", "" };
+string ouch_str = "";
+bool ouching = false;
 
 string confdir_str = "";
 
@@ -153,6 +156,51 @@ void Config::read_config(const string servername)
 				continue;
 			}
 		}
+		else if(keyw == "qshout")
+		{
+			short sh;
+			ss >> sh;
+			if(sh < 1 || sh > MAX_QUICK_SHOUTS)
+				cerr << "Invalid quick shout index: " << sh << endl;
+			else
+			{
+				qshout[sh-1] = ss.str();
+				qshout[sh-1].erase(0, 8 + int(sh > 9)); // 8 if sh is single-digit, 9 if not
+				if(qshout[sh-1].empty())
+				{
+					cerr << "Config warning: empty \'qshout " << sh << "\'?" << endl;
+					continue;
+				}
+				qshout[sh-1].erase(0,1); // remove ' '
+				if(num_syms(qshout[sh-1]) >= MSG_WIN_X)
+				{
+					cerr << "Quick shout " << sh << " is too long!" << endl;
+					del_syms(qshout[sh-1], MSG_WIN_X);
+				}
+			}
+			continue;
+		}
+		else if(keyw == "ouch")
+		{
+			ouch_str = ss.str();
+			if(ouch_str.size() < 5)
+			{
+				cerr << "Config warning: \'ouch\' without content?" << endl;
+				continue;
+			}
+			ouch_str.erase(0, 5); // erase "ouch "
+			if(num_syms(ouch_str) >= MSG_WIN_X)
+			{
+				cerr << "The ouch string in the config is too long!" << endl;
+				del_syms(ouch_str, MSG_WIN_X);
+			}
+			continue;
+		}
+		else if(keyw == "ouch_on")
+		{
+			ss >> ouching;
+			continue;
+		}
 		// if here, not all is okay:
 		cerr << "Warning, could not parse the following line in config file:"
 			<< endl << "\"" << s << "\"" << endl;
@@ -180,13 +228,22 @@ void Config::read_config(const string servername)
 		cerr << "Config resulted in key binding conflicts; reverting to original keys." << endl;
 		key_bindings = default_key_bds;
 	}
+	// check that ouching is off if ouch string is empty:
+	if(ouch_str.empty() && ouching)
+	{
+		ouching = false;
+		cerr << "Config error: the ouch feature requires you to define a non-empty message!" << endl;
+	}
 }
 
 
-string Config::get_server_ip() { return serverip; }
-string Config::get_nick() { return nick; }
-string Config::get_anim() { return anim; }
-string Config::configdir() { return confdir_str; }
+string &Config::get_server_ip() { return serverip; }
+string &Config::get_nick() { return nick; }
+string &Config::get_anim() { return anim; }
+string &Config::quick_shout(const char index) { return qshout[index]; }
+string &Config::get_ouch() { return ouch_str; }
+bool Config::do_ouch() { return ouching; }
+string &Config::configdir() { return confdir_str; }
 
 
 e_Key_binding Config::convert_key(const char key)
@@ -203,5 +260,13 @@ void Config::do_aliasing(string &s)
 	map<string,string>::iterator it = aliases.find(s);
 	if(it != aliases.end())
 		s = it->second;
+}
+
+
+bool Config::toggle_ouch()
+{
+	if(ouch_str.empty())
+		return false; // cannot use the feature without a string!
+	return (ouching = !ouching);
 }
 

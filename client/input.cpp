@@ -25,6 +25,8 @@ using namespace std;
  * platforms (using precompiler #if .. #else if ... #else ... #endif) */
 const char KEYCODE_ENTER = 13; // != '\n'
 
+const char* offon[2] = { "off", "on" };
+
 vector<string> prev_strs;
 vector<string>::const_iterator prev_str_it;
 string typed_str;
@@ -194,6 +196,20 @@ bool Input::inputhandle()
 		if(key == KEYCODE_INT)
 			return true; // ^C quits
 
+		// Quickshouts handled regardless of game state:
+		if(ClassCPV::im_alive())
+		{
+			for(char f = 1; f <= MAX_QUICK_SHOUTS; ++f)
+			{
+				if(key == KEY_F(f))
+				{
+					if(!Config::quick_shout(--f).empty())
+						Network::send_line(Config::quick_shout(f), false);
+					return false;
+				}
+			}
+		}
+
 		if(clientstate == CS_LIMBO)
 		{
 			if(isalpha(key))
@@ -301,8 +317,8 @@ bool Input::inputhandle()
 				return true; // confirmation? nah
 
 			/*
-			 * The following can be carried out in any clientstate without
-			 * interruption:
+			 * The following can be carried out in any clientstate except limbo
+			 * without interruption:
 			 */
 			case KB_w: // walk toggle
 				if(walkmode)
@@ -312,6 +328,9 @@ bool Input::inputhandle()
 				break;
 			case KB_t: // titles toggle
 				toggle_titles();
+				break;
+			case KB_o: // ouching toggle
+				add_msg(string("Reacting to damage ") + offon[Config::toggle_ouch()], 7);
 				break;
 			case KB_PLUS:
 				scroll_chat_up();

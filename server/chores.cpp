@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "chores.h"
 #include "actives.h"
 #include "network.h"
@@ -981,9 +982,9 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	}
 	case XN_SET_TRAP:
 	{
-		// A trap can be set where there is no trap or noccent:
+		// A trap can be set/disarmed where there is no noccent:
 		if(!(Game::curmap->get_tile(pit->own_pc->getpos()).flags
-			& (TF_TRAP|TF_NOCCENT)))
+			& TF_NOCCENT))
 		{
 			pit->doing_a_chore = TRAP_TURNS;
 			add_action_ind(pit->own_pc->getpos(), A_TRAP);
@@ -1233,11 +1234,21 @@ void progress_chore(const list<Player>::iterator pit)
 		if(!pit->doing_a_chore) // done
 		{
 			Coords c = pit->own_pc->getpos();
-			traps.push_back(Trap(c, TRAP_BOOBY, pit));
-			traps.back().set_seen_by(pit->team);
-			Game::curmap->mod_tile(c)->flags |= TF_TRAP;
-			event_set.insert(c);
-			string msg = "You set a boobytrap.";
+			string msg;
+			// If there is a trap, disarm it, else plant one:
+			if(Game::curmap->mod_tile(c)->flags & TF_TRAP)
+			{
+				traps.erase(any_trap_at(c));
+				Game::curmap->mod_tile(c)->flags &= ~TF_TRAP;
+				msg = "You disarm the trap.";
+			}
+			else
+			{
+				traps.push_back(Trap(c, TRAP_BOOBY, pit));
+				traps.back().set_seen_by(pit->team);
+				Game::curmap->mod_tile(c)->flags |= TF_TRAP;
+				msg = "You set a boobytrap.";
+			}
 			Network::construct_msg(msg, C_BOOBY_TRAP_LIT);
 			Network::send_to_player(*pit);
 		}
@@ -1380,3 +1391,4 @@ void trap_detection(const list<Player>::iterator pit)
 	} // if should detect traps
 }
 
+#endif // not maptest build

@@ -1,5 +1,6 @@
 // Please see LICENSE file.
 #include "settings.h"
+#ifndef MAPTEST
 #include "log.h"
 #include "../common/confdir.h"
 #include "../common/utfstr.h"
@@ -52,7 +53,20 @@ final map size span of 42--511 */
 string confdir_str = "";
 string greeting = "";
 string botexe = "";
+#endif // not maptest build
+std::string mapdir = "";
+#ifndef MAPTEST
 vector<e_GameMode> poss_modes;
+
+void check_path_setting(const string &name, string &val)
+{
+	if(!val.empty() && val[0] != '/')
+	{
+		to_log("Config error: the \'" + name + "\' setting must contain "
+			"the full path; ignoring the read \"" + val + "\".");
+		val.clear();
+	}
+}
 
 } // end of local namespace
 
@@ -142,13 +156,16 @@ void Config::read_config()
 		if(keyw == "bots")
 		{
 			ss >> botexe;
-			if(!botexe.empty() && botexe[0] != '/')
-			{
-				
-				to_log("Warning: the \'bots\' setting must contain "
-					"full path; ignored the read \"" + botexe + "\".");
-				botexe.clear();
-			}
+			check_path_setting(keyw, botexe);
+			continue;
+		}
+		if(keyw == "mapdir")
+		{
+			ss >> mapdir;
+			check_path_setting(keyw, mapdir);
+			// Make sure nonempty value ends in '/':
+			if(!mapdir.empty() && mapdir[mapdir.size()-1] != '/')
+				mapdir += '/';
 			continue;
 		}
 		if(keyw == "mode")
@@ -198,7 +215,7 @@ void Config::read_config()
 	if(int_settings[IS_CLASSLIMIT]
 		&& int_settings[IS_CLASSLIMIT]*2*NO_CLASS < int_settings[IS_MAXPLAYERS])
 	{
-		to_log("Warning: classlimit in config is too small "
+		to_log("Config error: classlimit is too small "
 			"with respect to the number of players allowed!");
 		int_settings[IS_CLASSLIMIT] = 0;
 	}
@@ -231,4 +248,8 @@ string Config::game_modes_str()
 	ret[ret.size()-1] = '.';
 	return ret;
 }
+
+#endif // not maptest build
+
+std::string &Config::get_mapdir() { return mapdir; }
 

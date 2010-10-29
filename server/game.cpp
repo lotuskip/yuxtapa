@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "game.h"
 #include "settings.h"
 #include "map.h"
@@ -331,7 +332,10 @@ void Game::next_map(const string &loadmap)
 		init_phase = IPH_GEN_MAP;
 	}
 	else // no need to generate map!
+	{
+		Network::to_chat("Loaded map \'" + loadmap + "\'.");
 		init_phase = IPH_GENERALS;
+	}
 }
 
 void Game::init_game()
@@ -897,10 +901,11 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 	{
 		if(pit->team != T_SPEC)
 		{
+			if(pit->is_alive())
+				kill_player(pit); /* see player_left_team; it won't call this
+				after we've set the team to spec! */
 			--num_players[pit->team - T_GREEN];
 			pit->team = T_SPEC;
-			kill_player(pit); /* see player_left_team; it won't call this after
-				we've set the team to spec! */
 			player_left_team(pit);
 			pit->cl = pit->next_cl = NO_CLASS;
 			send_state_change(pit);
@@ -1125,3 +1130,4 @@ void Game::del_owneds(const list<Player>::const_iterator pit)
 	}
 }
 
+#endif // not maptest build

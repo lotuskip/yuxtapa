@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "players.h"
 #include "settings.h"
 #include "viewpoint.h"
@@ -546,3 +547,5 @@ void output_stats()
 
 
 std::list<sockaddr_storage> &banlist() { return banned_ips; }
+
+#endif // not maptest build

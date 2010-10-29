@@ -1,4 +1,4 @@
-AC_INIT([yuxtapa], [2])
+AC_INIT([yuxtapa], [3])
 AM_INIT_AUTOMAKE
 AC_OUTPUT(Makefile)
 AC_LANG([C++])
@@ -30,7 +30,7 @@ AC_ARG_ENABLE([debug],
 	 debug="yes",
 	 debug="no")
 if test "x$debug" = "xyes"; then
-    CXXFLAGS="-g -O1 -DDEBUG -Wall -pedantic -Wno-char-subscripts -fsigned-char"
+    CXXFLAGS="-ggdb -O0 -DDEBUG -Wall -pedantic -Wno-char-subscripts -fsigned-char"
 else
 	CXXFLAGS="-O2 -g0 -fsigned-char"
 fi

@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "viewpoint.h"
 #include "actives.h"
 #include "declares.h"
@@ -415,3 +416,5 @@ bool ViewPoint::render_trap_at(const Coords &c, char *target, const bool lit) co
 	}
 	return false;
 }
+
+#endif // not maptest build

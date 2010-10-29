@@ -3,10 +3,13 @@
 #define SERVER_SETTINGS_H
 
 #include <string>
+#ifndef MAPTEST
 #include "declares.h"
+#endif
 
 namespace Config
 {
+#ifndef MAPTEST
 	// teambalance settings
 	enum { TB_OFF=0, TB_PASSIVE, TB_ACTIVE };
 
@@ -35,6 +38,8 @@ namespace Config
 	std::string game_modes_str();
 
 	extern unsigned int int_settings[MAX_INT_SETTING];
+#endif
+	std::string &get_mapdir();
 }
 
 #endif

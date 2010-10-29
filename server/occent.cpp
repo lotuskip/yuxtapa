@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#ifndef MAPTEST
 #include "occent.h"
 #include "chores.h"
 #include "map.h"
@@ -246,3 +247,4 @@ bool Zap::bounce(const e_Dir nd)
 	return false;
 }
 
+#endif // not maptest build
