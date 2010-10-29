@@ -36,6 +36,8 @@ namespace Config
 
 	e_GameMode next_game_mode();
 	std::string game_modes_str();
+	e_MapType next_map_type();
+	std::string map_types_str();
 
 	extern unsigned int int_settings[MAX_INT_SETTING];
 #endif

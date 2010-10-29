@@ -62,9 +62,11 @@ int main(int argc, char *argv[])
 		sip = "127.0.0.1:12360";
 	string port = "", ip = "";
 	size_t i;
-	if((i = sip.find(':')) != string::npos)
+	if((i = sip.rfind(':')) != string::npos && i > 1 && i != sip.size()-1)
 	{
 		port = sip.substr(i+1);
+		if(sip.rfind(':', i-1) != string::npos) // two ':'s imply IPv6 (or garbage...)
+			--i; // there is "::", not just ":" before the port
 		ip = sip.substr(0, i);
 	}
 	else
@@ -108,7 +110,7 @@ int main(int argc, char *argv[])
 
 	// construct a hello message:
 	send_buffer.add((unsigned char)MID_HELLO);
-	send_buffer.add(GAME_VERSION);
+	send_buffer.add(INTR_VERSION);
 	send_buffer.add((unsigned short)0xFFFF);
 	send_buffer.add(mynick);
 	
@@ -146,6 +148,7 @@ int main(int argc, char *argv[])
 			default: break;
 			}
 		} // received something
+		usleep(10000); // 10ms
 	} while(time(NULL) - sendtime < 2);
 #ifndef BE_QUIET
 	cerr << "Did not get a reply from the server." << endl;

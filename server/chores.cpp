@@ -61,10 +61,6 @@ void update_lights_around(const Coords &c)
 
 bool can_dig_in(const Coords &c, const e_Dir d)
 {
-	// First requirement is that c is not on the edge of the map:
-	if(!c.x || !c.y || c.x == Game::curmap->get_size()-1
-		|| c.y == Game::curmap->get_size()-1)
-		return false;
 	// Mining requires one of: (A) there is a wall, (B) there is a blocked
 	// boulder, (C) there is a boulder source.
 	Tile* tp = Game::curmap->mod_tile(c);
@@ -1173,8 +1169,15 @@ void progress_chore(const list<Player>::iterator pit)
 			// Digging is done; outcome depends on what exactly is there:
 			Tile* tp = Game::curmap->mod_tile(c);
 			list<OccEnt>::iterator b_it;
-			if(tp->symbol == '#') // wall; dig a passage
+			if(tp->symbol == '#') // wall; dig a passage unless NODIG
 			{
+				if(tp->flags & TF_NODIG)
+				{
+					string msg = "The wall resists.";
+					Network::construct_msg(msg, C_WALL_LIT);
+					Network::send_to_player(*pit);
+					break;
+				}
 				tp->symbol = '.';
 				tp->flags |= TF_WALKTHRU|TF_SEETHRU;
 				update_lights_around(c);

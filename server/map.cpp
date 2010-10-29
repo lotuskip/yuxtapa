@@ -24,6 +24,10 @@ namespace
 using namespace std;
 
 const char CHANCE_ROUGH = 22; // how much of the floor in dungeons is rough, %
+const char EVERY_N_WALL_UNDIG[2] = { // every Nth wall is made undiggable (in random)
+	30, // dungeon
+	12 // outdoor
+};
 
 // to reject maps saved with older specifications
 const unsigned char MAP_STORE_VERSION = 1;
@@ -31,7 +35,7 @@ const unsigned char MAP_STORE_VERSION = 1;
 // The tile flags that are static and relevant in a "raw map" that gets saved
 // to a file:
 const unsigned short STATIC_TF =
-	TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU|TF_BYWALL|TF_KILLS|TF_DROWNS;
+	TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU|TF_BYWALL|TF_KILLS|TF_DROWNS|TF_NODIG;
 
 const Tile T_TREE = { TF_WALKTHRU|TF_SEETHRU, 'T', C_TREE };
 const Tile T_GROUND = { TF_WALKTHRU|TF_SEETHRU, '.', C_GRASS };
@@ -944,8 +948,8 @@ Map::Map(const short size, const short variation, const short players)
 	const float *thresholds;
 	const Tile *tiles;
 	char num_tile_types;
-	// Determine whether we are making an outdoor map:
-	if((outdoor = random()%2))
+	// Determine map type:
+	if((maptype = Config::next_map_type()) == MT_OUTDOOR)
 	{
 		// best values for h are in the range 0.28--0.34
 		h = 0.31f + fractRand(0.03f);
@@ -953,7 +957,7 @@ Map::Map(const short size, const short variation, const short players)
 		tiles = outdoor_tiles;
 		num_tile_types = NUM_OD_TILES;
 	}
-	else // underground, best values for h seem to be 0.4--0.5
+	else // dungeon, best values for h seem to be 0.4--0.5
 	{
 		h = 0.45f + fractRand(0.05f);
 		thresholds = ug_thresholds;
@@ -989,7 +993,7 @@ Map::Map(const short size, const short variation, const short players)
 	// If we are creating an underground map, we add corridors and randomly
 	// change the floor tiles to rough tiles:
 	char ch;
-	if(!outdoor)
+	if(maptype != MT_OUTDOOR)
 	{
 		// Corridor algorithm; kind of like maze generation:
 		ch = random()%8 + 8; // 8--15
@@ -1071,7 +1075,7 @@ Map::Map(const short size, const short variation, const short players)
 			ci = hcoords.begin();
 			/*if(ci->x < 0 || ci->y < 0)
 				continue;*/
-			gen_house(outdoor);
+			gen_house(maptype == MT_OUTDOOR);
 			// That generated a "house pattern" to the table 'house'. Now we
 			// must apply this pattern to the location 'ci' on the actual map (with
 			// 'ci' giving the NW corner of, not the house, but the house buffer).
@@ -1083,7 +1087,7 @@ Map::Map(const short size, const short variation, const short players)
 					ch = house[j*MAX_HOUSE_SIZE+i];
 					if(ch == '+')
 					{
-						if(outdoor)
+						if(maptype == MT_OUTDOOR)
 							add_patch(Coords(ci->x+i, ci->y+j), T_ROAD);
 						else
 							add_patch(Coords(ci->x+i, ci->y+j), T_FLOOR);
@@ -1129,19 +1133,31 @@ Map::Map(const short size, const short variation, const short players)
 		} // loop creating houses
 	} // if create houses
 
-	// Always finish with the boundary:
+	// Always finish with the boundary wall, undiggable:
 	rowit rit = data.begin();
 	vector<Tile>::iterator it;
 	for(it = rit->begin(); it != rit->end(); ++it)
+	{
 		*it = T_WALL;
+		it->flags |= TF_NODIG;
+	}
 	rit = data.begin()+mapsize-1;
 	for(it = rit->begin(); it != rit->end(); ++it)
+	{
 		*it = T_WALL;
+		it->flags |= TF_NODIG;
+	}
 	for(rit = data.begin(); rit != data.end(); ++rit)
+	{
 		(*rit)[0] = (*rit)[mapsize-1] = T_WALL;
+		(*rit)[0].flags |= TF_NODIG;
+		(*rit)[mapsize-1].flags |= TF_NODIG;
+	}
+	
 
 	// Finally, initialize the BY_WALL flags (this might be doable faster, too)
-	// Note that no need to init for the edge since it's undiggable.
+	// and make some walls undiggable. Note that no need to init for the edge
+	// since it's always undiggable.
 	Coords c;
 	c.y = 1;
 	while(c.y < mapsize-1)
@@ -1150,6 +1166,8 @@ Map::Map(const short size, const short variation, const short players)
 		while(c.x < mapsize-1)
 		{
 			upd_by_wall_flag(c);
+			if(!(random()%EVERY_N_WALL_UNDIG[maptype]) && data[c.y][c.x] == T_WALL)
+				data[c.y][c.x].flags |= TF_NODIG;
 			c.x++;
 		}
 		c.y++;
@@ -1384,7 +1402,7 @@ bool Map::load_from_file(const string &mapname)
 	if(mapsize < MIN_MAP_SIZE || mapsize > MAX_MAP_SIZE)
 		return false; // a corrupt file or something
 	file.read(reinterpret_cast<char*>(&inhabited), sizeof(bool));
-	file.read(reinterpret_cast<char*>(&outdoor), sizeof(bool));
+	file.read(reinterpret_cast<char*>(&maptype), sizeof(e_MapType));
 	make_right_size(data);
 	vector<Tile>::iterator i;	
 	for(rowit it = data.begin(); it != data.end(); ++it)
@@ -1415,7 +1433,7 @@ bool Map::save_to_file(const std::string &mapname) const
 	file.write(reinterpret_cast<const char*>(&MAP_STORE_VERSION), 1);
 	file.write(reinterpret_cast<const char*>(&mapsize), sizeof(short));
 	file.write(reinterpret_cast<const char*>(&inhabited), sizeof(bool));
-	file.write(reinterpret_cast<const char*>(&outdoor), sizeof(bool));
+	file.write(reinterpret_cast<const char*>(&maptype), sizeof(e_MapType));
 	vector<Tile>::const_iterator i;	
 	for(vector< vector<Tile> >::const_iterator it = data.begin(); it != data.end(); ++it)
 	{

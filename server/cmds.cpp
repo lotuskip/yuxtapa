@@ -120,7 +120,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			keyw = "statpurge "
 				+ lexical_cast<string>(int_settings[IS_STATPURGE]) + "h, "
 				+ team_balance_str[int_settings[IS_TEAMBALANCE]];
-			keyw += " teambalance, modes: " + game_modes_str();
+			keyw += " teambalance, modes: " + game_modes_str() + ',';
+			Network::to_chat(keyw);
+			keyw = "map types: " + map_types_str() + '.';
 			Network::to_chat(keyw);
 			// may broadcast
 		}

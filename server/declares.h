@@ -11,6 +11,11 @@ enum e_GameMode {
 	GM_DESTR // destroy
 };
 
+enum e_MapType {
+	MT_DUNGEON=0,
+	MT_OUTDOOR
+};
+
 const unsigned char team_colour[3] = { C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
 
 const unsigned char DEF_MSG_COL = 7;

@@ -17,6 +17,7 @@ namespace
 using namespace std;
 
 const string short_mode_name[] = { "dom", "con", "ste", "des" };
+const string short_mtype_name[] = { "dun", "out" };
 
 // default settings:
 const unsigned int default_sets[Config::MAX_INT_SETTING] = {
@@ -57,6 +58,8 @@ string botexe = "";
 std::string mapdir = "";
 #ifndef MAPTEST
 vector<e_GameMode> poss_modes;
+vector<e_MapType> poss_mtypes;
+
 
 void check_path_setting(const string &name, string &val)
 {
@@ -189,6 +192,23 @@ void Config::read_config()
 			}
 			continue;
 		}
+		if(keyw == "maptype")
+		{
+			for(;;)
+			{
+				ss >> keyw;
+				if(keyw == "dungeon")
+					poss_mtypes.push_back(MT_DUNGEON);
+				else if(keyw == "outdoor")
+					poss_mtypes.push_back(MT_OUTDOOR);
+				else
+					to_log("Unrecognised map type string \'" + keyw + "\'!");
+				
+				if(ss.eof())
+					break;
+			}
+			continue;
+		}
 		// if here, not all is okay:
 		to_log("Warning: could not parse the following line in config file:");
 		to_log("\t\"" + s + "\"");
@@ -210,6 +230,12 @@ void Config::read_config()
 		poss_modes.push_back(GM_CONQ);
 		poss_modes.push_back(GM_STEAL);
 		poss_modes.push_back(GM_DESTR);
+	}
+	// Similarly check map types:
+	if(poss_mtypes.empty())
+	{
+		poss_mtypes.push_back(MT_DUNGEON);
+		poss_mtypes.push_back(MT_OUTDOOR);
 	}
 	// finally check classlimit with respect to maxplayers:
 	if(int_settings[IS_CLASSLIMIT]
@@ -245,7 +271,22 @@ string Config::game_modes_str()
 	for(vector<e_GameMode>::const_iterator it = poss_modes.begin();
 		it != poss_modes.end(); ++it)
 		ret += short_mode_name[*it] + '/';
-	ret[ret.size()-1] = '.';
+	ret.erase(ret.size()-1, 1);
+	return ret;
+}
+
+e_MapType Config::next_map_type()
+{
+	return poss_mtypes[randor0(poss_mtypes.size())];
+}
+
+string Config::map_types_str()
+{
+	string ret = "";
+	for(vector<e_MapType>::const_iterator it = poss_mtypes.begin();
+		it != poss_mtypes.end(); ++it)
+		ret += short_mtype_name[*it] + '/';
+	ret.erase(ret.size()-1, 1);
 	return ret;
 }
 

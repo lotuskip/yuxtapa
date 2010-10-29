@@ -2,8 +2,8 @@
 #ifndef MAP_H
 #define MAP_H
 
+#include "declares.h"
 #include "../common/coords.h"
-#include "../common/col_codes.h"
 #include <vector>
 #include <utility>
 #include <string>
@@ -27,7 +27,8 @@ enum {
 	TF_SOUND=0x0100, // fast ind. of a sound event
 	TF_KILLS=0x0200, // chasm tile
 	TF_DROWNS=0x0400, // water tile
-	TF_TRAP=0x0800 // trapped tile
+	TF_TRAP=0x0800, // trapped tile
+	TF_NODIG=0x1000 // cannot be dug (for walls)
 };
 // The empty tile is what is drawn for unknown places.
 const Tile EMPTY_TILE = { TF_SEETHRU, '?', C_UNKNOWN };
@@ -72,7 +73,7 @@ public:
 	bool LOS_between(const Coords &c1, Coords c2, const char maxrad);
 
 	bool is_inhabited() const { return inhabited; }
-	bool is_outdoor() const { return outdoor; }
+	bool is_outdoor() const { return maptype == MT_OUTDOOR; }
 
 	// When walls are removed (by digging), call this an all neighbours
 	// to update their being next to wall or not:
@@ -81,7 +82,7 @@ public:
 private:
 	short mapsize;
 	bool inhabited;
-	bool outdoor;
+	e_MapType maptype;
 
 	// the map, mapsize*mapsize square
 	std::vector< std::vector<Tile> > data;
