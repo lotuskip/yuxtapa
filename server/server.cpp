@@ -1,5 +1,6 @@
 // Please see LICENSE file.
 #include <iostream>
+#include "../config.h"
 
 #ifdef MAPTEST
 #include "map.h"

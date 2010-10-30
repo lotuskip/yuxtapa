@@ -4,6 +4,7 @@
 #include "network.h"
 #include "input.h"
 #include "msg.h"
+#include "../common/constants.h"
 #include <clocale>
 #include <iostream>
 

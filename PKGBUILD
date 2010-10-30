@@ -10,17 +10,13 @@ makedepends=('boost')
 depends=('zlib' 'boost-libs' 'ncurses')
 source=(http://tempoanon.net/lotuskip/tervat/$pkgname-$pkgver.tar.gz)
 install=yuxtapa.install
-md5sums=('487f92649485748562b76cb29fe51131')
+md5sums=('f9340abf669eeda63120b8c5ddc17e97')
 
 build() {
   mkdir -p "${pkgdir}/usr/bin" || return 1
   mkdir -p "${pkgdir}/usr/share/yuxtapa" || return 1
   mkdir -p "${pkgdir}/usr/share/doc" || return 1
   cd $srcdir/$pkgname
-  aclocal || return 1
-  automake --add-missing || return 1
-  autoconf || return 1
-  ./configure || return 1
   make || return 1
 }
 

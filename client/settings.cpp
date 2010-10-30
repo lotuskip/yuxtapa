@@ -124,8 +124,12 @@ void Config::read_config(const string servername)
 					} // else:
 					ch = tolower(keyw[2]) - 96;
 				}
-				else
-					ch = keyw[1];
+				else if((ch = keyw[1]) == '?')
+				{
+					// '?' is reserved for help view!
+					cerr << "Config error: key '?' is reserved!" << endl;
+					continue;
+				}
 				key_bindings[kb] = ch;
 			}
 			else

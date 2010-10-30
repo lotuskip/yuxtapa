@@ -1,6 +1,18 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Getting and installing</h2>
 
+<p><strong>If you just want to try the game out real quick</strong>, the necessary steps are:
+<ul>
+<li>Download the source code tarball and extract it</li>
+<li>Compile the server and the client as explained below</li>
+<li>Create the directory ~/.config/yuxtapa</li>
+<li>Copy the configuration template files server.conf and client.conf from 'yuxtapa/tmplates/' there</li>
+<li>Run the server (yuxtapa_sv), leave it running</li>
+<li>In another terminal run the client (yuxtapa_cl); you're then playing solo on your own local server</lI>
+</ul></p>
+<p>More precise information follow.</p>
+
+
 <h3>Downloading</h3>
 <p>You have one or two options:
 <ul>
@@ -19,73 +31,61 @@ to find out how to install them.
 <li>ZLib (<em>zlib</em>)</li>
 </ul>
 If your distribution makes the distinction, these need to be the <em>development</em> versions (eg. in Fedora: <em>ncurses-devel</em>,
-<em>boost-devel</em>, <em>zlib-devel</em>).
-You will also need a sane C++ compiling environment full with the GNU <em>autotools</em>.</p>
+<em>boost-devel</em>, <em>zlib-devel</em>).</p>
 
 <p>Please see the <a href="terminals.html">Terminals</a> page for information about what the yuxtapa
 client requires from the terminal emulator.</p>
 
 
 <h3>Compiling the source</h3>
+
 <p>yuxtapa has a separate executable for the server and the client. You can compile either or both.
-Furthermore, you can compile with debug either enabled or disabled. (Debug being enabled
-results in a larger binary and perhaps a tiny performance drop. Regular users probably don't need
-to enable it.) <em>By default</em> both the server and the client are built, and
-debugging is disabled.</p>
+The AUR package installs both by default. Users of AUR know what to do. The following is for everybody else.</p>
 
-<p><em>If you use AUR</em>, these defaults are followed (but perhaps you know how to change that). The following instructions
-are intended for people not using AUR:</p>
+<p><strong>To only build the client</strong>, simply do
+<pre>
+make client
+</pre>
+in the 'yuxtapa' directory that is created upon extracting the source package. This creates the executable
+'yuxtapa_cl' in that same directory. Place it anywhere you like, and jump to the next part below.</p>
 
-<p>First, extract the source package. Then, in a terminal, in the created directory named 'yuxtapa', run the following
-commands:
+<p><strong>If you also want the server</strong>, you may have to edit the 'config.h' file in the 'yuxtapa'
+directory prior to running <em>make</em>. This is necessary if you wish to either enable debug messages
+or to build a <em>map testing executable</em> (a non-server that only generates maps). If not, don't worry
+about 'config.h'. Once happy with your 'config.h' run either
 <pre>
-aclocal
-automake --add-missing
-autoconf
+make server
 </pre>
-This should create a bunch of files and print only a few messages. Next, run the created configure script
-(one of the following, for instance):
-<pre>
-./configure                                   [default: client + server, no debug]
-./configure --enable-debug                    [client + server, with debug]
-./configure --disable-client                  [just the server, no debug]
-./configure --enable-debug --disable-server   [just the client, with debug]
-./configure --prefix=/home/user/bin           [install in home dir]
-</pre>
-etc., you get the idea. Running './configure -h' prints more options. If that ran okay without complaints, you can continue with
+to build only the server, or
 <pre>
 make
 </pre>
-to compile and, optionally,
-<pre>
-make install
-</pre>
-(as root) to install (system-wide). Installing is not necessary to play or to run a server.
-</p>
+to build both the client and the server. The server executable is called 'yuxtapa_sv'.</p>
+
 
 <h3>Grabbing anything else you need from the package</h3>
+<p>There is no install script or Makefile rule: to &quot;install&quot; the game into your system, you
+must do something like
+<pre>
+mv yuxtapa_cl yuxtapa_sv /usr/bin
+</pre>
+as root. There are no other &quot;system files&quot; beyond these two executables.</p>
+
 <p>The source tarball contains other stuff that might be of interest to users, as well.
 Such as this manual (AUR users will have it installed in /usr/share/doc/yuxtapa/),
 the bot client (see the file 'testes/README' as well as the <a href="bots.html">manual page on bots</a>), and
 the template configuration files (see below).</p>
 
+
 <h3>Configuring and running</h3>
 <p>In order to get playing, you must <a href="clientconf.html">configure the client</a>. After
 that is done, you can run the client program with
 <pre>yuxtapa_cl</pre>
-if you installed the game into your path, or with
+if you installed the executable into your path, or with
 <pre>./yuxtapa_cl</pre>
 in the directory containing the executable otherwise.</p>
 
 <p>Some notes about setting up a server are in the <a href="serverconf.html">server configuration</a> page.</p>
 
-<p><strong>If you just want to try the game out real quick</strong>, the necessary steps are:
-<ul>
-<li>Compile the server and the client as explained above</li>
-<li>Create the directory ~/.config/yuxtapa</li>
-<li>Copy the configuration template files server.conf and client.conf there</li>
-<li>Run the server (yuxtapa_sv), leave it running</li>
-<li>In another terminal run the client (yuxtapa_cl); you're then playing solo on your own local server</lI>
-</ul></p>
-
 </body></html>
+

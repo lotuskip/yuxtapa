@@ -8,13 +8,14 @@ The structure of this package:
 ##############################
 README      this file
 LICENSE     license information
+config.h    if building the server please take a look at this file
+Makefile    for building
 manual/     the manual, HTML format
 client/     client source code
 server/     server source code
 common/     source code used by both client and server
 testes/     some auxiliary source code, see testes/README
 tmplates/   documented example config files
-+ some compilation related files
 
 
 Compilation, installation, and other information can be

@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#include "../config.h"
 #include "map.h"
 #include "settings.h"
 #include "../common/util.h"

@@ -1,4 +1,5 @@
 // Please see LICENSE file.
+#include "../config.h"
 #ifndef MAPTEST
 #include "viewpoint.h"
 #include "actives.h"

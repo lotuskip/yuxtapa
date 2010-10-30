@@ -3,6 +3,7 @@
 #define SERVER_SETTINGS_H
 
 #include <string>
+#include "../config.h"
 #ifndef MAPTEST
 #include "declares.h"
 #endif

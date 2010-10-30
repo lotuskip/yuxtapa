@@ -7,9 +7,6 @@
 #include "../common/constants.h"
 #include "../common/col_codes.h"
 #include <boost/lexical_cast.hpp>
-#ifdef DEBUG
-#include <iostream>
-#endif
 
 extern e_ClientState clientstate;
 extern bool walkmode;
