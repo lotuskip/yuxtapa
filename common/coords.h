@@ -2,7 +2,7 @@
 #ifndef COORDS_H
 #define COORDS_H
 
-#include <vector>
+//#include <vector>
 #include <string>
 
 enum e_Dir { D_N = 0, D_NE, D_E, D_SE, D_S, D_SW, D_W, D_NW, MAX_D };

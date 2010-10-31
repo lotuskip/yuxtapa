@@ -9,7 +9,7 @@
 // to delete the two '/' symbols from the beginning of the line.
 
 // Uncomment to enable printing debug info (affects the server mainly):
-//#define DEBUG
+#define DEBUG
 
 // Uncomment to build a maptest server that only generates maps:
 //#define MAPTEST

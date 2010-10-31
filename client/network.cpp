@@ -278,7 +278,7 @@ bool Network::receive_n_handle()
 			{
 				extern char viewbuffer[BUFFER_SIZE]; // defined in view.cpp
 				recv_buffer.read_compressed(viewbuffer);
-				if(clientstate != CS_LIMBO)
+				if(clientstate != CS_LIMBO && clientstate != CS_HELP)
 					redraw_view();
 			}
 			Base::viewtick();

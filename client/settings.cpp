@@ -19,6 +19,8 @@ using namespace std;
 const char MIN_ANIM_LEN = 2;
 const char MAX_ANIM_LEN = 15;
 
+const char CTRL_ADD = 64; // 'A'-1
+
 const string default_key_bds = "896321475 CscTXuwt+-lQo"; // cf. enum e_Key_binding
 const string default_nick = "player";
 const string default_anim = "-\\|/";
@@ -36,7 +38,24 @@ bool ouching = false;
 string confdir_str = "";
 
 map<string,string> aliases;
+
+char keyplaceholder[3] = "  ";
+
+void fill_kph(const char k)
+{
+	if(k < 27) // means it's a ctrl key
+	{
+		keyplaceholder[0] = '^';
+		keyplaceholder[1] = k + CTRL_ADD;
+	}
+	else
+	{
+		keyplaceholder[0] = k;
+		keyplaceholder[1] = '\0';
+	}
 }
+
+} // end local namespace
 
 void Config::read_config(const string servername)
 {
@@ -106,7 +125,7 @@ void Config::read_config(const string servername)
 					cerr << str_ctrl_error << endl;
 					continue;
 				} // else:
-				ch = tolower(keyw[1]) - 96; // 96 == 'a'-1
+				ch = toupper(keyw[1]) - CTRL_ADD;
 				keyw.erase(0,1); // remove '^', forcing the replacement to be at index 1
 			}
 			else
@@ -122,7 +141,7 @@ void Config::read_config(const string servername)
 						cerr << str_ctrl_error << endl;
 						continue;
 					} // else:
-					ch = tolower(keyw[2]) - 96;
+					ch = toupper(keyw[2]) - CTRL_ADD;
 				}
 				else if((ch = keyw[1]) == '?')
 				{
@@ -133,7 +152,11 @@ void Config::read_config(const string servername)
 				key_bindings[kb] = ch;
 			}
 			else
-				cerr << "Unknown original keybinding \'" << ch << "\' in config." << endl;
+			{
+				fill_kph(ch);
+				cerr << "Unknown original keybinding \'"
+					<< keyplaceholder << "\' in config." << endl;
+			}
 			continue;
 		}
 		else if(keyw == "anim")
@@ -258,6 +281,12 @@ e_Key_binding Config::convert_key(const char key)
 	else return e_Key_binding(index);
 }
 
+char* Config::key_map_value(const e_Key_binding kb)
+{
+	// assert(kb != MAX_KEY_BINDING);
+	fill_kph(key_bindings[kb]);
+	return keyplaceholder;
+}
 
 void Config::do_aliasing(string &s)
 {

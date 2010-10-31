@@ -28,6 +28,8 @@ namespace Config
 
 	// give the internal key where the character is mapped to
 	e_Key_binding convert_key(const char key);
+	// Returns the char (possibly "^X") which is mapped to kb:
+	char* key_map_value(const e_Key_binding kb);
 
 	std::string &configdir();
 }

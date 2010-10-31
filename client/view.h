@@ -9,6 +9,7 @@ enum e_ClientState {
 	CS_TYPE_CHAT, // typing a chat msg
 	CS_TYPE_SHOUT, // typing a shout
 	CS_LIMBO, // viewing the limbo menu
+	CS_HELP, // viewing the keymap
 	// class specifics:
 	CS_AIMING, // archer aiming
 	CS_DIR // waiting for direction input

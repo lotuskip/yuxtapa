@@ -196,7 +196,15 @@ bool Input::inputhandle()
 		if(key == KEYCODE_INT)
 			return true; // ^C quits
 
-		// Quickshouts handled regardless of game state:
+		if(clientstate == CS_HELP)
+		{
+			// any key in help screen closes help
+			clientstate = CS_NORMAL;
+			leave_limbo(); // not leaving limbo, but the functionality is the same
+			return false;
+		}
+
+		// Quickshouts handled regardless of clientstate:
 		if(ClassCPV::im_alive())
 		{
 			for(char f = 1; f <= MAX_QUICK_SHOUTS; ++f)
@@ -236,7 +244,16 @@ bool Input::inputhandle()
 		}
 		else
 		{
-			// clientstate is such that we need to convert the key:
+			if(key == '?') // help key
+			{
+				clientstate = CS_HELP;
+				walkmode_off();
+				redraw_view();
+				Base::type_cursor(0);
+				return false;
+			}
+
+			// if here, we need to convert the key:
 			e_Key_binding kb = MAX_KEY_BINDING;
 			if(key < 256) // fits in a byte; try to convert
 				kb = Config::convert_key(char(key));

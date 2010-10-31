@@ -233,545 +233,232 @@ const float ug_thresholds[NUM_UG_TILES] = {
 
 ///////////////////////////////////////////////////////////////////
 
-/*
- * The house building routines follow. These look horrible and
- * are probably too poorly commented. But it works! Somewhat.
- */
-const char MINSIZE = 4; // Minimum size of a house; DO NOT CHANGE!
-const char MAX_HOUSE_SIZE = 15; // Max size; should be at least MINSIZE+2
-const char CHANCE_NO_WALLS = 15; // % of having no interior walls whatsoever
-const char CHANCE_WINDOW = 20;
-const char CHANCE_DOOR = 35;
+// Don't modify these:
+const char MAX_HS = 14; // max house size
+const char ROOM_NUM = (MAX_HS-2)/3; // 4
+const char ROOM_SIZE = 3;
 
 // buffer to hold a house while it's being generated
-char house[MAX_HOUSE_SIZE*MAX_HOUSE_SIZE];
-/* Symbols used:
- * '#*: outer wall
- * 'H': inner wall
- * '+': a door
- * '_': a tile not covered by the house
- * 'A': floor, "an inner wall could start here"
- * 'B': floor, "an inner wall could end here"
- * '.': fixed to be floor
- * ',': interior, not yet fixed to be floor
- */
+char house[MAX_HS*MAX_HS];
+bool rooms[ROOM_NUM*ROOM_NUM];
 
-bool wall_space_check(e_Dir backdir, const Coords c)
-{
-	// Check first left:
-	--(--backdir);
-	Coords d = (c.in(backdir)).in(backdir);
-	char ch = house[d.y*MAX_HOUSE_SIZE+d.x];
-	if(ch != '#' && ch != 'H' && ch != '+')
-		return true; // all good
-	// Else check right:
-	backdir = !backdir;
-	d = (c.in(backdir)).in(backdir);
-	ch = house[d.y*MAX_HOUSE_SIZE+d.x];
-	if(ch != '#' && ch != 'H' && ch != '+')
-		return true; // all good
-	// failed this check:
-	return false;
-}
-
-struct WIP // wall init point
-{
-	Coords co;
-	e_Dir fd;
-
-	WIP(const Coords &c, const e_Dir d) : co(c), fd(d) {}
+const char roomcell[7][9] = {
+{ '.', '.', '.',
+  '.', '.', '.',
+  '.', '.', '.' },
+{ '#', '.', '.',
+  '#', '.', '.',
+  '#', '#', '#' },
+{ '#', '.', '#',
+  '.', '.', '.',
+  '#', '.', '#' },
+{ '#', ':', '#',
+  '#', '.', '#',
+  '#', ':', '#' },
+{ '#', ':', '#',
+  '#', '.', '#',
+  '#', '#', '#' },
+{ '.', '.', '.',
+  '.', '#', '.',
+  '.', '.', '.' },
+{ '#', '.', '#',
+  '#', '.', '.',
+  '#', '#', '#' },
 };
 
-// returns D_MAX for "no"
-e_Dir is_valid_wall_init_pt(const Coords c)
+char rot_0(const char x, const char y, const char* p)
 {
-	char ch = house[c.y*MAX_HOUSE_SIZE+c.x];
-	// Must be uninitialized interior or previously accepted as an A-point
-	if(ch != ',' && ch != 'A')
-		return MAX_D;
-	// Must have no door in a cardinal direction and 2-3 wall neighbours
-	char walls = 0;
-	e_Dir dir;
-	e_Dir backdir = MAX_D;
-	Coords d;
-	for(dir = D_N; dir != MAX_D; dir = e_Dir(dir+1))
+	return p[y*ROOM_SIZE+x]; // yep, identity map.
+}
+char rot_90(const char x, const char y, const char* p)
+{
+	return p[(ROOM_SIZE-1-x)*ROOM_SIZE+y];
+}
+char rot_180(const char x, const char y, const char* p)
+{
+	return p[(ROOM_SIZE-1-y)*ROOM_SIZE+ROOM_SIZE-1-x];
+}
+char rot_270(const char x, const char y, const char* p)
+{
+	return p[x*ROOM_SIZE+ROOM_SIZE-1-y];
+}
+
+char (*rot_fs[4])(const char, const char, const char*) = { rot_0, rot_90, rot_180, rot_270 };
+
+
+// construct a new "room cell" at (rx,ry), coming from 'dir' (dir==-1: initial cell)
+void room_recur(const char rx, const char ry, const char dir)
+{
+	if(rooms[ry*ROOM_NUM+rx])
+		return;
+	rooms[ry*ROOM_NUM+rx] = true;
+	// See where we can branch from here:
+	bool branches[4] = {  (dir != 0 && ry != 0) /*N*/,
+		(dir != 1 && rx != ROOM_NUM-1) /*E*/,
+		(dir != 2 && ry != ROOM_NUM-1) /*S*/,
+		(dir != 3 && rx != 0) /*W*/ };
+	char (*rot_func)(const char, const char, const char*) = &rot_0;
+	// Make a random kind of room here:
+	char room_type; // index to the 'roomcell' table
+	// First room (dir == -1) must not be a corridor only, and we favour
+	// the non-corridors otherwise, too:
+	if(dir == -1 || !(random()%5))
+		room_type = random()%2; // 0 or 1 is okay
+	else
+		room_type = random()%7;
+	switch(room_type)
 	{
-		d = c.in(dir);
-		ch = house[d.y*MAX_HOUSE_SIZE+d.x];
-		if(!(int(dir)%2) && ch == '+') // door in cardinal dir!
-			return MAX_D;
-		if(ch == '#' || ch == 'H' || ch == '+') // a door in non-card dir counts as a wall
+	case 1: case 6: /* #..  #.#  rotate these similarly
+			         * #..  #..
+			         * ###  ###  */
+		if(dir != -1)
 		{
-			++walls;
-			if(!(int(dir)%2)) // found a wall in a cardinal direction
+			if(random()%2) // dir enters from the top
 			{
-				if(backdir != MAX_D) // found _two_ walls in a cardinal direction!
-					return MAX_D;
-				// else:
-				backdir = dir;
+				rot_func = rot_fs[dir];
+				branches[(dir+2)%4] = branches[(dir+3)%4] = false;
+			}
+			else // dir enters from the side
+			{
+				rot_func = rot_fs[(dir+3)%4];
+				branches[(dir+1)%4] = branches[(dir+2)%4] = false;
 			}
 		}
-	}
-	if(walls > 3 || walls < 2)
-		return MAX_D;
-	// Finally, the most complicated check: in at least one side-direction there
-	// must be at least two free spaces (non-walls).
-	if(wall_space_check(backdir, c))
-		return backdir;
-	// else
-	return MAX_D;
-}
-
-bool is_valid_wall_cont_pt(const Coords c)
-{
-	char ch = house[c.y*MAX_HOUSE_SIZE+c.x];
-	// Must be uninitialized interior or previously accepted as an B-point
-	if(ch != ',' && ch != 'B')
-		return false;
-	// Must have no more than 2 wall neighbours, and no door in cardinal dir.
-	e_Dir dir;
-	e_Dir backdir = MAX_D;
-	char walls = 0;
-	Coords d;
-	for(dir = D_N; dir != MAX_D; dir = e_Dir(dir+1))
-	{
-		d = c.in(dir);
-		ch = house[d.y*MAX_HOUSE_SIZE+d.x];
-		if(!(int(dir)%2) && ch == '+') // door in cardinal dir!
-			return false;
-		if(ch == '#' || ch == 'H' || ch == '+')
+		else
+			branches[2] = branches[3] = false;
+		break;
+	case 4: /* #.#  can branch only one way
+			 * #.#
+			 * ### */
+		if(dir != -1)
+			rot_func = rot_fs[dir];
+		branches[0] = branches[1] = branches[2] = branches[3] = false;
+		break;
+	case 3: /* #.# can branch N / S
+			 * #.#
+			 * #.# */
+		if(dir%2)
 		{
-			if(++walls > 2)
-				return false;
-			if(!(int(dir)%2)) // found a wall in a cardinal direction
-			{
-				if(backdir != MAX_D) // found _two_ walls in a cardinal direction!
-					return false;
-				// else:
-				backdir = dir;
-			}
+			rot_func = rot_90;
+			branches[0] = branches[2] = false;
 		}
+		else
+			branches[1] = branches[3] = false;
+		break;
+	// default: (Others can branch any way and don't need rotation.)
 	}
-	if(backdir != MAX_D)
-		return wall_space_check(backdir, c);
-	return true; // no adjacent walls
-}
 
-bool outside(const Coords &c)
-{
-	return (c.x < 0 || c.y < 0 || c.x >= MAX_HOUSE_SIZE || c.y >= MAX_HOUSE_SIZE);
-}
-
-// Returns direction of window or MAX_D for "no"
-e_Dir is_valid_win_pt(const Coords c)
-{
-	// Assuming that the tile at c is '#'.
-	e_Dir dir = D_N;
-	Coords d;
-	for(; dir != MAX_D; dir = e_Dir(dir+2))
+	// Put the room in place:
+	char x, y;
+	for(y = 0; y < ROOM_SIZE; ++y)
 	{
-		d = c.in(dir);
-		if(outside(d))
-			break;
-		if(house[d.y*MAX_HOUSE_SIZE+d.x] == '_')
-			break;
+		for(x = 0; x < ROOM_SIZE; ++x)
+			house[(ry*ROOM_SIZE+1+y)*MAX_HS+rx*ROOM_SIZE+1+x]
+				= rot_func(x, y, roomcell[room_type]);
 	}
-	if(dir == MAX_D) // no outside tile in cardinal dir
-		return MAX_D;
-	// The tile opposite to dir has to be floor:
-	d = c.in(!dir);
-	if(outside(d))
-		return MAX_D;
-	char ch = house[d.y*MAX_HOUSE_SIZE+d.x];
-	if(ch == '#' || ch == 'H' || ch == '+')
-		return MAX_D;
-	// Finally, the sides have to be outside walls:
-	++(++dir);
-	d = c.in(dir);
-	if(outside(d) || house[d.y*MAX_HOUSE_SIZE+d.x] != '#')
-		return MAX_D;
-	d = c.in(!dir);
-	if(outside(d) || house[d.y*MAX_HOUSE_SIZE+d.x] != '#')
-		return MAX_D;
-	return dir;
-}
 
-bool is_valid_door_pt(const Coords c)
-{
-	// A door can be placed where a window can.
-	e_Dir dir = is_valid_win_pt(c);
-	if(dir == MAX_D)
-		return false;
-	// However, we don't want two doors too close to each other.
-	Coords d = (c.in(dir)).in(dir);
-	if(!outside(d) && house[d.y*MAX_HOUSE_SIZE+d.x] == '+')
-		return false;
-	d = (c.in(!dir)).in(!dir);
-	return (outside(d) || house[d.y*MAX_HOUSE_SIZE+d.x] != '+');
+	// Branch where-ever we can:
+	if(branches[0]) room_recur(rx, ry-1, 2);
+	if(branches[1]) room_recur(rx+1, ry, 3);
+	if(branches[2]) room_recur(rx, ry+1, 0);
+	if(branches[3]) room_recur(rx-1, ry, 1);
 }
 
 // Here's the entry point function.
 void gen_house(const bool outdoor)
 {
-	// Determine actual size:
-	char xsize = random()%(MAX_HOUSE_SIZE - MINSIZE + 1) + MINSIZE;
-	char ysize = random()%(MAX_HOUSE_SIZE - MINSIZE + 1) + MINSIZE;
+	short sh;
+	for(sh = 0; sh < MAX_HS*MAX_HS; ++sh)
+		house[sh] = '#';
+	for(sh = 0; sh < ROOM_NUM*ROOM_NUM; ++sh)
+		rooms[sh] = false;
 	
-	// Next, we have a bunch of coordinates, some of which will be obsolete
-	// for smaller houses:
-	Coords tl, tr, bl, br; // corners, "top-left" through "bottom-right"
-	Coords lct, lcb; // "left cut top/bottom"
-	Coords rct, rcb; // "right cut top/bottom"
-	/* tl                   tr
-	 *  x-------------------x
-	 *  |    lct            |
-	 *  |---x               |
-	 *  |   |         rct   |
-	 *  |   |          x----|
-	 *  |---x          |    |
-	 *  |   lcb        x----|
-	 *  |            rcb    |
-	 *  x-------------------x
-	 *  bl                  br
-	 *
-	 * It might be that there are no cuts at all, in which case lct=lcb, rct=rcb.
-	 * In the end, we might rotate the whole house 90 degrees, moving the possible
-	 * cuts to top&bottom instead.
-	 */
-	tl.x = tl.y = tr.y = bl.x = 0;
-	bl.y = br.y = ysize-1;
-	tr.x = br.x = xsize-1;
-	lct = lcb = tl;
-	rct = rcb = tr;
-	
-	// If possible, initialize the cuts to non-degenerate values:
-	if(ysize >= MINSIZE+2 && xsize >= MINSIZE+2) // possible to have cuts
-	{
-		if(random()%2) // should make left cut
-		{
-			if(ysize >= 2*(MINSIZE+1)) // have room to move
-				lct.y += MINSIZE-1 + random()%(ysize - 2*MINSIZE);
-			lcb.y = lct.y + 2;
-			if(ysize >= 3+MINSIZE+lcb.y)
-				lcb.y += random()%(ysize - lcb.y - MINSIZE - 1);
+	// This calls itself recursively:
+	room_recur(random()%ROOM_NUM, random()%ROOM_NUM, -1);
 
-			if(xsize > MINSIZE+2)
-				lct.x = lcb.x = 2 + random()%(xsize-MINSIZE-1);
-			else
-				lct.x = lcb.x = 2;
-		}
-		// check if should and still can make the right cut:
-		if(random()%2 && xsize - MINSIZE - lct.x >= 3)
-		{
-			if(ysize >= 2*(MINSIZE+1)) // have room to move
-				rct.y += MINSIZE-1 + random()%(ysize - 2*MINSIZE);
-			rcb.y = rct.y + 2;
-			if(ysize >= 3+MINSIZE+rcb.y)
-				rcb.y += random()%(ysize - rcb.y - MINSIZE - 1);
-
-			if(xsize > lct.x+MINSIZE+3)
-				rct.x = rcb.x -= 2 + random()%(xsize-lct.x-MINSIZE-2);
-			else
-				rct.x = rcb.x -= 2;
-		}
-	}
-
-	// Initialize the internal representation buffer:
-	Coords c;
-	for(c.y = 0; c.y < MAX_HOUSE_SIZE; ++c.y)
+	// Remove extra (surrounding) walls; any wall that has as neighbours
+	// only '#' or '_' becomes '_'. While looping, also place doors and
+	// windows.
+	Coords c, d;
+	string card;
+	bool outwall;
+	for(c.y = 0; c.y < MAX_HS; ++(c.y))
 	{
-		for(c.x = 0; c.x < MAX_HOUSE_SIZE; ++c.x)
+		for(c.x = 0; c.x < MAX_HS; ++(c.x))
 		{
-			if(c.x < xsize && c.y < ysize)
-				house[c.y*MAX_HOUSE_SIZE+c.x] = '#';
-			else
-				house[c.y*MAX_HOUSE_SIZE+c.x] = '_';
-		}
-	}
-	// Next, add the holes caused by the cuts:
-	if(!lct.y && lcb.y)
-	{
-		for(c.x = 0; c.x < lct.x; c.x++)
-		{
-			for(c.y = 0; c.y < lcb.y; c.y++)
-				house[c.y*MAX_HOUSE_SIZE+c.x] = '_';
-		}
-	}
-	else if(lct.y)
-	{
-		for(c.x = 0; c.x < lct.x; c.x++)
-		{
-			for(c.y = lct.y+1; c.y < lcb.y; c.y++)
-				house[c.y*MAX_HOUSE_SIZE+c.x] = '_';
-		}
-	}
-	if(!rct.y && rcb.y)
-	{
-		for(c.x = rct.x+1; c.x < xsize; c.x++)
-		{
-			for(c.y = 0; c.y < rcb.y; c.y++)
-				house[c.y*MAX_HOUSE_SIZE+c.x] = '_';
-		}
-	}
-	else if(rct.y)
-	{
-		for(c.x = rct.x+1; c.x < xsize; c.x++)
-		{
-			for(c.y = rct.y+1; c.y < rcb.y; c.y++)
-				house[c.y*MAX_HOUSE_SIZE+c.x] = '_';
-		}
-	}
-	// Finally, "carve the whole house hollow":
-	bool inside; Coords d;
-	for(c.y = 1; c.y < ysize-1; ++c.y)
-	{
-		for(c.x = 1; c.x < xsize-1; ++c.x)
-		{
-			inside = true;
-			for(d.x = c.x-1; d.x <= c.x+1; d.x++)
+			if(house[c.y*MAX_HS+c.x] == '#')
 			{
-				for(d.y = c.y-1; d.y <= c.y+1; d.y++)
+				card.clear();
+				outwall = true;
+				for(sh = 0; sh < MAX_D; ++sh)
 				{
-					if(house[d.y*MAX_HOUSE_SIZE+d.x] == '_')
+					d = c.in(e_Dir(sh));
+					if(d.x >= 0 && d.y >= 0 && d.x < MAX_HS && d.y < MAX_HS)
 					{
-						inside = false;
-						goto exitall;
+						if(house[d.y*MAX_HS+d.x] == '.' || house[d.y*MAX_HS+d.x] == ':')
+							outwall = false;
+						if(!(sh%2)) // cardinal direction
+							card += house[d.y*MAX_HS+d.x];
 					}
+					else if(!(sh%2))
+						card += '_'; // outside of buffer
+				}
+				if(outwall)
+					house[c.y*MAX_HS+c.x] = '_';
+				else // See if this is a wall we could place a window on
+				{
+					// replace any ':' with '.' (there can be at most one)
+					if((sh = card.find(':')) != string::npos)
+						card[sh] = '.';
+					if(card == "_#.#" || card == ".#_#")
+						house[c.y*MAX_HS+c.x] = '-';
+					else if(card == "#.#_" || card == "#_#.")
+						house[c.y*MAX_HS+c.x] = '|';
 				}
 			}
-			exitall:
-			if(inside)
-				house[c.y*MAX_HOUSE_SIZE+c.x] = ',';
+			// Check if could place a door:
+			else if(house[c.y*MAX_HS+c.x] == ':'
+				&& random()%3 // skip every 2nd potential door loc
+				&& house[(c.y+1)*MAX_HS+c.x] == house[(c.y-1)*MAX_HS+c.x]
+				&& house[c.y*MAX_HS+c.x+1] == house[c.y*MAX_HS+c.x-1])
+				house[c.y*MAX_HS+c.x] = '+';
 		}
 	}
 
-	// Next we decide the location of the main entrance:
-	Coords door1(xsize/2, ysize/2);
-	e_Dir dir;
-	if(house[door1.y*MAX_HOUSE_SIZE+door1.x] == '_') // this could be bad
-	{
-		door1.x = door1.y = 0;
-		dir = D_SE; // this assures we'll hit something
-	}
-	else // this is what we do practically always
-		dir = e_Dir(random()%MAX_D);
-	while(house[door1.y*MAX_HOUSE_SIZE+door1.x] != '#')
-		door1 = door1.in(dir);
-	house[door1.y*MAX_HOUSE_SIZE+door1.x] = '+';
-
-	// Build walls inside the house:
-	if(xsize > MINSIZE || ysize > MINSIZE)
-	{
-		Coords c2;
-		// We put _something_ inside the house, depending on its size, at least.
-		// Tiles marked as 'H' (wall) or '.' (final floor) won't be touched
-		// by subsequent procedures.
-		// The first possibility is a "pillar hall":
-		if(random()%2)
+	// The windows we placed above were only "preliminary plans". At least one
+	// of them must be replaced by our front door, and if we are not outside,
+	// there can be no windows!
+	//First place a front door:
+	outwall = false;
+	do {
+		sh = random()%(MAX_HS*MAX_HS);
+		while(sh)
 		{
-			short area_tl = lct.y*rct.x;
-			short area_tr = rct.y*(tr.x - lct.x);
-			short area_bl = (bl.y - lcb.y)*rcb.x;
-			short area_br = (br.y - rcb.y)*(tr.x - lct.x);
-			if(area_tl > area_tr && area_tl > area_bl && area_tl > area_br)
+			if(house[sh] == '|' || house[sh] == '-')
 			{
-				c = tl;
-				c2.x = rct.x; c2.y = lct.y;
-			}
-			else if(area_tr > area_tl && area_tr > area_bl && area_tr > area_br)
-			{
-				c.x = lct.x; c.y = 0;
-				c2.x = tr.x; c2.y = rct.y;
-			}
-			else if(area_bl > area_tl && area_bl > area_tr && area_bl > area_br)
-			{
-				c.x = 0; c.y = lcb.y;
-				c2.x = rcb.x; c2.y = bl.y;
-			}
-			else
-			{
-				c.x = lcb.x; c.y = rcb.y;
-				c2 = br;
-			}
-
-			c.x++; c.y++;
-			c2.x--; c2.y--;
-			// Now the area between c and c2 is the largest rectangle in the house.
-
-			if((c2.x - c.x) >= 4 && !((c2.x - c.x)%2)
-				&& (c2.y - c.y) >= 4 && !((c2.y - c.y)%2))
-			{
-				for(d.x = c.x; d.x <= c2.x; d.x++)
-				{
-					for(d.y = c.y; d.y <= c2.y; d.y++)
-					{
-						if((d.y - c.y)%2 && (d.x - c.x)%2)
-							house[d.y*MAX_HOUSE_SIZE+d.x] = 'H';
-						else
-							house[d.y*MAX_HOUSE_SIZE+d.x] = '.';
-					}
-				}
-			}
-		} // if try to do pillar hall
-
-		// Next we add some smaller rooms/corridors/whatnot.
-		if(random()%100 >= CHANCE_NO_WALLS)
-		{
-		char ch; char walls;
-		vector<WIP> As;
-		vector<WIP>::iterator Ait;
-		e_Dir firstdir;
-		char wall_len;
-		bool canturn;
-		// Build 1-4 walls (or stop when cannot build any more)
-		for(walls = 1+random()%4; walls > 0; --walls)
-		{
-			As.clear();
-			// Mark by 'A' the tiles where a wall can "start", and by 'B' the tiles
-			// where a wall can exists otherwise:
-			for(c.y = 1; c.y < ysize-1; ++c.y)
-			{
-			for(c.x = 1; c.x < xsize-1; ++c.x)
-			{
-				if((dir = is_valid_wall_init_pt(c)) != MAX_D)
-				{
-					house[c.y*MAX_HOUSE_SIZE+c.x] = 'A';
-					As.push_back(WIP(c, !dir));
-				}
-				else if(is_valid_wall_cont_pt(c))
-					house[c.y*MAX_HOUSE_SIZE+c.x] = 'B';
-				else
-				{
-					ch = house[c.y*MAX_HOUSE_SIZE+c.x];
-					if(ch == 'A' || ch == 'B') // must reset
-						house[c.y*MAX_HOUSE_SIZE+c.x] = '.';
-				}
-			} }
-			if(As.empty())
+				house[sh] = '+';
+				outwall = true;
 				break;
-			// Pick a random A-point to begin from:
-			Ait = As.begin() + randor0(As.size());
-			c = Ait->co; // store in c and remove from the vector:
-			firstdir = Ait->fd;
-			As.erase(Ait);
-			house[c.y*MAX_HOUSE_SIZE+c.x] = 'H';
-			wall_len = 0;
-			dir = firstdir;
-			canturn = true;
-			for(;;)
-			{
-				d = c.in(dir);
-				if(house[d.y*MAX_HOUSE_SIZE+d.x] == 'B')
-					house[d.y*MAX_HOUSE_SIZE+d.x] = 'H';
-				else if(canturn)
-				{
-					canturn = false;
-					++(++dir);
-					if(random()%2) dir = !dir;
-					d = c.in(dir);
-					if(house[d.y*MAX_HOUSE_SIZE+d.x] == 'B')
-						house[d.y*MAX_HOUSE_SIZE+d.x] = 'H';
-					else
-					{
-						d = c.in(!dir);
-						if(house[d.y*MAX_HOUSE_SIZE+d.x] == 'B')
-							house[d.y*MAX_HOUSE_SIZE+d.x] = 'H';
-						else
-							break;
-					}
-				}
-				else // no more suitable B-points found
-					break;
-				c = d; // continue from the neighbour point
-				++wall_len;
 			}
-			// Now there is no more a 'B' neighbour; check if there is an 'A' neighbour:
-			dir = e_Dir(2*(random()%4)); // gives a random cardinal dir
-			for(ch = 0; ch < 4; ++ch)
-			{
-				d = c.in(dir);
-				// If wall_len is 0 (no B points used), only allow using an
-				// A-point in firstdir. Never allow it in !firstdir.
-				if((wall_len || dir == firstdir)
-					&& dir != !firstdir
-					&& house[d.y*MAX_HOUSE_SIZE+d.x] == 'A')
-				{
-					// make sure there is a door:
-					if(random()%2)
-					{
-						house[d.y*MAX_HOUSE_SIZE+d.x] = 'H';
-						house[c.y*MAX_HOUSE_SIZE+c.x] = '+';
-					}
-					else
-					{
-						house[c.y*MAX_HOUSE_SIZE+c.x] = '+';
-						house[d.y*MAX_HOUSE_SIZE+d.x] = 'H';
-					}
-					break;
-				}
-				++(++dir);
-			}
-		} // 1-4 walls
-		} // should add rooms
-	} // can add rooms
-
-	// Center the house inside h; move each point n steps right and m steps down,
-	// filling with n and m '_':s respectively:
-	char n = (MAX_HOUSE_SIZE-xsize)/2;
-	char m = (MAX_HOUSE_SIZE-ysize)/2;
-	if(n || m)
+			--sh;
+		}
+	} while(!outwall);
+	// Next, remove all or some windows and add more doors:
+	char num = 0; // number of additional doors
+	for(sh = 0; sh < MAX_HS*MAX_HS; ++sh)
 	{
-		for(c.y = ysize-1+m; c.y >= m; --c.y)
+		if(house[sh] == '|' || house[sh] == '-')
 		{
-			for(c.x = xsize-1+n; c.x >= n; --c.x)
+			if(num < 3 && !(random()%10)) // another front door
 			{
-				house[c.y*MAX_HOUSE_SIZE+c.x] = house[(c.y-m)*MAX_HOUSE_SIZE+c.x-n];
-				house[(c.y-m)*MAX_HOUSE_SIZE+c.x-n] = '_';
+				house[sh] = '+';
+				++num;
 			}
+			else if(!outdoor || random()%4)
+				house[sh] = '#';
 		}
 	}
 
-	// Possible rotate the house 90 degrees (a square matrix transponation)
-	if(random()%2)
-	{
-		char tmp;
-		for(n = 0; n < MAX_HOUSE_SIZE-1; ++n)
-		{
-	    	for(m = n + 1; m < MAX_HOUSE_SIZE; ++m)
-			{
-				tmp = house[n*MAX_HOUSE_SIZE+m];
-				house[n*MAX_HOUSE_SIZE+m] = house[m*MAX_HOUSE_SIZE+n];
-				house[m*MAX_HOUSE_SIZE+n] = tmp;
-			}
-		}
-	}
-
-	// Add doors & windows. Has to be done after possible rotate to
-	// align windows properly.
-	n = 0; // number of doors; at most 2 addition ones
-	for(c.y = 0; c.y < ysize; ++c.y)
-	{
-		for(c.x = 0; c.x < xsize; ++c.x)
-		{
-			if(house[c.y*MAX_HOUSE_SIZE+c.x] == '#') // outer wall
-			{
-				if(n < 2 && random()%100 < CHANCE_DOOR
-					&& is_valid_door_pt(c))
-				{
-					house[c.y*MAX_HOUSE_SIZE+c.x] = '+';
-					++n;
-				}
-				else if(outdoor && random()%100 < CHANCE_WINDOW
-					&& (dir = is_valid_win_pt(c)) != MAX_D)
-				{
-					if((int(dir)%4))
-						house[c.y*MAX_HOUSE_SIZE+c.x] = '-';
-					else
-						house[c.y*MAX_HOUSE_SIZE+c.x] = '|';
-				}
-			}
-		}
-	} // add doors/windows loop
 } // gen_house
 
 ///////////////////////////////////////////////////////////////////
@@ -791,17 +478,17 @@ void fill_hc_circular(vector<Coords> &hc, const char num, const short size)
 	}
 	// The angle between the points, 2Pi/num:
 	float theta = 6.28318f/num;
-	// We want the points to be at a *walking* distance of MAX_HOUSE_SIZE+1:
-	short rad = (MAX_HOUSE_SIZE+1)/max(abs(1.0f-cos(theta)), abs(sin(theta)))+1;
+	// We want the points to be at a *walking* distance of MAX_HS+1:
+	short rad = (MAX_HS+1)/max(abs(1.0f-cos(theta)), abs(sin(theta)))+1;
 	/* NOTE: the maximum number of houses being limited by map size should
 	 * ensure that rad cannot be too large. If rad is too large the houses
 	 * will be put outside of the map... */
-	if(rad >= size/2 - MAX_HOUSE_SIZE)
+	if(rad >= size/2 - MAX_HS)
 	{
 #ifdef DEBUG
 		cerr << "Debug warning: circular house placement has too big radius!" << endl;
 #endif
-		rad = size/2 - MAX_HOUSE_SIZE - 1;
+		rad = size/2 - MAX_HS - 1;
 	}
 	for(char i = 0; i < num; ++i)
 	{
@@ -818,13 +505,13 @@ void fill_hc_old(vector<Coords> &hc, const char num, const short size)
 	hc[0].y = size/3 + random()%(size/3);
 	for(char i = 1; i < num; ++i)
 	{
-		hc[i].x = hc[i-1].x + MAX_HOUSE_SIZE + 1 + random()%MAX_HOUSE_SIZE;
+		hc[i].x = hc[i-1].x + MAX_HS + 1 + random()%MAX_HS;
 		hc[i].y = hc[i-1].y + random()%7 - 3;
-		if(hc[i].x >= size - MAX_HOUSE_SIZE - 1) // wen't too far
+		if(hc[i].x >= size - MAX_HS - 1) // wen't too far
 		{
 			hc[i].x = 2 + random()%10;
-			hc[i].y += MAX_HOUSE_SIZE + 1 + random()%MAX_HOUSE_SIZE;
-			if(hc[i].y >= size - MAX_HOUSE_SIZE - 1)
+			hc[i].y += MAX_HS + 1 + random()%MAX_HS;
+			if(hc[i].y >= size - MAX_HS - 1)
 				hc[i].y = 2 + random()%10;
 		}
 	}
@@ -868,15 +555,15 @@ void fill_hc_mainst(vector<Coords> &hc, const char num, const short size)
 	// The normal of the directional vector, shrunk:
 	Coords p(-v.y, v.x);
 	float len = p.dist_eucl(Coords(0,0));
-	p.x = p.x*2*MAX_HOUSE_SIZE/(3*len);
-	p.y = p.y*2*MAX_HOUSE_SIZE/(3*len);
+	p.x = p.x*2*MAX_HS/(3*len);
+	p.y = p.y*2*MAX_HS/(3*len);
 	// Determine step (how far "down the street" the next houses are):
 	v.x /= num+1;
-	if(v.x > 3*MAX_HOUSE_SIZE/2)
-		v.x = 3*MAX_HOUSE_SIZE/2;
+	if(v.x > 3*MAX_HS/2)
+		v.x = 3*MAX_HS/2;
 	v.y /= num+1;
-	if(v.y > 3*MAX_HOUSE_SIZE/2)
-		v.y = 3*MAX_HOUSE_SIZE/2;
+	if(v.y > 3*MAX_HS/2)
+		v.y = 3*MAX_HS/2;
 	// Place the coords:
 	for(char i = 0; i < num; i += 2)
 	{
@@ -1081,11 +768,11 @@ Map::Map(const short size, const short variation, const short players)
 			// must apply this pattern to the location 'ci' on the actual map (with
 			// 'ci' giving the NW corner of, not the house, but the house buffer).
 			// First loop blows up areas around doors&windows:
-			for(i = 0; i < MAX_HOUSE_SIZE; ++i)
+			for(i = 0; i < MAX_HS; ++i)
 			{
-				for(j = 0; j < MAX_HOUSE_SIZE; ++j)
+				for(j = 0; j < MAX_HS; ++j)
 				{
-					ch = house[j*MAX_HOUSE_SIZE+i];
+					ch = house[j*MAX_HS+i];
 					if(ch == '+')
 					{
 						if(maptype == MT_OUTDOOR)
@@ -1098,20 +785,20 @@ Map::Map(const short size, const short variation, const short players)
 				}
 			}
 			// Second run actually puts the house there:
-			for(i = 0; i < MAX_HOUSE_SIZE; ++i)
+			for(i = 0; i < MAX_HS; ++i)
 			{
 				if(ci->x+i >= mapsize)
 					break;
-				for(j = 0; j < MAX_HOUSE_SIZE; ++j)
+				for(j = 0; j < MAX_HS; ++j)
 				{
 					if(ci->y+j >= mapsize)
 						break;
 					tp = mod_tile(ci->x + i, ci->y + j);
-					switch(house[j*MAX_HOUSE_SIZE+i])
+					switch(house[j*MAX_HS+i])
 					{
-					case 'A': case 'B': case ',': case '.':
+					case ':': case '.':
 						*tp = T_FLOOR; break;
-					case 'H': case '#':
+					case '#':
 						*tp = T_WALL; break;
 					case '+':
 						*tp = T_DOOR;
@@ -1123,7 +810,7 @@ Map::Map(const short size, const short variation, const short players)
 						break;
 					case '|': case '-':
 						*tp = T_WINDOW;
-						tp->symbol = house[j*MAX_HOUSE_SIZE+i];
+						tp->symbol = house[j*MAX_HS+i];
 						break;
 					// default: do nothing
 					}

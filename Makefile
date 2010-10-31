@@ -1,8 +1,8 @@
 # yuxtapa Makefile
 CXX=g++
 RM=rm -f
-#CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char
-CPPFLAGS=-O2 -g0 -fsigned-char
+CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char
+#CPPFLAGS=-O2 -g0 -fsigned-char
 LDLIBS_CL=-lncursesw -lz
 LDLIBS_SV=-lz
 

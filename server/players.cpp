@@ -287,7 +287,7 @@ void init_known_players(const bool nopurge)
 
 	short numpl;
 	file.read(reinterpret_cast<char*>(&numpl), sizeof(short));
-	if(numpl < 0)
+	if(numpl < 0 || numpl > MAX_STORED_PLAYERS)
 	{
 		to_log("Player datafile is corrupt! Ignoring the data!");
 		return;
