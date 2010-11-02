@@ -106,6 +106,7 @@ void register_player(string nick, sockaddr_storage &sas,
 	npit->cl = npit->next_cl = NO_CLASS;
 	npit->cl_props.hp = // this assures the player is !alive()
 		npit->doing_a_chore = 0;
+	npit->botpid = -1;
 
 	// A newly connected player is watching her own viewpoint:
 	(npit->own_vp = new ViewPoint())->set_owner(npit);
@@ -122,7 +123,7 @@ list<PlayerStats>::iterator new_player()
 	while(find(known_players.begin(), known_players.end(), tmpstats)
 		!= known_players.end())
 	{
-		if(++(tmpstats.ID) == 0xFFFF)
+		if(++(tmpstats.ID) == HIGHEST_VALID_ID)
 			tmpstats.ID = 0;
 	}
 	next_ID_to_give = tmpstats.ID+1;
@@ -184,6 +185,9 @@ unsigned short add_and_register_player(const string &nick, string &passw,
 	return newpl->ID;
 }
 
+const string mrbrown_str = "Mr. Brown";
+const string &gen_new_bot_nick() { return mrbrown_str; } // for now
+
 } // end local namespace
 
 list<PlayerStats> known_players;
@@ -194,7 +198,7 @@ list<sockaddr_storage> banned_ips;
 
 PlayerStats::PlayerStats() : last_known_as(""), kills(0), deaths(0),
 	healing_recvd(0), total_time(0), time_specced(0), arch_hits(0),
-	arch_shots(0), cm_hits(0), cm_shots(0), ad_lvl(AL_GUEST), bot(false)
+	arch_shots(0), cm_hits(0), cm_shots(0), ad_lvl(AL_GUEST)
 {
 	for(int i = 0; i < NO_CLASS; ++i)
 		time_played[i] = 0;	
@@ -340,23 +344,18 @@ void store_known_players()
 	for(list<Player>::iterator pit = cur_players.begin();
 		pit != cur_players.end(); ++pit)
 	{
-		pit->stats_i->total_time += time(NULL) - pit->stats_i->last_seen;
-		time(&(pit->stats_i->last_seen));
-		
-		if(pit->is_alive())
-			pit->stats_i->time_played[pit->cl] += time(NULL) - pit->last_switched_cl;
-		else if(pit->team == T_SPEC && !intermission)
-			pit->stats_i->time_specced += time(NULL) - pit->last_switched_cl;
-	}
-
-	// Remove bots so that they are not stored:
-	list<PlayerStats>::iterator ps_it = known_players.begin();
-	while(ps_it != known_players.end())
-	{
-		if(ps_it->bot)
-			ps_it = known_players.erase(ps_it);
+		if(pit->botpid != -1) // it's a bot
+			known_players.erase(pit->stats_i);
 		else
-			++ps_it;
+		{
+			pit->stats_i->total_time += time(NULL) - pit->stats_i->last_seen;
+			time(&(pit->stats_i->last_seen));
+		
+			if(pit->is_alive())
+				pit->stats_i->time_played[pit->cl] += time(NULL) - pit->last_switched_cl;
+			else if(pit->team == T_SPEC && !intermission)
+				pit->stats_i->time_specced += time(NULL) - pit->last_switched_cl;
+		}
 	}
 
 	// Now start actually storing the player statistics:
@@ -437,7 +436,7 @@ unsigned short player_hello(const unsigned short id, string &passw,
 	}
 
 	if(id == 0xFFFF) // a new player
-		return add_and_register_player(nick, passw,sas);
+		return add_and_register_player(nick, passw, sas);
 
 	// Check if ID is already playing:
 	for(it = cur_players.begin(); it != cur_players.end(); ++it)
@@ -460,9 +459,22 @@ unsigned short player_hello(const unsigned short id, string &passw,
 		}
 	}
 	// If here, we have forgotten about this player, most likely
-	return add_and_register_player(nick, passw,sas);
+	return add_and_register_player(nick, passw, sas);
 }
 
+unsigned short bot_connect(const unsigned short pid, sockaddr_storage &sas)
+{
+	// Basically we delegate to player_hello, but some extra checks:
+	// We don't want to "drop bots to make room for bots:
+	if(cur_players.size() >= Config::int_settings[Config::IS_MAXPLAYERS])
+		return SERVER_FULL;
+	// else:
+	string tmp1, tmp2 = gen_new_bot_nick();
+	unsigned short sh = player_hello(0xFFFF, tmp1, tmp2, sas);
+	if(sh <= HIGHEST_VALID_ID) // player was added
+		cur_players.back().botpid = pid;
+	return sh;
+}
 
 void usage_update()
 {

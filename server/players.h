@@ -33,7 +33,6 @@ struct PlayerStats
 	unsigned long cm_hits, cm_shots;
 	time_t last_seen;
 	e_AdminLvl ad_lvl;
-	bool bot;
 
 	// default constructor for new players
 	PlayerStats();
@@ -107,6 +106,9 @@ struct Player
 	e_Dir facing;
 	e_Dir sector;
 	short torch_left;
+
+	// This is -1 for humans and process pid for bots:
+	int botpid;
 };
 
 
@@ -122,9 +124,11 @@ enum { // Player Hello Result
 	JOIN_OK_ID_OK = 0xFFFF, // fine, a revisitor
 	ID_STEAL = 0XFFFE, // that ID is already playing!
 	IP_BANNED = 0xFFFD,
-	SERVER_FULL = 0xFFFC }; // any other return value means "this is your new id"
+	SERVER_FULL = 0xFFFC, // any other return value means "this is your new id"
+	HIGHEST_VALID_ID = 0xFFFB };
 unsigned short player_hello(const unsigned short id,
 	std::string &passw, const std::string &nick, sockaddr_storage &sas);
+unsigned short bot_connect(const unsigned short pid, sockaddr_storage &sas);
 
 // to log average usage of the server:
 void usage_update();

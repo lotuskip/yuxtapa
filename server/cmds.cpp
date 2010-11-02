@@ -15,7 +15,6 @@
 #include <unistd.h>
 #include <sys/wait.h>
 #include <dirent.h>
-#include <signal.h>
 #include <algorithm>
 #include <cstring>
 #include <boost/lexical_cast.hpp>
@@ -36,15 +35,6 @@ const string ad_lvl_name[4] = { "guest", "regular", "trusted user",
 	"admin" };
 const string team_balance_str[] = { "no", "passive", "active" };
 
-list<pid_t> botpids;
-
-// Used to drop bots (let them think the server shutdown)
-void quit_to(Player &p)
-{
-	Network::send_buffer.clear();
-	Network::send_buffer.add((unsigned char)MID_QUIT);
-	Network::send_to_player(p);
-}
 
 // For sorting players by their "level" for team shuffling.
 // We want a *descending* order; return true if i should be before j.
@@ -97,7 +87,15 @@ list<Player>::iterator id_pl_by_nick_part(const string &s)
 	return foundit;
 }
 
+
+bool next_bot(list<Player>::iterator &it)
+{
+	while(it != cur_players.end() && it->botpid == -1)
+		++it;
+	return (it != cur_players.end());
 }
+
+} // end local namespace
 
 
 bool process_cmd(const list<Player>::iterator pit, string &cmd)
@@ -247,14 +245,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(nit != cur_players.end() &&
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
-				if(nit->stats_i->bot)
-					quit_to(*nit);
-				else
-				{
-					keyw = "You have been kicked from this server.";
-					Network::construct_msg(keyw, DEF_MSG_COL);
-					Network::send_to_player(*nit);
-				}
+				keyw = "You have been kicked from this server.";
+				Network::construct_msg(keyw, DEF_MSG_COL);
+				Network::send_to_player(*nit);
 				Game::remove_player(nit, " kicked by " + pit->nick + '.');
 			}
 			// may broadcast
@@ -337,14 +330,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(nit != cur_players.end() &&
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
-				if(nit->stats_i->bot)
-					quit_to(*nit);
-				else
-				{
-					keyw = "You have been banned from this server.";
-					Network::construct_msg(keyw, DEF_MSG_COL);
-					Network::send_to_player(*nit);
-				}
+				keyw = "You have been banned from this server.";
+				Network::construct_msg(keyw, DEF_MSG_COL);
+				Network::send_to_player(*nit);
 				banlist().push_back(nit->address);
 				Game::remove_player(nit, " banned by " + pit->nick + '.');
 			}
@@ -402,8 +390,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					Network::to_chat("Cannot spawn bots! Mr. Brown executable most likely missing...");
 					break;
 				}
-				// else bot is running:
-				botpids.push_back(pid);
+				// else bot is running and network will handle its connection attempt
 			}
 			// may broadcast
 		}
@@ -412,17 +399,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	{
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
 		{
-			for(list<pid_t>::const_iterator it = botpids.begin();
-				it != botpids.end(); ++it)
-				kill(*it, SIGINT);
-			botpids.clear();
+			while(drop_a_bot()); // not fast, but simple
 			// may broadcast
 		}
-	}
-	else if(keyw == "dontstatme")
-	{
-		pit->stats_i->bot = true;
-		return true; // private request
 	}
 	return false;
 }
@@ -495,28 +474,27 @@ void shuffle_teams()
 
 bool drop_a_bot()
 {
-	if(!num_bots())
-		return false; // no bots to drop
-	kill(botpids.back(), SIGINT);
-	botpids.pop_back();
-	return true;
+	list<Player>::iterator bit = cur_players.begin();
+	if(next_bot(bit))
+	{
+		Game::remove_player(bit, " dropped.");
+		return true;
+	}
+	return false;
 }
 
 
 short num_bots()
 {
 	int ces;
-	// First, remove from the list those bots who are there no longer:
-	list<pid_t>::iterator bit = botpids.begin();
-	while(bit != botpids.end())
+	short num = 0;
+	list<Player>::iterator bit = cur_players.begin();
+	while(next_bot(bit))
 	{
-		if(waitpid(*bit, &ces, WNOHANG) == *bit
-			&& (WIFEXITED(ces) || WIFSIGNALED(ces)))
-			bit = botpids.erase(bit);
-		else
-			++bit;
+		++bit;
+		++num;
 	}
-	return botpids.size();
+	return num;
 }
 
 #endif // not maptest build

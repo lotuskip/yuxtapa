@@ -28,7 +28,8 @@ namespace
 {
 using namespace std;
 
-const short CONNECTION_ATTEMPTS = 3;
+const char CONNECTION_ATTEMPTS = 3;
+const short REPLY_WAIT_MS = 2000; // wait this long for server reply
 SerialBuffer recv_buffer, send_buffer;
 const string serversfile_name = "servers";
 
@@ -183,17 +184,17 @@ bool Network::connect(string &errors)
 	
 	// send hello message (repeatedly) and wait for a reply
 	int k;
-	for(int j = 0; j < CONNECTION_ATTEMPTS; ++j)
+	for(char j = 0; j < CONNECTION_ATTEMPTS; ++j)
 	{
 		if(do_send())
 		{
-			errors = "Problem connecting to \'" + sip + "\'.";
+			errors = "Problem sending connection request.";
 			close(s_me);
 			freeaddrinfo(servinfo);
 			return false;
 		}
 		// Wait for the reply (the timeout on the getch() call will delay):
-		for(k = 0; k < 2000/GETCH_TIMEOUT; ++k) // aim for 2 seconds wait
+		for(k = 0; k < REPLY_WAIT_MS/GETCH_TIMEOUT; ++k)
 		{
 			if(do_receive() != -1)
 			{
@@ -218,7 +219,7 @@ bool Network::connect(string &errors)
 					store_id_for_server(cur_id, sip, passw);
 					return true;
 				}
-				default: break; // some other message; our reply probably got lost on the way
+				default: break; // ignore other messages
 				}
 			} // received something
 			if(getch() == KEYCODE_INT)

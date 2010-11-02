@@ -21,15 +21,6 @@
 
 using namespace std;
 
-const string mynick = "Mr. Brown";
-
-#ifndef BE_QUIET
-const string hello_errors[] = {
-	"The server is full.", 
-	"Bot IP banned??",
-	"Server is running incompatible version." };
-#endif
-
 SerialBuffer recv_buffer, send_buffer;
 int s_me; // socket
 struct addrinfo *servinfo, *the_serv;
@@ -108,11 +99,11 @@ int main(int argc, char *argv[])
 	// set socket to nonblock mode:
 	fcntl(s_me, F_SETFL, O_NONBLOCK);
 
-	// construct a hello message:
-	send_buffer.add((unsigned char)MID_HELLO);
+	// construct a hello message: (different for bots than people)
+	send_buffer.add((unsigned char)MID_BOTHELLO);
 	send_buffer.add(INTR_VERSION);
-	send_buffer.add((unsigned short)0xFFFF);
-	send_buffer.add(mynick);
+	pid_t mypid = getpid();
+	send_buffer.add((unsigned short)mypid);
 	
 	last_sent_axn.update();
 
@@ -134,11 +125,9 @@ int main(int argc, char *argv[])
 			mid = recv_buffer.read_ch();
 			switch(mid)
 			{
-			case MID_HELLO_FULL:
-			case MID_HELLO_BANNED:
 			case MID_HELLO_VERSION:
 #ifndef BE_QUIET
-				cerr << hello_errors[mid - MID_HELLO_FULL] << endl;
+				cerr << "Server is running an incompatible version!" << endl;
 #endif
 				close(s_me);
 				freeaddrinfo(servinfo);
@@ -177,13 +166,6 @@ connected:
 	}
 	short msglen;
 	bool alive = false;
-
-	// Tell server not to stat us:
-	send_buffer.clear();
-	send_buffer.add((unsigned char)MID_SAY_CHAT);
-	send_buffer.add(cur_id);
-	send_buffer.add(string("!dontstatme"));
-	do_send();
 
 	// Send spawn request: (no sense having spectator bots!)
 	send_buffer.clear();
@@ -267,10 +249,6 @@ connected:
 	} // for eva
 
 	// Disconnect
-	send_buffer.clear();
-	send_buffer.add((unsigned char)MID_QUIT);
-	send_buffer.add(cur_id);
-	do_send();
 	freeaddrinfo(servinfo);
 	close(s_me);
 	return 0;

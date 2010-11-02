@@ -15,6 +15,7 @@
 #include <vector>
 #include <cstring>
 #include <ctime>
+#include <sys/wait.h>
 #include <boost/lexical_cast.hpp>
 #ifdef DEBUG
 #include <iostream>
@@ -1064,9 +1065,16 @@ list<Player>::iterator Game::remove_player(list<Player>::iterator pit,
 			pit->stats_i->time_specced += time(NULL) - pit->last_switched_cl;
 	}
 	
-	// We don't store the stats for bots:
-	if(pit->stats_i->bot)
+	// If it is a bot, kill the process and ditch stats:
+	if(pit->botpid != -1)
+	{
 		known_players.erase(pit->stats_i);
+		Network::send_buffer.clear();
+		Network::send_buffer.add((unsigned char)MID_QUIT);
+		Network::send_to_player(*pit);
+		int cet;
+		waitpid(pit->botpid, &cet, 0);
+	}
 	
 	string msg = pit->nick + reason;
 	list<Player>::iterator retval = cur_players.erase(pit);

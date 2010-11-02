@@ -62,7 +62,8 @@ tile until you're close enough to see it even if it was not lit.
 If this bothers you, just think about it like this: after a wall is dug out, a
 cloud of dust remains behind, making it difficult to see. On the other hand, if you
 didn't even understand the bug by the preceding explanation, then surely it hasn't
-bothered you!</p>
+bothered you!<br>
+[In more technical terms: the viewpoints' lit-flags are not updated immediately when the lit-flags in the map are.]</p>
 
 <p><em><u>The 'thin walls have many holes' bug</u></em><br>
 If there is a thin wall (one tile wide) and a light source on the other side, you
@@ -75,16 +76,17 @@ torch--&gt; .t.#..@ &lt;-- this PC sees the wall as lit
 tile lit:1111000
 </pre>
 This can be 'explained' by stating that thin walls have small holes in them: you
-really see the torch light shining through.</p>
+really see the torch light shining through.<br>
+[The technical explanation is that being lit is just a boolean; there is no direction attached.]</p>
 
 
-<p><em><u>The 'classlimitless shuffling' bug</u></em><br>
-After a '!shuffle' command (see <a href="chatting.html">Chatting and shouting</a>), the classes
+<p><em><u>Classlimitless shuffling</u></em><br>
+After a team shuffle the classes
 of the PCs aren't checked, so the <em>classlimit setting</em> (see the server configuration file 'server.conf')
 might be violated. You still can't change your class into any 'fully taken' class, but you can
 retain your own 'fully taken' class as long as you wish.
 The problem here is partly about fairness: some players could be forced to switch their class,
-but just picking those players randomly seems like an unnecessary annoyance to the players. Then
+but just picking those players at random seems like an unnecessary annoyance to the players. Then
 again, if a team wants to do well, they will need a variety of classes, so it can be expected that
 good players switch class after a shuffle if they see the need.</p>
 

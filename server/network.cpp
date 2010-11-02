@@ -147,10 +147,10 @@ bool Network::receive_n_handle()
 		{
 		case MID_HELLO:
 		{
-			send_buffer.clear();
 			// Check that interaction versions match:
 			if(recv_buffer.read_sh() != INTR_VERSION)
 			{
+				send_buffer.clear();
 				send_buffer.add((unsigned char)MID_HELLO_VERSION);
 				do_send_to(&them, addr_len);
 				break;
@@ -167,6 +167,8 @@ bool Network::receive_n_handle()
 				break;
 			}
 			pl_id = player_hello(pl_id, pl_passw, pl_nick, them);
+			// Note: player_hello can call something that uses send_buffer!
+			send_buffer.clear();
 			if(pl_id == ID_STEAL)
 			{
 				send_buffer.add((unsigned char)MID_HELLO_STEAL);
@@ -209,6 +211,26 @@ bool Network::receive_n_handle()
 			Game::send_state_change(pit);
 			Game::send_team_upds(pit);
 			to_chat(pit->nick + " connected.");
+			break;
+		}
+		case MID_BOTHELLO:
+		{
+			send_buffer.clear();
+			// Check that interaction versions match:
+			if(recv_buffer.read_sh() != INTR_VERSION)
+			{
+				send_buffer.add((unsigned char)MID_HELLO_VERSION);
+				do_send_to(&them, addr_len);
+				to_log("Incompatible child connection.");
+				break;
+			}
+			unsigned short botpid = recv_buffer.read_sh();
+			if((botpid = bot_connect(botpid, them)) <= HIGHEST_VALID_ID)
+			{
+				send_buffer.add((unsigned char)MID_HELLO_NEWID);
+				send_buffer.add(botpid);
+				do_send_to(&them, addr_len);
+			}
 			break;
 		}
 		case MID_QUIT:
