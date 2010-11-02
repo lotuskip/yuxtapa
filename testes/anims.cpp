@@ -2,8 +2,8 @@
 #include <ncurses.h>
 #include <ctime>
 
-const char anim[10][5] =
-{ ".oOo", "-\\|/", "LFEF", "v<v>", "])})", "pbdq", "-~=~", "+x+x", "sS$S", "DB8B" };
+const char anim[11][5] =
+{ ".oOo", "-\\|/", "LFEF", "v<v>", "])})", "pbdq", "-~=~", "+x+x", "sS$S", "DB8B", "`'`'" };
 
 int main()
 {
@@ -15,7 +15,7 @@ int main()
 	char i, j = 0;
 	while(getch() != 'q')
 	{
-		for(i = 0; i < 10; ++i)
+		for(i = 0; i < 11; ++i)
 		{
 			move(2*i,0);
 			addch(anim[i][j]);

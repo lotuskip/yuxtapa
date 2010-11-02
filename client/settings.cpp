@@ -278,7 +278,7 @@ e_Key_binding Config::convert_key(const char key)
 	string::size_type index = key_bindings.find(key);
 	if(index == string::npos) // no such key mapped
 		return MAX_KEY_BINDING;
-	else return e_Key_binding(index);
+	return e_Key_binding(index);
 }
 
 char* Config::key_map_value(const e_Key_binding kb)

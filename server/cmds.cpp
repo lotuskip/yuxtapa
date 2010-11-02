@@ -1,5 +1,4 @@
 // Please see LICENSE file.
-#include "../config.h"
 #ifndef MAPTEST
 #include "cmds.h"
 #include "server.h"
@@ -10,6 +9,7 @@
 #include "players.h"
 #include "settings.h"
 #include "chores.h"
+#include "viewpoint.h"
 #include <cctype>
 #include <cstdlib>
 #include <unistd.h>
@@ -38,6 +38,13 @@ const string team_balance_str[] = { "no", "passive", "active" };
 
 list<pid_t> botpids;
 
+// Used to drop bots (let them think the server shutdown)
+void quit_to(Player &p)
+{
+	Network::send_buffer.clear();
+	Network::send_buffer.add((unsigned char)MID_QUIT);
+	Network::send_to_player(p);
+}
 
 // For sorting players by their "level" for team shuffling.
 // We want a *descending* order; return true if i should be before j.
@@ -240,9 +247,14 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(nit != cur_players.end() &&
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
-				keyw = "You have been kicked from this server.";
-				Network::construct_msg(keyw, DEF_MSG_COL);
-				Network::send_to_player(*nit);
+				if(nit->stats_i->bot)
+					quit_to(*nit);
+				else
+				{
+					keyw = "You have been kicked from this server.";
+					Network::construct_msg(keyw, DEF_MSG_COL);
+					Network::send_to_player(*nit);
+				}
 				Game::remove_player(nit, " kicked by " + pit->nick + '.');
 			}
 			// may broadcast
@@ -325,9 +337,14 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(nit != cur_players.end() &&
 				pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
-				keyw = "You have been banned from this server.";
-				Network::construct_msg(keyw, DEF_MSG_COL);
-				Network::send_to_player(*nit);
+				if(nit->stats_i->bot)
+					quit_to(*nit);
+				else
+				{
+					keyw = "You have been banned from this server.";
+					Network::construct_msg(keyw, DEF_MSG_COL);
+					Network::send_to_player(*nit);
+				}
 				banlist().push_back(nit->address);
 				Game::remove_player(nit, " banned by " + pit->nick + '.');
 			}
@@ -424,6 +441,7 @@ void shuffle_teams()
 			if(it->is_alive())
 				kill_player(it);
 			playing_players.push_back(it);
+			it->own_vp->clear_memory();
 		}
 	}
 
@@ -479,8 +497,8 @@ bool drop_a_bot()
 {
 	if(!num_bots())
 		return false; // no bots to drop
-	kill(botpids.front(), SIGINT);
-	botpids.pop_front();
+	kill(botpids.back(), SIGINT);
+	botpids.pop_back();
 	return true;
 }
 

@@ -42,25 +42,17 @@ client requires from the terminal emulator.</p>
 <p>yuxtapa has a separate executable for the server and the client. You can compile either or both.
 The AUR package installs both by default. Users of AUR know what to do. The following is for everybody else.</p>
 
-<p><strong>To only build the client</strong>, simply do
+<p>To build either only the client or only the server, run (in the directory 'yuxtapa' that is created upon
+extracting the source package) either of
 <pre>
 make client
 </pre>
-in the 'yuxtapa' directory that is created upon extracting the source package. This creates the executable
-'yuxtapa_cl' in that same directory. Place it anywhere you like, and jump to the next part below.</p>
-
-<p><strong>If you also want the server</strong>, you may have to edit the 'config.h' file in the 'yuxtapa'
-directory prior to running <em>make</em>. This is necessary if you wish to either enable debug messages
-or to build a <em>map testing executable</em> (a non-server that only generates maps). If not, don't worry
-about 'config.h'. Once happy with your 'config.h' run either
+and
 <pre>
 make server
 </pre>
-to build only the server, or
-<pre>
-make
-</pre>
-to build both the client and the server. The server executable is called 'yuxtapa_sv'.</p>
+respectively. Just 'make' compiles both. The client is called 'yuxtapa_cl' and the server 'yuxtapa_sv'. Both
+will be placed in the 'yuxtapa' directory.</p>
 
 
 <h3>Grabbing anything else you need from the package</h3>

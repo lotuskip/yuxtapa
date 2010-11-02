@@ -1,5 +1,4 @@
 // Please see LICENSE file.
-#include "../config.h"
 #ifndef MAPTEST
 #include "actives.h"
 #include "game.h"

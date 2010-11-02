@@ -1,5 +1,4 @@
 // Please see LICENSE file.
-#include "../config.h"
 #ifndef MAPTEST
 #include "viewpoint.h"
 #include "actives.h"
@@ -95,9 +94,22 @@ ViewPoint::ViewPoint() : LOSrad(SPEC_LOS_RAD), blinded(0)
 }
 
 
+void ViewPoint::clear_memory()
+{
+	// Don't touch flags, so as to retain the lit statuses
+	vector<Tile>::iterator ti;
+	for(vector< vector<Tile> >::iterator i = ownview.begin(); i != ownview.end(); ++i)
+	{
+		for(ti = i->begin(); ti != i->end(); ++ti)
+		{
+			ti->cpair = EMPTY_TILE.cpair;
+			ti->symbol = EMPTY_TILE.symbol;
+		}
+	}
+}
+
 void ViewPoint::newmap()
 {
-	// Resize:
 	Game::curmap->make_right_size(ownview);
 	// Fill empty; the tiles will be updated with the actual map data as they
 	// become visible. The only thing we need from the actual map already at
@@ -112,7 +124,6 @@ void ViewPoint::newmap()
 				ownview[c.y][c.x].flags |= TF_LIT;
 		}
 	}
-
 	pos.x = pos.y = ownview.size()/2;
 	poschanged = true;
 }
@@ -279,7 +290,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 						+ fg_map[*(target-2)-BASE_COLOURS];
 			} // point is in map
 		} // loop x
-} // loop y
+	} // loop y
 	poschanged = false;
 
 	// Add titles in the form [num of titles (char)][so many titles: [x][y][C-string]]

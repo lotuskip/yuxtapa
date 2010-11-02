@@ -11,6 +11,7 @@
 #include "../common/constants.h"
 #include <ncurses.h>
 #include <cctype>
+#include <vector>
 
 e_ClientState clientstate = CS_NORMAL;
 bool walkmode = false;

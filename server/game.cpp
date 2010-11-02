@@ -1,5 +1,4 @@
 // Please see LICENSE file.
-#include "../config.h"
 #ifndef MAPTEST
 #include "game.h"
 #include "settings.h"
@@ -855,6 +854,10 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 
 void Game::send_times(const list<Player>::const_iterator to)
 {
+	// A convenient place as any to do a periodic check on what bots have
+	// finished (or crashed or been killed or ...):
+	num_bots();
+
 	Network::send_buffer.clear();
 	// mid and maptime are the same for all clients:
 	Network::send_buffer.add((unsigned char)MID_TIME_UPD);
@@ -966,6 +969,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			// The ex-spectator might be following a now-enemy:
 			if(pit->viewn_vp->get_owner()->team != pit->team)
 				follow_change(pit, pit);
+			pit->own_vp->clear_memory();
 		}
 
 		pit->next_cl = newcl; // will set pit->cl = pit->next_cl at spawn
@@ -1015,6 +1019,7 @@ void Game::team_switch(const list<Player>::iterator pit)
 			player_left_team(pit);
 			post_spawn_msg(pit);
 			send_state_change(pit);
+			pit->own_vp->clear_memory();
 		}
 	}
 }

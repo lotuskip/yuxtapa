@@ -17,9 +17,9 @@ using namespace std;
 const char MIN_SCREEN_X = 80;
 const char MIN_SCREEN_Y = 24;
 
+const char walk_syms[2] = { ' ', 'W' };
+
 short scr_x, scr_y;
-
-
 bool fullcolourmode;
 
 short *term_colours;
@@ -91,7 +91,7 @@ bool Base::init_ncurses()
 	// Then the actual NCurses stuff
 	if(!initscr())
 	{
-		cout << endl << "Failed to init NCurses screen!" << endl;
+		cout << "Failed to init NCurses screen!" << endl;
 		return false;
 	}
 
@@ -99,8 +99,8 @@ bool Base::init_ncurses()
 	if(scr_x < MIN_SCREEN_X || scr_y < MIN_SCREEN_Y)
 	{
 		endwin();
-		cout << endl << "Terminal window is too small! Required minimum is "
-			<< int(MIN_SCREEN_X) << 'x' << int(MIN_SCREEN_Y) << '.'<< endl;
+		cout << "Terminal window is too small! Required minimum is "
+			<< int(MIN_SCREEN_X) << 'x' << int(MIN_SCREEN_Y) << '.' << endl;
 		return false;
 	}
 
@@ -174,15 +174,16 @@ bool Base::init_ncurses()
 
 void Base::deinit_ncurses()
 {
+	int i;
 	if(fullcolourmode)
 	{
 		// restore original colours: (this gives a nice shutdown "animation", too)
-		for(short c = 0; c < MAX_PREDEF_COLOUR-BASE_COLOURS; ++c)
-			init_color(c+BASE_COLOURS, term_colours[3*c], term_colours[3*c+1],
-				term_colours[3*c+2]);
+		for(i = 0; i < MAX_PREDEF_COLOUR-BASE_COLOURS; ++i)
+			init_color(i+BASE_COLOURS, term_colours[3*i], term_colours[3*i+1],
+				term_colours[3*i+2]);
 		delete[] term_colours;
 	}
-	for(int i = 0; i < MAX_WIN; ++i)
+	for(i = 0; i < MAX_WIN; ++i)
 		delwin(windows[i]);
 	echo();
 	endwin();
@@ -256,7 +257,7 @@ char Base::num_chat_lines_to_show() { return scr_y - VIEWSIZE; }
 void Base::print_view(const char *source)
 {
 	// The view has a sequence of pairs (colour, symbol):
-	char x,y;
+	char x, y;
 	for(y = 0; y < VIEWSIZE; ++y)
 	{
 		wmove(windows[VIEW_WIN], y, 0);
@@ -299,9 +300,7 @@ void Base::print_walk(const bool w)
 {
 	wmove(windows[PC_WIN], 8, 5);
 	change_colour(windows[PC_WIN], C_WALL_LIT);
-	if(w)
-		waddch(windows[PC_WIN], 'W');
-	else waddch(windows[PC_WIN], ' ');
+	waddch(windows[PC_WIN], walk_syms[w]);
 	wrefresh(windows[PC_WIN]);
 	return_cursor(cursor_in_view);
 }
@@ -317,14 +316,14 @@ void Base::print_teams_upd(const unsigned char greens,
 
 	wmove(windows[STAT_WIN], 1, 0);
 	change_colour(windows[STAT_WIN], C_GREEN_PC);
-	string str = "Green team: ";
-	str += boost::lexical_cast<string>((unsigned short)greens);
-	str += " players ";
+	string str = "Green team: "
+		+ boost::lexical_cast<string>((unsigned short)greens)
+		+ " players ";
 	waddstr(windows[STAT_WIN], str.c_str());
 	change_colour(windows[STAT_WIN], C_PURPLE_PC);
-	str = " Purple team: ";
-	str += boost::lexical_cast<string>((unsigned short)purples);
-	str += " players";
+	str = " Purple team: "
+		+ boost::lexical_cast<string>((unsigned short)purples)
+		+ " players";
 	waddstr(windows[STAT_WIN], str.c_str());
 	wclrtoeol(windows[STAT_WIN]);
 	wrefresh(windows[STAT_WIN]);

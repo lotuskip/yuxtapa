@@ -27,6 +27,7 @@ public:
 		const { return followers.end(); }
 	std::list<Player>::const_iterator get_owner() const { return owner; }
 
+	void clear_memory(); // empty the knowledge about the current map
 	void newmap(); // notify that map (and possibly its size) has changed
 	short render(char *target, std::vector<std::string> &shouts);
 	// render returns amount of data written

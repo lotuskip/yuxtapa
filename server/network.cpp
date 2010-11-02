@@ -1,5 +1,4 @@
 // Please see LICENSE file.
-#include "../config.h"
 #ifndef MAPTEST
 #include "network.h"
 #include "settings.h"
@@ -18,6 +17,7 @@
 #include <iostream>
 #include <cstring>
 #include <ctime>
+#include <vector>
 #include <cerrno>
 #include <boost/lexical_cast.hpp>
 

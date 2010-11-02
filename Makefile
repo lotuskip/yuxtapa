@@ -1,8 +1,15 @@
 # yuxtapa Makefile
+#
+#This option for a pedantic, warnful debug build:
+#CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG
+#This one for optimised version:
+CPPFLAGS=-O2 -g0 -fsigned-char
+# Add -DMAPTEST to either one to build a "server" for testing & creating maps
+
+#The rest probably needs not be touched.
+###############################################################################
 CXX=g++
 RM=rm -f
-CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char
-#CPPFLAGS=-O2 -g0 -fsigned-char
 LDLIBS_CL=-lncursesw -lz
 LDLIBS_SV=-lz
 
@@ -10,14 +17,16 @@ SRCS_CO = common/timer.cpp common/netutils.cpp common/utfstr.cpp \
 	common/confdir.cpp common/coords.cpp common/util.cpp
 OBJS_CO=$(subst .cpp,.o,$(SRCS_CO))
 
-SRCS_CL = client/base.cpp client/class_cpv.cpp client/client.cpp client/input.cpp client/msg.cpp \
-	client/network.cpp client/settings.cpp client/view.cpp
+SRCS_CL = client/base.cpp client/class_cpv.cpp client/client.cpp \
+	client/input.cpp client/msg.cpp client/network.cpp \
+	client/settings.cpp client/view.cpp
 OBJS_CL=$(subst .cpp,.o,$(SRCS_CL))
 
-SRCS_SV = server/server.cpp server/network.cpp server/settings.cpp server/sighandle.cpp \
-	server/players.cpp server/log.cpp server/map.cpp server/game.cpp server/viewpoint.cpp \
-	server/actives.cpp server/ent.cpp server/noccent.cpp server/occent.cpp \
-	server/spiral.cpp server/chores.cpp server/cmds.cpp
+SRCS_SV = server/server.cpp server/network.cpp server/settings.cpp \
+	server/sighandle.cpp server/players.cpp server/log.cpp server/map.cpp \
+	server/game.cpp server/viewpoint.cpp server/actives.cpp server/ent.cpp \
+	server/noccent.cpp server/occent.cpp server/spiral.cpp server/chores.cpp \
+	server/cmds.cpp
 OBJS_SV=$(subst .cpp,.o,$(SRCS_SV))
 
 all: client server
