@@ -10,7 +10,7 @@ makedepends=('boost')
 depends=('zlib' 'boost-libs' 'ncurses')
 source=(http://tempoanon.net/lotuskip/tervat/$pkgname-$pkgver.tar.gz)
 install=yuxtapa.install
-md5sums=('3a1bdac6acbedc8adcff883bbad01f35')
+md5sums=('e225909cc208a933ca044e7b651b8dcf')
 
 build() {
   mkdir -p "${pkgdir}/usr/bin" || return 1
@@ -18,11 +18,13 @@ build() {
   mkdir -p "${pkgdir}/usr/share/doc" || return 1
   cd $srcdir/$pkgname
   make || return 1
+  cd $srcdir/$pkgname/testes
+  make
 }
 
 package() {
   cd $srcdir/$pkgname
   mv -f yuxtapa_sv yuxtapa_cl ${pkgdir}/usr/bin
-  mv -f tmplates/*.conf ${pkgdir}/usr/share/yuxtapa
+  mv -f tmplates/*.conf mrbrown ${pkgdir}/usr/share/yuxtapa
   mv -f manual ${pkgdir}/usr/share/doc/yuxtapa
 }

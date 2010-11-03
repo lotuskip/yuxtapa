@@ -56,7 +56,7 @@ void goto_intermission(const string &loadmap)
 
 void next_map_forced(const string &loadmap)
 {
-	if(intermission)
+	if(intermission && loadmap.empty())
 		goto_next_map();
 	else
 		goto_intermission(loadmap);

@@ -2,8 +2,6 @@
 #ifndef CLASSES_COMMON_H
 #define CLASSES_COMMON_H
 
-#include <string>
-
 enum e_Class { C_ARCHER=0, C_ASSASSIN, C_COMBAT_MAGE, C_MINDCRAFTER,
 	C_SCOUT, C_FIGHTER, C_MINER, C_HEALER, C_WIZARD, C_TRAPPER, NO_CLASS };
 // NO_CLASS functions as the number of the classes and denotes being a spectator
@@ -19,7 +17,7 @@ const e_Team opp_team[4] = { T_NO_TEAM, T_SPEC, T_PURPLE, T_GREEN };
 // to have them all in the same common structure.
 struct ClassProperties
 {
-	std::string abbr;
+	char abbr[3];
 	char hp, tohit, magicres, dam_die, dam_add, dv, pv, losr;
 	bool torch, can_push;
 };

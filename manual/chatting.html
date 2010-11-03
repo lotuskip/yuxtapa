@@ -37,8 +37,12 @@ These always start with an exclamation mark.</p>
 <p>Requiring <a href="adminlevels.html">AL</a> at least 2:
 <ul>
 <li><strong>!shuffle</strong> shuffles the teams, see <a href="teambalance.html">Team balance</a></li>
-<li><strong>!nextmap [name]</strong> forces an <a href="intermission.html">Intermission</a>, or, if on one, forces it to end. See also
-<a href="mapsaving.html">map saving</a></li>
+<li><strong>!nextmap [name]</strong>:
+<ul>
+<li>without <em>name</em> generates a random map and forces an <a href="intermission.html">Intermission</a>, or, if on one, forces it to end
+<li>if <em>name</em> is given, tries to load a map by that name (see <a href="mapsaving.html">map saving</a>). If successful, regardless of current game
+state, loads that map and starts an intermission. If no map by such name could be loaded, generates a random map instead</li>
+</ul></li>
 <li><strong>!listmaps</strong> prints a lists of previously saved maps</li>
 </ul></p>
 

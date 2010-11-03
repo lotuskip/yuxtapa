@@ -196,6 +196,10 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					keyw.erase(keyw.size()-1,1);
 				else
 					keyw += " [none]";
+				// If there's a crazy amount, the resulting string might be too long!
+				if(keyw.size() > MAXIMUM_STR_LEN)
+					keyw.replace(keyw.rfind(' ', MAXIMUM_STR_LEN-4),
+						keyw.size(), "...");
 				Network::to_chat(keyw);
 			}
 		}

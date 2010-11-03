@@ -1098,7 +1098,7 @@ bool Map::load_from_file(const string &mapname)
 		{
 			file.read(reinterpret_cast<char*>(&(*i)), sizeof(Tile));
 			// ignore the "non-static" flags (these get saved along with the rest!)
-			i->flags |= STATIC_TF;
+			i->flags &= STATIC_TF;
 			// validate other data:
 			if(!isprint(i->symbol) || i->cpair > C_WATER || i->cpair < C_TREE)
 				return false; // this is bogus data!

@@ -60,7 +60,8 @@ void typing_done()
 {
 	if(!typed_str.empty())
 	{
-		prev_strs.push_back(typed_str);
+		if(prev_strs.empty() || typed_str != prev_strs.back())
+			prev_strs.push_back(typed_str);
 		Config::do_aliasing(typed_str);
 		Network::send_line(typed_str, clientstate == CS_TYPE_CHAT);
 	}

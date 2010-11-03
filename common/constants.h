@@ -21,7 +21,7 @@ const unsigned short BUFFER_SIZE = 2048; /* this is plenty for most purposes,
 
 const unsigned char MAX_NICK_LEN = 10;
 
-const unsigned short MAXIMUM_STR_LEN = 250; /* In _valid_ communication,
+const unsigned short MAXIMUM_STR_LEN = 350; /* In _valid_ communication,
 	the longest strings sent are the chat messages. This should be plenty
 	for those, even if it's multibyte UTF-8. */
 

@@ -20,10 +20,19 @@ in <a href="zapbounce.html">Zap bouncing</a>.</p>
 </ul>
 Note that once space is pressed, there is no cancelling! Casting zaps looks something like this:
 <pre>
-<font style="background-color:black;color:magenta">@</font><font style="background-color:black;color:gray">..</font><font style="background-color:black;color:yellow">&gt;</font><font style="background-color:black;color:gray">..</font><font style="background-color:black;color:green">@</font><font style="background-color:black;color:gray">
-.......
-......</font><font style="background-color:black;color:yellow">v</font>
+<font style="background-color:black;color:magenta">@</font><font style="background-color:black;color:gray">.</font><font style="background-color:black;color:yellow">&gt;</font><font style="background-color:black;color:gray">..</font><font style="background-color:black;color:green">@</font><font style="background-color:black;color:gray">
+......
+.....</font><font style="background-color:black;color:yellow">v</font>
 </pre></p>
+
+<p>A zap can disappear in four ways:
+<ul>
+<li>it travels for too long without bouncing</li>
+<li>the number of times it has bounced grows too large</li>
+<li>it <em>exactly</em> hits a player, or hits a boulder</li>
+<li>its owner disconnects, making it void</li>
+</ul>
+</p>
 
 <p>The zapping ability is limited as described <a href="limiting.html">here</a>.</p>
 

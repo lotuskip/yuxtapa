@@ -101,5 +101,6 @@ public:
 private:
 	e_Dir dir;
 	char bounces;
+	char travelled;
 };
 #endif

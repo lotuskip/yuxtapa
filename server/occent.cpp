@@ -26,6 +26,7 @@ const char ARROW_TILES_PER_TURN = 3;
 const char ZAP_TILES_PER_TURN = 2;
 
 const char MAX_ZAP_BOUNCES = 7;
+const char ZAP_TRAVEL_DIST = 6;
 const char MAX_MM_HOMING_DIST = 15;
 
 }
@@ -190,7 +191,7 @@ void MM::update()
 
 
 Zap::Zap(const std::list<Player>::iterator o, const e_Dir d)
-	: OwnedEnt(o->own_pc->getpos(), '|', C_ZAP, o), dir(d), bounces(-1)
+	: OwnedEnt(o->own_pc->getpos(), ' ', C_ZAP, o), dir(d), bounces(-1), travelled(0)
 {
 }
 
@@ -227,10 +228,16 @@ void Zap::update()
 		// else
 		pos = pos.in(dir);
 	}
-	// Travelled all the way without hitting anything; update for drawing:
-	Game::curmap->mod_tile(pos)->flags |= TF_OCCUPIED;
-	event_set.insert(pos);
-	symbol = zappath_sym[dir];
+	// Travelled all the way without hitting anything.
+	if(++travelled > ZAP_TRAVEL_DIST)
+		makevoid();
+	else
+	{
+		// Update for drawing:
+		Game::curmap->mod_tile(pos)->flags |= TF_OCCUPIED;
+		event_set.insert(pos);
+		symbol = zappath_sym[dir];
+	}
 }
 
 
@@ -243,6 +250,7 @@ bool Zap::bounce(const e_Dir nd)
 		// occupied flag has been unset.
 		return true;
 	}
+	travelled = 0;
 	dir = nd;
 	return false;
 }
