@@ -5,7 +5,9 @@
 #include "../common/constants.h"
 #include "../common/timer.h"
 #include "../common/col_codes.h"
-#include "boost/lexical_cast.hpp"
+#include <boost/lexical_cast.hpp>
+#include <deque>
+#include <cstring>
 
 namespace
 {
@@ -16,12 +18,17 @@ using namespace std;
  */
 
 // messages on the screen:
-deque<string> msgbuffer(MSG_WIN_Y-1); // -1 to leave last row for typing space
-deque<unsigned char> msgcpairs(MSG_WIN_Y-1);
+struct MsgBufferLine
+{
+	string text;
+	unsigned char cpair;
+	MsgBufferLine(const string &s = "", const unsigned char c = 0)
+		: text(s), cpair(c) {}
+};
+deque<MsgBufferLine> msgbuffer(MSG_WIN_Y-1); // -1 to leave last row for typing space
 char bottom_idx = 0;
 // messages awaiting to go onto the screen:
-deque<string> msgavail;
-deque<unsigned char> availcpairs;
+deque<MsgBufferLine> msgavail;
 
 // Messages are added (to the screen) at most every STAY_TIME ms.
 // Messages are moved away at least every MOVE_FREQ ms.
@@ -35,12 +42,17 @@ msTimer last_move, last_add, reference;
 const char CHAT_BUFFER_SIZE = 50;
 
 // cf. e_Team im ../server/players.h
-const char* team_ind[4] = { "* ", ": ", " @: ", " @: " };
+const char* team_ind[4] = { "", ": ", " @: ", " @: " };
 const unsigned char team_cpair[4] = { 0, C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
 
-deque<string> chatbuffer;
-deque<string> chatspeaker;
-deque<unsigned char> chatteams;
+struct ChatBufferLine
+{
+	string text, speaker;
+	unsigned char team;
+	ChatBufferLine(const string &m = "", const string &s = "",
+		const unsigned char t = 0) : text(m), speaker(s), team(t) {}
+};
+deque<ChatBufferLine> chatbuffer;
 char chat_top = 0;
 char num_chat_lines = 0;
 
@@ -58,10 +70,10 @@ void redraw_chat()
 	for(char i = 0; i < num; ++i)
 	{
 		Base::incr_print_start(0, i, CHAT_WIN);
-		Base::incr_print(chatspeaker[chat_top+i].c_str(), 3, CHAT_WIN);
-		Base::incr_print(team_ind[chatteams[chat_top+i]],
-			team_cpair[chatteams[chat_top+i]], CHAT_WIN);
-		Base::incr_print(chatbuffer[chat_top+i].c_str(), 7, CHAT_WIN);
+		Base::incr_print(chatbuffer[chat_top+i].speaker.c_str(), 3, CHAT_WIN);
+		Base::incr_print(team_ind[chatbuffer[chat_top+i].team],
+			team_cpair[chatbuffer[chat_top+i].team], CHAT_WIN);
+		Base::incr_print(chatbuffer[chat_top+i].text.c_str(), 7, CHAT_WIN);
 		Base::incr_print_end(CHAT_WIN, true);
 	}
 	// if necessary, print indicators of there being more messages:
@@ -76,12 +88,17 @@ void move_msgs()
 	if(bottom_idx)
 	{
 		msgbuffer.pop_front();
-		msgbuffer.push_back("");
-		msgcpairs.pop_front();
-		msgcpairs.push_back(0);
+		msgbuffer.push_back(MsgBufferLine());
 		--bottom_idx;
 		last_move.update();
 	}
+}
+
+void redraw_msgs()
+{
+	for(char y = 0; y < MSG_WIN_Y-1; ++y)
+		Base::print_str(msgbuffer[y].text.c_str(), msgbuffer[y].cpair, 0, y,
+			MSG_WIN, true);
 }
 
 void redraw_clocks()
@@ -125,17 +142,16 @@ void add_msg(const string &s, const unsigned char cp)
 		if(reference.update() - last_add < STAY_TIME)
 		{
 			// time not passed, put the message in queue to be displayed later
-			msgavail.push_back(s);
-			availcpairs.push_back(cp);
+			msgavail.push_back(MsgBufferLine(s,cp));
 			return;
 		}
 		else
 			move_msgs();
 	}
-	msgbuffer[bottom_idx] = s;
-	msgcpairs[bottom_idx] = cp;
+	msgbuffer[bottom_idx].text = s;
+	msgbuffer[bottom_idx].cpair = cp;
 	++bottom_idx;
-	Base::redraw_msgs(msgbuffer, msgcpairs);
+	redraw_msgs();
 	last_add.update();
 	last_move.update(); // also delay moving
 }
@@ -147,17 +163,15 @@ void upd_msgs()
 	{
 		move_msgs();
 		msgbuffer[bottom_idx] = msgavail.front();
-		msgcpairs[bottom_idx] = availcpairs.front();
 		msgavail.pop_front();
-		availcpairs.pop_front();
 		++bottom_idx;
 		last_add.update();
-		Base::redraw_msgs(msgbuffer, msgcpairs);
+		redraw_msgs();
 	}
 	else if(reference.update() - last_move >= MOVE_FREQ)
 	{
 		move_msgs();
-		Base::redraw_msgs(msgbuffer, msgcpairs);
+		redraw_msgs();
 	}
 
 	// clock check:
@@ -175,31 +189,49 @@ void upd_msgs()
 void clear_msgs()
 {
 	for(char i = 0; i < bottom_idx; ++i)
-		msgbuffer[i].clear(); // never mind the cpairs
+		msgbuffer[i].text.clear(); // nevermind the cpairs
 	bottom_idx = 0;
-	Base::redraw_msgs(msgbuffer, msgcpairs);
+	redraw_msgs();
 }
 
 
-void add_to_chat(const string &s, const string &talker, const unsigned char t)
+void add_to_chat(string &s, const string &talker, const unsigned char t)
 {
-	bool forceredraw = false;
-	if(num_chat_lines == CHAT_BUFFER_SIZE)
+	// Chop into pieces if line is too long:
+	short len = talker.size() + strlen(team_ind[t]);
+	if(len + s.size() > Base::chat_width())
 	{
-		chatbuffer.pop_front();
-		chatspeaker.pop_front();
-		chatteams.pop_front();
-		if(!chat_top)
-			forceredraw = true;
-		else
-			--chat_top;
+		unsigned int i;
+		if((i = s.rfind(' ', Base::chat_width() - len)) == string::npos)
+			i = Base::chat_width() - len;
+		chatbuffer.push_back(ChatBufferLine(s.substr(0, i), talker, t));
+		++num_chat_lines;
+		s.erase(0, i);
+		while(s.size() > Base::chat_width())
+		{
+			if((i = s.rfind(' ', Base::chat_width())) == string::npos)
+				i = Base::chat_width();
+			chatbuffer.push_back(ChatBufferLine(s.substr(0, i), "", 0));
+			++num_chat_lines;
+			s.erase(0, i);
+		}
+		chatbuffer.push_back(ChatBufferLine(s, "", 0));
 	}
 	else
-		++num_chat_lines;
-
-	chatbuffer.push_back(s);
-	chatspeaker.push_back(talker);
-	chatteams.push_back(t);
+		chatbuffer.push_back(ChatBufferLine(s, talker, t));
+	++num_chat_lines; // at least one line added
+	
+	bool forceredraw = false;
+	while(num_chat_lines >= CHAT_BUFFER_SIZE)
+	{
+		chatbuffer.pop_front();
+		--chat_top;
+	}
+	if(chat_top <= 0)
+	{
+		forceredraw = true;
+		chat_top = 0;
+	}
 
 	// auto-scrolling:
 	if(chat_top + Base::num_chat_lines_to_show() + 1 == num_chat_lines)

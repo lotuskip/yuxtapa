@@ -10,7 +10,7 @@ void upd_msgs();
 void clear_msgs(); // clears all messages, resulting in an empty buffer
 
 
-void add_to_chat(const std::string &s, const std::string &talker,
+void add_to_chat(std::string &s, const std::string &talker,
 	const unsigned char t);
 void scroll_chat_up();
 void scroll_chat_down();

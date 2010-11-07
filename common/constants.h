@@ -3,7 +3,7 @@
 #define COMMON_CONSTANTS_H
 
 #define PACKAGE "yuxtapa"
-#define VERSION "3"
+#define VERSION "4"
 
 const unsigned char VIEWSIZE = 23;
 const unsigned char MSG_WIN_X = 47;

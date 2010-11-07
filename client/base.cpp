@@ -8,7 +8,7 @@
 #include <vector>
 #include "../common/constants.h"
 #include "colourdef.h"
-#include "boost/lexical_cast.hpp"
+#include <boost/lexical_cast.hpp>
 
 namespace
 {
@@ -237,21 +237,8 @@ void Base::less_chat_ind()
 	return_cursor(cursor_in_view);
 }
 
-void Base::redraw_msgs(const deque<string> &msgs, const deque<unsigned char> &cpairs)
-{
-	for(char y = 0; y < MSG_WIN_Y-1; ++y)
-	{
-		wmove(windows[MSG_WIN], y, 0);
-		change_colour(windows[MSG_WIN], cpairs[y]);
-		waddstr(windows[MSG_WIN], msgs[y].c_str());
-		wclrtoeol(windows[MSG_WIN]);
-	}
-	wrefresh(windows[MSG_WIN]);
-	return_cursor(cursor_in_view);
-}
-
-
-char Base::num_chat_lines_to_show() { return scr_y - VIEWSIZE; }
+unsigned char Base::num_chat_lines_to_show() { return scr_y - VIEWSIZE; }
+short Base::chat_width() { return scr_x; }
 
 
 void Base::print_view(const char *source)

@@ -1,6 +1,6 @@
 # Maintainer: Onni R. <onnir at iki dot fi>
 pkgname=yuxtapa
-pkgver=3
+pkgver=4
 pkgrel=1
 license=('None')
 pkgdesc="a text-mode team-based real-time multiplayer game"
@@ -18,8 +18,7 @@ build() {
   mkdir -p "${pkgdir}/usr/share/doc" || return 1
   cd $srcdir/$pkgname
   make || return 1
-  cd $srcdir/$pkgname/testes
-  make
+  make mrbrown
 }
 
 package() {

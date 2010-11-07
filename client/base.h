@@ -2,7 +2,6 @@
 #ifndef BASE_H
 #define BASE_H
 
-#include <deque>
 #include <string>
 
 enum e_Win {
@@ -33,9 +32,8 @@ namespace Base
 	void incr_print(const char *cs, const unsigned char cpair, const e_Win targetwin);
 	void incr_print_end(const e_Win targetwin, const bool cteol);
 
-	void redraw_msgs(const std::deque<std::string> &msgs,
-		const std::deque<unsigned char> &cpairs);
-	char num_chat_lines_to_show();
+	unsigned char num_chat_lines_to_show();
+	short chat_width();
 	void more_chat_ind(); // print indicators of there being more/less chat msgs
 	void less_chat_ind();
 

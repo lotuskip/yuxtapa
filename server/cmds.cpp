@@ -121,14 +121,12 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			keyw += lexical_cast<string>(int_settings[IS_CLASSLIMIT])
 				+ ", turn " + lexical_cast<string>(int_settings[IS_TURNMS]);
 			keyw += "ms, intermission "
-				+ lexical_cast<string>(int_settings[IS_INTERM_SECS]) + "s,";
-			Network::to_chat(keyw);
-			keyw = "statpurge "
+				+ lexical_cast<string>(int_settings[IS_INTERM_SECS]);
+			keyw += "s, statpurge "
 				+ lexical_cast<string>(int_settings[IS_STATPURGE]) + "h, "
 				+ team_balance_str[int_settings[IS_TEAMBALANCE]];
-			keyw += " teambalance, modes: " + game_modes_str() + ',';
-			Network::to_chat(keyw);
-			keyw = "map types: " + map_types_str() + '.';
+			keyw += " teambalance, modes: " + game_modes_str();
+			keyw += ", map types: " + map_types_str() + '.';
 			Network::to_chat(keyw);
 			// may broadcast
 		}
@@ -490,7 +488,6 @@ bool drop_a_bot()
 
 short num_bots()
 {
-	int ces;
 	short num = 0;
 	list<Player>::iterator bit = cur_players.begin();
 	while(next_bot(bit))

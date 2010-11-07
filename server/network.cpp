@@ -398,7 +398,7 @@ void Network::to_chat(const string &s)
 	send_buffer.add((unsigned char)MID_SAY_CHAT);
 	send_buffer.add((unsigned short)0);
 	send_buffer.add(s);
-	send_buffer.add(string(""));
+	send_buffer.add(string("* "));
 	send_buffer.add((unsigned char)0); // no team, server speaking
 	broadcast();
 }

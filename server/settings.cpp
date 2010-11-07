@@ -16,6 +16,8 @@ namespace
 {
 using namespace std;
 
+const unsigned char MAX_LIST_LEN = 80;
+
 const string short_mode_name[] = { "dom", "con", "ste", "des" };
 const string short_mtype_name[] = { "dun", "out" };
 
@@ -57,8 +59,8 @@ string botexe = "";
 #endif // not maptest build
 std::string mapdir = "";
 #ifndef MAPTEST
-vector<e_GameMode> poss_modes;
-vector<e_MapType> poss_mtypes;
+vector<char> poss_modes; // e_GameMode
+vector<char> poss_mtypes; // e_MapType
 
 
 void check_path_setting(const string &name, string &val)
@@ -69,6 +71,21 @@ void check_path_setting(const string &name, string &val)
 			"the full path; ignoring the read \"" + val + "\".");
 		val.clear();
 	}
+}
+
+
+string construct_value_list(const vector<char> &l, string const* const s)
+{
+	string ret = "";
+	for(vector<char>::const_iterator it = l.begin(); it != l.end(); ++it)
+		ret += s[*it] + '/';
+	ret.erase(ret.size()-1, 1);
+	if(ret.size() > MAX_LIST_LEN)
+	{
+		ret.erase(ret.rfind('/', MAX_LIST_LEN-4));
+		ret += "...";
+	}
+	return ret;
 }
 
 } // end of local namespace
@@ -262,32 +279,22 @@ string &Config::get_botexe() { return botexe; }
 
 e_GameMode Config::next_game_mode()
 {
-	return poss_modes[randor0(poss_modes.size())];
+	return e_GameMode(poss_modes[randor0(poss_modes.size())]);
 }
 
 string Config::game_modes_str()
 {
-	string ret = "";
-	for(vector<e_GameMode>::const_iterator it = poss_modes.begin();
-		it != poss_modes.end(); ++it)
-		ret += short_mode_name[*it] + '/';
-	ret.erase(ret.size()-1, 1);
-	return ret;
+	return construct_value_list(poss_modes, short_mode_name);
 }
 
 e_MapType Config::next_map_type()
 {
-	return poss_mtypes[randor0(poss_mtypes.size())];
+	return e_MapType(poss_mtypes[randor0(poss_mtypes.size())]);
 }
 
 string Config::map_types_str()
 {
-	string ret = "";
-	for(vector<e_MapType>::const_iterator it = poss_mtypes.begin();
-		it != poss_mtypes.end(); ++it)
-		ret += short_mtype_name[*it] + '/';
-	ret.erase(ret.size()-1, 1);
-	return ret;
+	return construct_value_list(poss_mtypes, short_mtype_name);
 }
 
 #endif // not maptest build

@@ -15,7 +15,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
-#ifndef BE_QUIET
+#ifdef BOTMSG
 #include <iostream>
 #endif
 
@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 	}
 	else
 	{
-#ifndef BE_QUIET
+#ifdef BOTMSG
 		cerr << "Not a valid address: " << sip << endl;
 #endif
 		return 1;
@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	// get server info:
 	if((rv = getaddrinfo(ip.c_str(), port.c_str(), &hints, &servinfo)))
 	{
-#ifndef BE_QUIET
+#ifdef BOTMSG
 		cerr << "Error in getaddrinfo: " << gai_strerror(rv) << endl;
 #endif
 		return 1;
@@ -90,7 +90,7 @@ int main(int argc, char *argv[])
 	}
 	if(!the_serv)
 	{
-#ifndef BE_QUIET
+#ifdef BOTMSG
 		cerr << "Failed to create socket!" << endl;
 #endif
 		freeaddrinfo(servinfo);
@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 
 	if(do_send())
 	{
-#ifndef BE_QUIET
+#ifdef BOTMSG
 		cerr << "Problem connecting to \'" << sip << "\'." << endl;
 #endif
 		close(s_me);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
 			switch(mid)
 			{
 			case MID_HELLO_VERSION:
-#ifndef BE_QUIET
+#ifdef BOTMSG
 				cerr << "Server is running an incompatible version!" << endl;
 #endif
 				close(s_me);
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 		} // received something
 		usleep(10000); // 10ms
 	} while(time(NULL) - sendtime < 2);
-#ifndef BE_QUIET
+#ifdef BOTMSG
 	cerr << "Did not get a reply from the server." << endl;
 #endif
 	close(s_me);
@@ -153,7 +153,7 @@ connected:
 	ifstream urf("/dev/urandom", ios_base::binary);
 	if(!urf)
 	{
-#ifndef BE_QUIET
+#ifdef BOTMSG
 		cerr << "No /dev/urandom access to seed rng!" << endl;
 #endif
 		srandom(time(NULL)); // settle with this
@@ -193,7 +193,7 @@ connected:
 
 				// Could grab the view and do some fancy AI shit with it...
 			}
-#ifndef BE_QUIET
+#ifdef BOTMSG
 			else if(mid == MID_ADD_MSG)
 			{
 				recv_buffer.read_ch(); // cpair

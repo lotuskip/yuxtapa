@@ -1,10 +1,12 @@
 # yuxtapa Makefile
 #
 #This option for a pedantic, warnful debug build:
-#CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG
+CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG
 #This one for optimised version:
-CPPFLAGS=-O2 -g0 -fsigned-char
+#CPPFLAGS=-O2 -g0 -fsigned-char
 # Add -DMAPTEST to either one to build a "server" for testing & creating maps
+#
+# Add -DBOTMSG to make the bot client print messages.
 
 #The rest probably needs not be touched.
 ###############################################################################
@@ -12,6 +14,7 @@ CXX=g++
 RM=rm -f
 LDLIBS_CL=-lncursesw -lz
 LDLIBS_SV=-lz
+LDLIBS_MB=-lz
 
 SRCS_CO = common/timer.cpp common/netutils.cpp common/utfstr.cpp \
 	common/confdir.cpp common/coords.cpp common/util.cpp
@@ -21,6 +24,8 @@ SRCS_CL = client/base.cpp client/class_cpv.cpp client/client.cpp \
 	client/input.cpp client/msg.cpp client/network.cpp \
 	client/settings.cpp client/view.cpp
 OBJS_CL=$(subst .cpp,.o,$(SRCS_CL))
+
+OBJS_MB=testes/mrbrown.o common/netutils.o common/timer.o
 
 SRCS_SV = server/server.cpp server/network.cpp server/settings.cpp \
 	server/sighandle.cpp server/players.cpp server/log.cpp server/map.cpp \
@@ -36,6 +41,9 @@ client: $(OBJS_CL) $(OBJS_CO)
 
 server: $(OBJS_SV) $(OBJS_CO)
 	$(CXX) -o yuxtapa_sv $(OBJS_SV) $(OBJS_CO) $(LDLIBS_SV)
+
+mrbrown: $(OBJS_MB)
+	$(CXX) -o mrbrown $(OBJS_MB) $(LDLIBS_MB)
 
 clean:
 	$(RM) $(OBJS_CL) $(OBJS_SV) $(OBJS_CO)
@@ -72,4 +80,6 @@ server/occent.o: server/occent.cpp
 server/spiral.o: server/spiral.cpp
 server/chores.o: server/chores.cpp
 server/cmds.o: server/cmds.cpp
+
+testes/mrbrown.o: testes/mrbrown.cpp
 
