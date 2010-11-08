@@ -33,6 +33,7 @@ vector<string>::const_iterator prev_str_it;
 string typed_str;
 short type_pos; // in *UTF-8 symbols*, not chars
 short str_syms;
+short printb_pos;
 
 e_Dir last_dir = MAX_D;
 
@@ -54,6 +55,7 @@ void init_type()
 {
 	typed_str.clear();
 	Base::type_cursor((type_pos = str_syms = 0));
+	printb_pos = 0;
 }
 
 void typing_done()
@@ -72,6 +74,7 @@ void typing_done()
 void set_typed_str(const string &s)
 {
 	type_pos = str_syms = num_syms((typed_str = s));
+	printb_pos = max(0, str_syms - MSG_WIN_X + 1);
 }
 
 bool check_typing()
@@ -93,7 +96,8 @@ bool check_typing()
 			if(type_pos > 0)
 			{
 				del(typed_str, type_pos-1);
-				--type_pos;
+				if(--type_pos < printb_pos)
+					printb_pos = max(0, printb_pos - MSG_WIN_X/2);
 				--str_syms;
 			}
 			break;
@@ -106,17 +110,25 @@ bool check_typing()
 			break;
 		case KEY_LEFT:
 			if(type_pos > 0)
-				--type_pos;
+			{
+				if(--type_pos < printb_pos)
+					printb_pos = max(0, printb_pos - MSG_WIN_X/2);
+			}
 			break;
 		case KEY_RIGHT:
 			if(type_pos < str_syms)
-				++type_pos;
+			{
+				if(++type_pos >= MSG_WIN_X)
+					++printb_pos;
+			}
 			break;
 		case KEY_HOME:
 			type_pos = 0;
+			printb_pos = 0;
 			break;
 		case KEY_END:
 			type_pos = str_syms;
+			printb_pos = max(0, str_syms - MSG_WIN_X + 1);
 			break;
 		case KEY_UP:
 			if(prev_str_it != prev_strs.begin())
@@ -165,12 +177,16 @@ bool check_typing()
 		ins(typed_str, key, type_pos);
 		++str_syms; // string got longer
 		++type_pos;
+		if(type_pos == str_syms && type_pos >= MSG_WIN_X)
+			++printb_pos;
 	}
 	else // no key at all
 		return false;
 
-	Base::print_str(typed_str.c_str(), 7, 0, MSG_WIN_Y-1, MSG_WIN, true);
-	Base::type_cursor(type_pos);
+	Base::print_str(mb_substr(typed_str, printb_pos,
+		min(str_syms - printb_pos, int(MSG_WIN_X))),
+		7, 0, MSG_WIN_Y-1, MSG_WIN, true);
+	Base::type_cursor(type_pos - printb_pos);
 	return false;
 }
 

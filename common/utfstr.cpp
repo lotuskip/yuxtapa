@@ -1,12 +1,16 @@
 //Please see LICENSE file.
 #include "utfstr.h"
+#ifdef DEBUG
 #include <iostream>
+#endif
 
 namespace
 {
 using namespace std;
 
+#ifdef DEBUG
 const string inv_utf8_warning = "Invalid UTF-8! Expect trouble...";
+#endif
 
 
 char seq_len(char leadch) // determine the length of the sequence starting with leadch
@@ -20,7 +24,9 @@ char seq_len(char leadch) // determine the length of the sequence starting with 
 		return 3;
 	if(lead >= 0xF0 && lead <= 0xF4)
 		return 4;
+#ifdef DEBUG
 	cerr << inv_utf8_warning << endl;
+#endif
 	return 1; // invalid lead!
 }
 
@@ -32,58 +38,70 @@ bool invalid_cont_byte(const char ch)
 
 
 // move iterator forward by a complete symbol
-void advance(string::iterator &i, string &s)
+void advance(string::iterator &i, string &s, short num)
 {
-	char l = seq_len(*i);
-	do { ++i; --l; }
-	while(l > 0 // sequence is ready,
-		&& i != s.end() // premature end of string,
-		&& !invalid_cont_byte(*i)); // non-first byte invalid for continuation
+	char l;
+	for(; num > 0; --num)
+	{
+		l = seq_len(*i);
+		do { ++i; --l; }
+		while(l > 0 // sequence is ready,
+			&& i != s.end() // premature end of string,
+			&& !invalid_cont_byte(*i)); // non-first byte invalid for continuation
 
-	if(l > 0) // if was broken for some other reason than this, something is wrong
-		cerr << inv_utf8_warning << endl;
+#ifdef DEBUG
+		if(l > 0) // if was broken for some other reason than this, something is wrong
+		{
+			cerr << inv_utf8_warning << endl;
+			return;
+		}
+#endif
+	}
 }
 
-}
+} // end local namespace
 
 
-void del(string &s, int n)
+char del(string &s, const int n)
 {
 	string::iterator i = s.begin();
-	for(; n > 0; --n)
-		advance(i, s);
+	advance(i, s, n);
 	char l = seq_len(*i);
-	for(; l > 0; --l)
+	for(char c = 0; c < l; ++c)
 		i = s.erase(i); // NOTE: unsafe if string is improper utf8...
+	return l;
 }
 
 
-void ins(string &s, const unsigned int c, int n)
+char ins(string &s, const unsigned int c, const int n)
 {
 	// First interpret "n symbols" in terms of a string iterator:
 	string::iterator i = s.begin();
-	for(; n > 0; --n)
-		advance(i, s);
+	advance(i, s, n);
 	if(c < 0x80) // single byte
+	{
 		s.insert(i, static_cast<unsigned char>(c));
-	else if(c < 0x800) // 2 bytes
+		return 1;
+	}
+	if(c < 0x800) // 2 bytes
 	{
 		i = s.insert(i, static_cast<unsigned char>((c >> 6) | 0xc0));
 		s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
+		return 2;
 	}
-	else if(c < 0x10000) // 3
+	if(c < 0x10000) // 3
 	{
 		i = s.insert(i, static_cast<unsigned char>((c >> 12) | 0xe0));
 		i = s.insert(++i, static_cast<unsigned char>(((c >> 6) & 0x3f) | 0x80));
 		s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
+		return 3;
 	}
-	else // 4
-	{
-		i = s.insert(i, static_cast<unsigned char>((c >> 18) | 0xf0));
-		i = s.insert(++i, static_cast<unsigned char>(((c >> 12) & 0x3f) | 0x80));
-		i = s.insert(++i, static_cast<unsigned char>(((c >> 6) & 0x3f) | 0x80));
-		s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
-	}
+	// else 4
+	i = s.insert(i, static_cast<unsigned char>((c >> 18) | 0xf0));
+	i = s.insert(++i, static_cast<unsigned char>(((c >> 12) & 0x3f) | 0x80));
+	i = s.insert(++i, static_cast<unsigned char>(((c >> 6) & 0x3f) | 0x80));
+	s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
+	return 4;
 }
 
 
@@ -100,11 +118,9 @@ short num_syms(const string &s)
 }
 
 
-string sym_at(const string &s, int n)
+string sym_at(const string &s, const int n)
 {
-	char b = 0;
-	for(; n > 0; --n)
-		b += seq_len(s[b]);
+	short b = ind_of_sym(s, n);
 	return s.substr(b, seq_len(s[b]));
 }
 
@@ -112,9 +128,27 @@ string sym_at(const string &s, int n)
 void del_syms(std::string &s, const short start_at)
 {
 	string::iterator i = s.begin();
-	for(short j = 0; j < start_at; ++j)
-		advance(i, s);
+	advance(i, s, start_at);
 	for(char l = seq_len(*i); l > 0; --l)
 		i = s.erase(i); // unsafe if string is improper utf8...
+}
+
+
+short ind_of_sym(const string &s, int n)
+{
+	short b = 0;
+	for(; n > 0; --n)
+		b += seq_len(s[b]);
+	return b;
+}
+
+
+const char* mb_substr(const string &s, const short beg, short len)
+{
+	short b = ind_of_sym(s, beg);
+	short e = 0;
+	for(; len > 0; --len)
+		e += seq_len(s[b+e]);
+	return s.substr(b, e).c_str();
 }
 

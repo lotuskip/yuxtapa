@@ -39,6 +39,8 @@ namespace Config
 	e_MapType next_map_type();
 	std::string map_types_str();
 
+	const std::string &new_bot_name();
+
 	extern unsigned int int_settings[MAX_INT_SETTING];
 #endif
 	std::string &get_mapdir();

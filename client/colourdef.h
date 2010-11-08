@@ -4,6 +4,7 @@
 
 #include "../common/col_codes.h"
 
+// "FULL" mode:
 // colours are defined in NCurses system, RGB values 0-1000
 const short colour[MAX_PREDEF_COLOUR-BASE_COLOURS][3] = {
 { 184, 215, 148 }, //  tree, dim
@@ -75,11 +76,72 @@ const short colour[MAX_PREDEF_COLOUR-BASE_COLOURS][3] = {
 };
 
 
+// "MANY" mode; at least 88 colours but cannot redefine them.
+// We assume the "standard 256 xterm colours", and make the best of them.
+const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
+	// the dims:
+	238, 238, 238, 238, 238, 238, 238,
+	34, // tree
+	112, // grass
+	136, // road
+	8, // wall
+	172, // door
+	245, // floor
+	12, // water
+	10, // green pc
+	5, // purple pc
+	208, // brown pc
+	33, // water trap
+	220, // light trap
+	76, // tele trap
+	241, // booby trap
+	160, // fireb trap
+	7, // neutral flag
+	6, // portal in
+	8, // portal out
+	178, // arrow
+	// lits:
+	40, // tree
+	118, // grass
+	214, // road
+	245, // wall
+	208, // door
+	250, // floor
+	32, // water
+	46, // green pc
+	13, // purple pc
+	214, // brown pc
+	69, // water trap
+	226, // light trap
+	118, // tele trap
+	250, // booby trap
+	196, // fireb trap
+	15, // neutral flag
+	14, // portal in
+	245, // portal out
+	220, // arrow
+	// only lits:
+	126, 135, // mm
+	166, // torch
+	11 // zap
+};
+
+const unsigned char fixed_bgc[6] = { 4, 3, 2, 6, 1, 240 };
+const unsigned char fixed_fgc[7] = { 10, 13, 11, 16, 12, 9, 11 };
+
+// "FEW" mode (8+8 colours):
+//
 enum { BASE_BLACK=0, BASE_RED, BASE_GREEN, BASE_BROWN, BASE_BLUE,
 	BASE_MAGENTA, BASE_CYAN, BASE_LIGHT_GRAY,
 	// the rest need A_BOLD attribute:
 	BASE_DARK_GRAY, BASE_LIGHT_RED, BASE_LIGHT_GREEN, BASE_YELLOW,
 	BASE_LIGHT_BLUE, BASE_LIGHT_MAGENTA, BASE_LIGHT_CYAN, BASE_WHITE };
+
+// For non-black backgrounds
+const char bgc[6] = { BASE_BLUE, BASE_BROWN, BASE_GREEN, BASE_CYAN,
+	BASE_RED, BASE_LIGHT_GRAY };
+const char fgc[7] = { BASE_GREEN, BASE_MAGENTA, BASE_BROWN, BASE_BLACK,
+	BASE_BLUE, BASE_RED, BASE_BROWN };
 
 // Remapping of the colours in ../common/col_codes.h for 16 colours:
 const char col_remap[C_BG_HEAL-BASE_COLOURS] = {

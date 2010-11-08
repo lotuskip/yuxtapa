@@ -7,14 +7,15 @@ of any terminal whatsoever.</p>
 <h3>Colours</h3>
 <p>The yuxtapa client has mainly been tested on <em>urxvt</em> (rxvt-unicode)
 and <em>xterm</em>. It is designed for terminal emulators that provide at least 88 colours and
-256 colour pairs, and moreover allow changing the colour RGB values. There is a fall-back function for more simple terminals (16 fixed colours)
-such as xterm; the game is playable but looks more crude.</p>
+256 colour pairs, and moreover allow changing the colour RGB values. There is a fall-back function for more simple terminals
+(256 or 16 fixed colours) such as xterm; the game is playable but looks more crude.</p>
 
 <p>For comparison, here are two screenshots, the first with full colours, the second with
 only 16 colours (not the default 16 xterm colours):<br>
 <img src="fullcolour.png" alt="full-colour screenshot">&nbsp;<img src="fbcolour.png" alt="16-colour screenshot"></p>
 
-<p>Playing with only 16 colours is quite possible, but most people will probably prefer the full colour mode.
+<p>Playing with only 16 colours or with immutable 256 colours is quite possible, but most people will
+probably prefer the full colour mode.
 Terminals that have been tested to work with full colours 'out-of-the-box':
 <ul>
 <li>rxvt-unicode (both the default and the 256-color version)</li>
@@ -38,6 +39,10 @@ should place instead of '[something]', depends on your system.</p>
 
 
 <h3>Size and font</h3>
+<p>Using UTF-8 compliant terminals and fonts with UTF-8 glyphs is recommended.
+It is not <em>necessary</em> for the terminal to support Unicode, but if other players have Unicode nicks or type Unicode into the chat
+or if the server sends some Unicode messages, this might produce annoying garbage in a client that doesn't support UTF-8.</p>
+
 <p>The absolute minimum terminal size for the client is 80x24. Anything larger goes, and <em>somewhat</em> larger is recommended,
 because with the minimum screen the chat box (see <a href="clientscreen.html">Client screen</a>) is only one line high, which
 makes the chat feature annoying to the point of being useless.</p>

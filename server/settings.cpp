@@ -62,6 +62,9 @@ std::string mapdir = "";
 vector<char> poss_modes; // e_GameMode
 vector<char> poss_mtypes; // e_MapType
 
+vector<string> botnames;
+vector<string>::const_iterator botname_iter;
+
 
 void check_path_setting(const string &name, string &val)
 {
@@ -179,6 +182,18 @@ void Config::read_config()
 			check_path_setting(keyw, botexe);
 			continue;
 		}
+		if(keyw == "botnames")
+		{
+			size_t ind;
+			while(ss >> keyw)
+			{
+				ind = 0;
+				while((ind = keyw.find('_', ind)) != string::npos)
+					keyw.replace(ind, 1, 1, ' ');
+				botnames.push_back(keyw);
+			}
+			continue;
+		}
 		if(keyw == "mapdir")
 		{
 			ss >> mapdir;
@@ -254,6 +269,10 @@ void Config::read_config()
 		poss_mtypes.push_back(MT_DUNGEON);
 		poss_mtypes.push_back(MT_OUTDOOR);
 	}
+	// Force at least one bot name:
+	if(botnames.empty())
+		botnames.push_back("Mr. Brown");
+	botname_iter = botnames.begin();
 	// finally check classlimit with respect to maxplayers:
 	if(int_settings[IS_CLASSLIMIT]
 		&& int_settings[IS_CLASSLIMIT]*2*NO_CLASS < int_settings[IS_MAXPLAYERS])
@@ -295,6 +314,13 @@ e_MapType Config::next_map_type()
 string Config::map_types_str()
 {
 	return construct_value_list(poss_mtypes, short_mtype_name);
+}
+
+const string &Config::new_bot_name()
+{
+	if(++botname_iter == botnames.end())
+		botname_iter = botnames.begin();
+	return *botname_iter;
 }
 
 #endif // not maptest build

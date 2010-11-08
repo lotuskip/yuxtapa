@@ -20,7 +20,10 @@ const char MIN_SCREEN_Y = 24;
 const char walk_syms[2] = { ' ', 'W' };
 
 short scr_x, scr_y;
-bool fullcolourmode;
+enum e_ColorMode { CM_FULL=0, //full colours that can be changed
+	CM_MANY, //full, immutable colours
+	CM_FEW }; // 8+8 colour mode (xterm)
+e_ColorMode colmode;
 
 short *term_colours;
 WINDOW *windows[MAX_WIN]; // STAT_WIN, CHAT_WIN, MSG_WIN, PC_WIN, VIEW_WIN
@@ -46,9 +49,9 @@ void return_cursor(const bool def)
 	}
 }
 
-void change_colour(WINDOW *w, unsigned char cpair)
+void change_colour(WINDOW* const w, unsigned char cpair)
 {
-	if(fullcolourmode)
+	if(colmode != CM_FEW)
 		wattrset(w, COLOR_PAIR(cpair));
 	else
 	{
@@ -75,7 +78,7 @@ void change_colour(WINDOW *w, unsigned char cpair)
 			wattrset(w, (A_BOLD | (COLOR_PAIR(cpair))));
 		else
 			wattrset(w, COLOR_PAIR(cpair));
-	} // no fullcolourmode
+	} // only few colours
 }
 
 } // end local namespace
@@ -120,9 +123,10 @@ bool Base::init_ncurses()
 	for(c = 0; c < BASE_COLOURS; ++c)
 		init_pair(c, ct[c], COLOR_BLACK);
 
-	// check if can init rest of the colours:
-	if((fullcolourmode = (can_change_color() && COLORS > MAX_PREDEF_COLOUR)))
+	// figure out colour mode:
+	if(can_change_color() && COLORS >= MAX_PREDEF_COLOUR)
 	{
+		colmode = CM_FULL;
 		term_colours = new short[3*(MAX_PREDEF_COLOUR-BASE_COLOURS)];
 		for(c = 0; c < MAX_PREDEF_COLOUR-BASE_COLOURS; ++c)
 		{
@@ -143,13 +147,22 @@ bool Base::init_ncurses()
 		}
 		init_pair(C_UNKNOWN, C_WALL_DIM, C_WALL_DIM); 
 	}
-	else // cannot change colours or not enough colours
+	else if(COLORS >= MAX_PREDEF_COLOUR) // immutable multi-colour
 	{
+		colmode = CM_MANY;
+		for(c = BASE_COLOURS; c < C_BG_HEAL; ++c)
+			init_pair(c, fixed_remap[c-BASE_COLOURS], COLOR_BLACK);
+		for(d = 0; d < 6; ++d)
+		{
+			for(c = 0; c < 7; ++c)
+				init_pair(C_GREEN_ON_HEAL+d*7+c, fixed_fgc[c], fixed_bgc[d]);
+		}
+		init_pair(C_UNKNOWN, 8, 8);
+	}
+	else // only 8+8 colours
+	{
+		colmode = CM_FEW;
 		// Init the pairs with non-black background
-		char bgc[6] = { BASE_BLUE, BASE_BROWN, BASE_GREEN, BASE_CYAN,
-			BASE_RED, BASE_LIGHT_GRAY };
-		char fgc[7] = { BASE_GREEN, BASE_MAGENTA, BASE_BROWN, BASE_BLACK,
-			BASE_BLUE, BASE_RED, BASE_BROWN };
 		for(d = 0; d < 6; ++d)
 		{
 			for(c = 0; c < 7; ++c)
@@ -175,7 +188,7 @@ bool Base::init_ncurses()
 void Base::deinit_ncurses()
 {
 	int i;
-	if(fullcolourmode)
+	if(colmode == CM_FULL)
 	{
 		// restore original colours: (this gives a nice shutdown "animation", too)
 		for(i = 0; i < MAX_PREDEF_COLOUR-BASE_COLOURS; ++i)

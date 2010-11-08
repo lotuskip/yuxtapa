@@ -1,14 +1,18 @@
 // Please see LICENSE file.
 #include <ncurses.h>
+#include <iostream>
 #include "../client/colourdef.h"
 #include "../common/col_codes.h"
 
 short *term_colours;
-bool fullcolourmode;
+enum e_ColorMode { CM_FULL=0, //full colours that can be changed
+	CM_MANY, //full, immutable colours
+	CM_FEW }; // 8+8 colour mode (xterm)
+e_ColorMode colmode;
 
 void change_colour(unsigned char cpair)
 {
-	if(fullcolourmode)
+	if(colmode != CM_FEW)
 		attrset(COLOR_PAIR(cpair));
 	else
 	{
@@ -57,9 +61,9 @@ int main()
 	for(c = 0; c < BASE_COLOURS; ++c)
 		init_pair(c, ct[c], COLOR_BLACK);
 
-	// check if can init rest of the colours:
-	if((fullcolourmode = (can_change_color() && COLORS > MAX_PREDEF_COLOUR)))
+	if(can_change_color() && COLORS >= MAX_PREDEF_COLOUR)
 	{
+		colmode = CM_FULL;
 		term_colours = new short[3*(MAX_PREDEF_COLOUR-BASE_COLOURS)];
 		for(c = 0; c < MAX_PREDEF_COLOUR-BASE_COLOURS; ++c)
 		{
@@ -80,13 +84,22 @@ int main()
 		}
 		init_pair(C_UNKNOWN, C_WALL_DIM, C_WALL_DIM); 
 	}
-	else // cannot change colours or not enough colours
+	else if(COLORS >= MAX_PREDEF_COLOUR) // immutable multi-colour
 	{
+		colmode = CM_MANY;
+		for(c = BASE_COLOURS; c < C_BG_HEAL; ++c)
+			init_pair(c, fixed_remap[c-BASE_COLOURS], COLOR_BLACK);
+		for(d = 0; d < 6; ++d)
+		{
+			for(c = 0; c < 7; ++c)
+				init_pair(C_GREEN_ON_HEAL+d*7+c, fixed_fgc[c], fixed_bgc[d]);
+		}
+		init_pair(C_UNKNOWN, 8, 8);
+	}
+	else
+	{
+		colmode = CM_FEW;
 		// Init the pairs with non-black background
-		char bgc[6] = { BASE_BLUE, BASE_BROWN, BASE_GREEN, BASE_CYAN,
-			BASE_RED, BASE_LIGHT_GRAY };
-		char fgc[7] = { BASE_GREEN, BASE_MAGENTA, BASE_BROWN, BASE_BLACK,
-			BASE_BLUE, BASE_RED, BASE_BROWN };
 		for(d = 0; d < 6; ++d)
 		{
 			for(c = 0; c < 7; ++c)
@@ -177,7 +190,7 @@ int main()
 	refresh();
 	getch();	
 
-	if(fullcolourmode)
+	if(colmode == CM_FULL)
 	{
 		// restore original colours: (this gives a nice shutdown "animation", too)
 		for(c = 0; c < MAX_PREDEF_COLOUR-16; ++c)
@@ -186,6 +199,11 @@ int main()
 	}
 
 	endwin();
+	std::cout << "Colour mode: ";
+	if(colmode == CM_FULL) std::cout << "full";
+	else if(colmode == CM_MANY) std::cout << "many";
+	else std::cout << "few";
+	std::cout << std::endl;
 	return 0;
 }
 

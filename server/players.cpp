@@ -185,9 +185,6 @@ unsigned short add_and_register_player(const string &nick, string &passw,
 	return newpl->ID;
 }
 
-const string mrbrown_str = "Mr. Brown";
-const string &gen_new_bot_nick() { return mrbrown_str; } // for now
-
 } // end local namespace
 
 list<PlayerStats> known_players;
@@ -469,7 +466,7 @@ unsigned short bot_connect(const unsigned short pid, sockaddr_storage &sas)
 	if(cur_players.size() >= Config::int_settings[Config::IS_MAXPLAYERS])
 		return SERVER_FULL;
 	// else:
-	string tmp1, tmp2 = gen_new_bot_nick();
+	string tmp1, tmp2 = Config::new_bot_name();
 	unsigned short sh = player_hello(0xFFFF, tmp1, tmp2, sas);
 	if(sh <= HIGHEST_VALID_ID) // player was added
 		cur_players.back().botpid = pid;
