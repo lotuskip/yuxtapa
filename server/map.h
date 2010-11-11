@@ -31,7 +31,7 @@ enum {
 	TF_NODIG=0x1000 // cannot be dug (for walls)
 };
 // The empty tile is what is drawn for unknown places.
-const Tile EMPTY_TILE = { TF_SEETHRU, ' ', C_UNKNOWN };
+const Tile EMPTY_TILE = { TF_SEETHRU, '?', C_UNKNOWN };
 const Tile T_FLOOR = { TF_WALKTHRU|TF_SEETHRU,
 #ifdef MAPTEST
 '_'

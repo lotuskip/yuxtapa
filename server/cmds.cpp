@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <sys/wait.h>
+#include <netdb.h>
 #include <dirent.h>
 #include <algorithm>
 #include <cstring>
@@ -147,12 +148,12 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 		}
 		return true; // a "private" request
 	}
-	else if(keyw == "teams") // req: none
+	/*else*/ if(keyw == "teams") // req: none
 	{
 		Game::construct_team_msgs(pit);
 		return true; // a "private" request
 	}
-	else if(keyw == "shuffle") //req: AL >= 2 && not muted
+	/*else*/ if(keyw == "shuffle") //req: AL >= 2 && not muted
 	{
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 			shuffle_teams();
@@ -404,6 +405,45 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			while(drop_a_bot()); // not fast, but simple
 			// may broadcast
 		}
+	}
+	else if(keyw == "log") // req: AL >= 3
+	{
+		if(pit->stats_i->ad_lvl >= AL_ADMIN && i != string::npos
+			&& i < cmd.size()-1)
+		{
+			timed_log(pit->nick + " wrote: " + cmd.substr(i+1));
+			return true; // do not broadcast succesful logging
+		}
+	}
+	else if(keyw == "plinfo") // req: AL >= 2
+	{
+		if(pit->stats_i->ad_lvl >= AL_TU
+			&& i != string::npos && i < cmd.size()-1)
+		{
+			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1));
+			if(nit != cur_players.end())
+			{
+				// Construct player info:
+				keyw = nit->nick + ": ";
+				char host[80];
+				char serv[20];
+				if(getnameinfo((sockaddr*)&(nit->address), sizeof(nit->address),
+					host, 80, serv, 20, NI_DGRAM|NI_NUMERICSERV))
+					keyw += "[problem in getnameinfo]";
+				else
+				{
+					keyw += host; keyw += ':'; keyw += serv;
+				}
+				if(nit->botpid != -1)
+					keyw += ", BOT";
+				keyw += ", t.time: ";
+				keyw += boost::lexical_cast<string>(nit->stats_i->total_time/60);
+				keyw += "min";
+				Network::construct_msg(keyw, cmd_respond_msg_col); 
+				Network::send_to_player(*pit);
+			}
+		}
+		return true; // no broadcast
 	}
 	return false;
 }

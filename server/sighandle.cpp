@@ -16,7 +16,7 @@ Signal_Handler* Signal_Handler::instance()
 
 
 Event_Handler *Signal_Handler::register_handler(const int signum,
-	Event_Handler *eh)
+	Event_Handler* const eh)
 {
 	// Copy the old_eh from the signum slot in the signal_handlers_ table.
 	Event_Handler *old_eh = signal_handlers_[signum];

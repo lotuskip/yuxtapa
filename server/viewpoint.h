@@ -59,10 +59,10 @@ private:
 	// basically rubbish outside of the render()-routine.
 	static char loslittbl[VIEWSIZE][VIEWSIZE];
 
-	bool render_pc_at(const Coords &c, char *target, const bool lit,
+	bool render_pc_at(const Coords &c, char* const target, const bool lit,
 		std::list<std::string> &titles) const;
-	bool render_pc_indir(const Coords &c, char *target) const;
-	bool render_trap_at(const Coords &c, char *target, const bool lit) const;
+	bool render_pc_indir(const Coords &c, char* const target) const;
+	bool render_trap_at(const Coords &c, char* const target, const bool lit) const;
 };
 
 #endif

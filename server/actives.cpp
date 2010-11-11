@@ -53,7 +53,7 @@ void next_unused_tile(Coords &c, vector<Coords> &useds)
 const char noccent_symbol[MAX_NOE-1] = { '_', 'A', 'V', '0', '&', 't' };
 const char noccent_cpair[MAX_NOE-1] = { C_WALL, C_PORTAL_IN, C_PORTAL_OUT,
 	C_PORTAL_IN, C_NEUT_FLAG, C_TORCH };
-void add_noccent(const Coords c, const e_Noccent type, const short m = 0)
+void add_noccent(const Coords &c, const e_Noccent type, const short m = 0)
 {
 	noccents[type].push_back(NOccEnt(c, noccent_symbol[type-1],
 		noccent_cpair[type-1], m));
@@ -101,7 +101,7 @@ void add_noccent(const Coords c, const e_Noccent type, const short m = 0)
 	}
 }
 
-void add_block(const Coords c)
+void add_block(const Coords &c)
 {
 	boulders.push_back(OccEnt(c, 'O', C_WALL));
 	Game::curmap->mod_tile(c)->flags |= TF_OCCUPIED;

@@ -10,7 +10,7 @@ makedepends=('boost')
 depends=('zlib' 'boost-libs' 'ncurses')
 source=(http://tempoanon.net/lotuskip/tervat/$pkgname-$pkgver.tar.gz)
 install=yuxtapa.install
-md5sums=('e225909cc208a933ca044e7b651b8dcf')
+md5sums=('bd465ad5a137f1e392df1ccd66428417')
 
 build() {
   mkdir -p "${pkgdir}/usr/bin" || return 1

@@ -44,11 +44,13 @@ These always start with an exclamation mark.</p>
 state, loads that map and starts an intermission. If no map by such name could be loaded, generates a random map instead</li>
 </ul></li>
 <li><strong>!listmaps</strong> prints a lists of previously saved maps</li>
+<li><strong>!plinfo [nick]</strong> prints the specified player's IP, total time played, and mentions if they are a bot</li>
 </ul></p>
 
 <p>Requiring AL at least 3:
 <ul>
 <li><strong>!storemap [name]</strong> saves the current map; see <a href="mapsaving.html">map saving</a></li>
+<li><strong>!log [text]</strong> add <em>text</em> to the <a href="serverlog.html">server log</a> file</li>
 </ul></p>
 
 <p>Requiring AL higher than the target's:
@@ -74,7 +76,8 @@ The last two commands only affect a session; they do not overwrite the settings 
 <p>In all the commands that contain [nick], you can use a partial nick. For instance, if there is an 'anonymous' playing
 and you issue '!kick ano', and there is no other player with 'ano' in their name, 'anonymous' gets kicked.</p>
 
-<p>The following commands, and only the following, can be used when muted: !adminlvl, !teams, and !dontstatme.</p>
+<p>The following commands, and only the following, can be used when muted (as using them will be completely invisible to other players): !adminlvl,
+!teams, !log, and !plinfo.</p>
 
 <p>Note that banning really bans the entire IP. This can have an undesired side-effect of banning a whole
 subnet of people when one player from that IP gets a ban. Also, if you ban bots, that

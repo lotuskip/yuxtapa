@@ -57,7 +57,7 @@ void fill_kph(const char k)
 
 } // end local namespace
 
-void Config::read_config(const string servername)
+void Config::read_config(const string &servername)
 {
 	// figure out config  directory of current user:
 	string s;

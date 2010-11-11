@@ -18,7 +18,7 @@ int cur_mday = -1; // current day of month; to check whether the date has change
 }
 
 
-void to_log(const string s)
+void to_log(const string &s)
 {
 	if(canlog)
 	{
@@ -38,7 +38,7 @@ void to_log(const string s)
 }
 
 
-void timed_log(const string s)
+void timed_log(const string &s)
 {
 	time_t rawtime;
 	struct tm *timeinfo;

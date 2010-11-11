@@ -370,7 +370,7 @@ void ViewPoint::move_watchers()
 }
 
 
-bool ViewPoint::render_pc_at(const Coords &c, char *target, const bool lit,
+bool ViewPoint::render_pc_at(const Coords &c, char* const target, const bool lit,
 	list<string> &titles) const
 {
 	string tstr;
@@ -407,7 +407,7 @@ bool ViewPoint::render_pc_at(const Coords &c, char *target, const bool lit,
 }
 
 // Draw a PC outside of LOS (one seen by a teammate scout)
-bool ViewPoint::render_pc_indir(const Coords &c, char *target) const
+bool ViewPoint::render_pc_indir(const Coords &c, char* const target) const
 {
 	list<PCEnt>::iterator it = any_pc_at(c);
 	if(it != PCs.end() && it->is_seen_by_team(owner->team) && !it->isvoid())
@@ -418,7 +418,7 @@ bool ViewPoint::render_pc_indir(const Coords &c, char *target) const
 	return false;
 }
 
-bool ViewPoint::render_trap_at(const Coords &c, char *target, const bool lit) const
+bool ViewPoint::render_trap_at(const Coords &c, char* const target, const bool lit) const
 {
 	list<Trap>::iterator tr_it = any_trap_at(c);
 	if(tr_it->is_seen_by(owner->team))

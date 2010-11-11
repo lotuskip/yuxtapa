@@ -47,7 +47,7 @@ const char ctestsym[] = "abcdefghijklmnop" // 16 base colours
 "T..#+.~@@@^^^^^&AV/" // normals
 "T..#+.~@@@^^^^^&AV/**t\\" // lits
 "T@+#~^/T@+#~^/T@+#~^/T@+#~^/T@+#~^/T@+#~^/" // backgroundeds
-" "; // unknown
+"?"; // unknown
 
 int main()
 {
@@ -111,7 +111,7 @@ int main()
 
 	// Outside view.
 	change_colour(C_UNKNOWN);
-	addch(' ');
+	addch('?');
 	change_colour(C_TREE-NUM_DIM_COLS);
 	addch('T');
 	addch('\"');
@@ -143,7 +143,7 @@ int main()
 
 	// Dungeon view:
 	change_colour(C_UNKNOWN);
-	addch(' ');
+	addch('?');
 	change_colour(C_WALL-NUM_DIM_COLS);
 	addch('#');
 	change_colour(C_FLOOR-NUM_DIM_COLS);

@@ -19,7 +19,7 @@ public:
 
 	// Register an event handler eh for signum and return a pointer to any
 	// existing Event_Handler that was previously registered to handle signum.
-	Event_Handler *register_handler(const int signum, Event_Handler *eh);
+	Event_Handler *register_handler(const int signum, Event_Handler* const eh);
 
 	int remove_handler(const int signum);
 

@@ -14,7 +14,7 @@ const char MAX_QUICK_SHOUTS = 12;
 
 namespace Config
 {
-	void read_config(const std::string servername);
+	void read_config(const std::string &servername);
 
 	std::string &get_server_ip();
 	std::string &get_nick();

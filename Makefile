@@ -25,7 +25,7 @@ SRCS_CL = client/base.cpp client/class_cpv.cpp client/client.cpp \
 	client/settings.cpp client/view.cpp
 OBJS_CL=$(subst .cpp,.o,$(SRCS_CL))
 
-OBJS_MB=testes/mrbrown.o common/netutils.o common/timer.o
+OBJS_MB=testes/mrbrown.o common/netutils.o common/timer.o common/coords.o
 
 SRCS_SV = server/server.cpp server/network.cpp server/settings.cpp \
 	server/sighandle.cpp server/players.cpp server/log.cpp server/map.cpp \

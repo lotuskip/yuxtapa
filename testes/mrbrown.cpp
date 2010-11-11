@@ -3,6 +3,7 @@
 #include "../common/timer.h"
 #include "../common/classes_common.h"
 #include "../common/coords.h"
+#include "../common/col_codes.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -27,6 +28,16 @@ struct addrinfo *servinfo, *the_serv;
 unsigned short cur_id;
 unsigned short curturn = 0;
 unsigned char axn_counter = 0;
+char viewbuffer[BUFFER_SIZE];
+
+const Coords center(VIEWSIZE/2, VIEWSIZE/2);
+bool no_walk_to(const e_Dir d)
+{
+	Coords c = center.in(d);
+	// colour is at (y*SIZE+x)*2, symbol at that+1
+	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
+	return (sym == '?' || sym == '~' || sym == '#');
+}
 
 msTimer last_sent_axn, reftimer;
 
@@ -174,6 +185,7 @@ connected:
 	send_buffer.add((unsigned char)(random()%NO_CLASS));
 	do_send();
 
+	e_Dir walkdir;
 	for(;;)
 	{
 		if((msglen = do_receive()) != -1)
@@ -191,7 +203,8 @@ connected:
 				send_buffer.add(curturn);
 				do_send();
 
-				// Could grab the view and do some fancy AI shit with it...
+				if(msglen > 5) // msg is not very small => view has changed
+					recv_buffer.read_compressed(viewbuffer);
 			}
 #ifdef BOTMSG
 			else if(mid == MID_ADD_MSG)
@@ -219,30 +232,39 @@ connected:
 				// new hp tell us whether we are alive:
 				alive = (static_cast<char>(recv_buffer.read_ch()) > 0);
 			}
-#if 0
 			//TODO: FANCY AI SHIT!!
 			else if(mid == MID_STATE_CHANGE) { }
 			else if(mid == MID_GAME_UPD) { }
 			else if(mid == MID_TIME_UPD) { }
-#endif
 		} // received a msg
 		else usleep(10000);
 		
 		if(alive) // When alive, get movin'
 		{
-			//TODO: Could do fancy AI shit here, as well.
+			//TODO: fancy AI shit here, as well.
 
 			if(reftimer.update() - last_sent_axn > 250)
 			{
-				send_buffer.clear();
-				send_buffer.add((unsigned char)MID_TAKE_ACTION);
-				send_buffer.add(cur_id);
-				send_buffer.add(curturn);
-				send_buffer.add(axn_counter);
-				send_buffer.add((unsigned char)XN_MOVE);
-				send_buffer.add((unsigned char)(random()%MAX_D));
-				do_send();
-				++axn_counter;
+				// Figure out a dir to walk to (avoid chasms&water and don't run into walls)
+				walkdir = e_Dir(random()%MAX_D);
+				for(rv = 0; rv < MAX_D; ++rv)
+				{
+					if(!no_walk_to(walkdir)) // can walk there
+						break;
+					++walkdir;
+				}
+				if(rv < MAX_D) // found a dir to walk to
+				{
+					send_buffer.clear();
+					send_buffer.add((unsigned char)MID_TAKE_ACTION);
+					send_buffer.add(cur_id);
+					send_buffer.add(curturn);
+					send_buffer.add(axn_counter);
+					send_buffer.add((unsigned char)XN_MOVE);
+					send_buffer.add((unsigned char)walkdir);
+					do_send();
+					++axn_counter;
+				} // else we're stuck or something...
 				last_sent_axn.update();
 			}
 		}

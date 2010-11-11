@@ -88,7 +88,7 @@ float fractRand(const float v)
 }
 
 float avgDiamondVals(const int i, const int j, const int stride,
-	const int size, const int subSize, const float *fa)
+	const int size, const int subSize, const float* const fa)
 {
     if(!i)
 		return (fa[(i*size) + j-stride] + fa[(i*size) + j+stride]
@@ -107,7 +107,7 @@ float avgDiamondVals(const int i, const int j, const int stride,
 }
 
 float avgSquareVals(const int i, const int j, const int stride, const int size,
-	const float *fa)
+	const float* const fa)
 {
     return (fa[((i-stride)*size) + j-stride] + fa[((i-stride)*size) + j+stride]
 		+ fa[((i+stride)*size) + j-stride] + fa[((i+stride)*size) + j+stride])*.25f;
@@ -117,7 +117,7 @@ float avgSquareVals(const int i, const int j, const int stride, const int size,
  * Size must be a power of two + 1 (65, 129, 257, 513)
  * h determines smoothness: 0->very jagged, 1->very smooth
  */
-void fill2DFractArray(float *fa, const int size, const float h)
+void fill2DFractArray(float* const fa, const int size, const float h)
 {
     int subSize = size-1;
 	float ratio = pow(2.,-h);
@@ -265,24 +265,25 @@ const char roomcell[7][9] = {
   '#', '#', '#' },
 };
 
-char rot_0(const char x, const char y, const char* p)
+char rot_0(const char x, const char y, const char* const p)
 {
 	return p[y*ROOM_SIZE+x]; // yep, identity map.
 }
-char rot_90(const char x, const char y, const char* p)
+char rot_90(const char x, const char y, const char* const p)
 {
 	return p[(ROOM_SIZE-1-x)*ROOM_SIZE+y];
 }
-char rot_180(const char x, const char y, const char* p)
+char rot_180(const char x, const char y, const char* const p)
 {
 	return p[(ROOM_SIZE-1-y)*ROOM_SIZE+ROOM_SIZE-1-x];
 }
-char rot_270(const char x, const char y, const char* p)
+char rot_270(const char x, const char y, const char* const p)
 {
 	return p[x*ROOM_SIZE+ROOM_SIZE-1-y];
 }
 
-char (*rot_fs[4])(const char, const char, const char*) = { rot_0, rot_90, rot_180, rot_270 };
+char (*rot_fs[4])(const char, const char, const char* const)
+	= { rot_0, rot_90, rot_180, rot_270 };
 
 
 // construct a new "room cell" at (rx,ry), coming from 'dir' (dir==-1: initial cell)
