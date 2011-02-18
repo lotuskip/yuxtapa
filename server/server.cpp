@@ -109,7 +109,7 @@ int main(int argc, char *argv[])
 		return 0;
 	}
 	// else going to start the server for real
-	std::cout << "(__)uxtapa " << VERSION << std::endl;
+	std::cout << "(__)ux+apa " << VERSION << std::endl;
 	std::cout << " ._)" << std::endl << std::endl;
 	if(!str.empty())
 		std::cout << "Uknown argument \"" << str << '\"' << std::endl;

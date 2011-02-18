@@ -2,8 +2,8 @@
 #ifndef COMMON_CONSTANTS_H
 #define COMMON_CONSTANTS_H
 
-#define PACKAGE "yuxtapa"
-#define VERSION "4"
+#define PACKAGE "yux+apa"
+#define VERSION "5"
 
 const unsigned char VIEWSIZE = 23;
 const unsigned char MSG_WIN_X = 47;
@@ -14,7 +14,7 @@ const unsigned char MSG_WIN_Y = 15;
 // in the interaction between the two. Hence, in addition to the version
 // of the game, we have an "interaction version". For a server and a client
 // to be compatible, only their interaction versions need to match.
-const unsigned short INTR_VERSION = 1;
+const unsigned short INTR_VERSION = 2;
 
 const unsigned short BUFFER_SIZE = 2048; /* this is plenty for most purposes,
 	but can't be much lower for some */

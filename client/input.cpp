@@ -305,6 +305,10 @@ bool Input::inputhandle()
 				ClassCPV::space();
 				walkmode_off();
 				break;
+			case KB_p: // follow previous key
+				ClassCPV::follow_prev();
+				walkmode_off();
+				break;
 
 			/*
 			 * These can be done in the middle of unfinished actions, but will cause

@@ -730,14 +730,25 @@ void Game::player_action(const list<Player>::iterator pit, const Axn action)
 			} while(!fit->is_alive() && fit != pit);
 			follow_change(pit, fit);
 		}
+		else if(action.xncode == XN_FOLLOW_PREV)
+		{
+			list<Player>::const_iterator fit = pit->viewn_vp->get_owner();
+			// follow prev nonspectator (but allow following self)
+			do {
+				if(fit == cur_players.begin())
+					fit = cur_players.end();
+				--fit;
+			} while(!fit->is_alive() && fit != pit);
+			follow_change(pit, fit);
+		}
 		return;
 	}
 	// Not spectator:
 	if(pit->is_alive())
 	{
-		if(action.xncode == XN_FOLLOW_SWITCH)
+		if(action.xncode == XN_FOLLOW_SWITCH || action.xncode == XN_FOLLOW_PREV)
 		{
-			// this code makes no sense when alive; resend class info
+			// these codes makes no sense when alive; resend class info
 			send_full_state_refresh(pit);
 			return;
 		}
@@ -764,6 +775,17 @@ void Game::player_action(const list<Player>::iterator pit, const Axn action)
 			do {
 				if(++fit == cur_players.end())
 					fit = cur_players.begin();
+			} while(fit != pit && (!fit->is_alive() || fit->team != pit->team));
+			follow_change(pit, fit);
+		}
+		else if(action.xncode == XN_FOLLOW_PREV)
+		{
+			list<Player>::const_iterator fit = pit->viewn_vp->get_owner();
+			// follow prev alive teammate or self:
+			do {
+				if(fit == cur_players.begin())
+					fit = cur_players.end();
+				--fit;
 			} while(fit != pit && (!fit->is_alive() || fit->team != pit->team));
 			follow_change(pit, fit);
 		}

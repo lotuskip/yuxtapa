@@ -10,6 +10,7 @@
 enum {
 // both ways:
 	MID_HELLO=0, // server sends this to indicate the connection is accepted
+	MID_BOTHELLO, // only bots->S
 	MID_QUIT,
 	MID_VIEW_UPD, /* S->C: new view or a "next turn" notice, also acts as a
 		'ping'. C->S: the corresponding 'pong' */
@@ -31,8 +32,6 @@ enum {
 	MID_HELLO_VERSION, // kick, incompatible version
 	MID_HELLO_STEAL, // kick, someone is using your nick
 	MID_HELLO_NEWID, // player accepted but given a new id
-// this is here for now, until we move to interaction version 2 in the next release:
-	MID_BOTHELLO,
 // above that everything is unknown:
 	MAX_MID
 };
@@ -57,7 +56,8 @@ enum {
 	XN_MM,
 	XN_SET_TRAP,
 	// finally, for deads&specs:
-	XN_FOLLOW_SWITCH
+	XN_FOLLOW_SWITCH,
+	XN_FOLLOW_PREV
 };
 
 

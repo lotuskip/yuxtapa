@@ -142,6 +142,7 @@ int main(int argc, char *argv[])
 #endif
 				close(s_me);
 				freeaddrinfo(servinfo);
+				return -1;
 			case MID_HELLO_NEWID:
 				cur_id = recv_buffer.read_sh();
 				goto connected;

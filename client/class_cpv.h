@@ -11,6 +11,7 @@ namespace ClassCPV
 	void move(const e_Dir d);
 	void five();
 	void space();
+	void follow_prev();
 	void suicide();
 
 	// received new class and team:

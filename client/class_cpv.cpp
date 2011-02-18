@@ -165,6 +165,12 @@ void ClassCPV::space()
 	} // not spectator or dead
 }
 
+void ClassCPV::follow_prev()
+{
+	if(!im_alive())
+		Network::send_action(XN_FOLLOW_PREV);
+	// else no effect
+}
 
 void ClassCPV::suicide()
 {
