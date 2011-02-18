@@ -2,8 +2,8 @@
 #ifndef COMMON_CONSTANTS_H
 #define COMMON_CONSTANTS_H
 
-#define PACKAGE "yuxtapa"
-#define VERSION "4"
+#define PACKAGE "yux+apa"
+#define VERSION "4a"
 
 const unsigned char VIEWSIZE = 23;
 const unsigned char MSG_WIN_X = 47;

@@ -31,7 +31,7 @@ enum {
 	MID_HELLO_VERSION, // kick, incompatible version
 	MID_HELLO_STEAL, // kick, someone is using your nick
 	MID_HELLO_NEWID, // player accepted but given a new id
-// this is here for now, until we move to interaction version 2 in the next release:
+// this is here for IAv1, moved upper in later versions:
 	MID_BOTHELLO,
 // above that everything is unknown:
 	MAX_MID
