@@ -104,7 +104,7 @@ void Arrow::update()
 		path.pop_front();
 		if(path.empty()) // this is where the arrow falls
 		{
-			add_action_ind(pos, A_MISS);
+			arrow_fall(this, pos);
 			makevoid(); // occupied flag has been unset
 			return;
 		}

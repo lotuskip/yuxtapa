@@ -45,6 +45,7 @@ const char DETECT_TRAPS_RAD = 3;
 const char SNEAK_RADIUS = 3;
 const char CHANCE_RUST = 65;
 const char RUST_MOD = 2;
+const char CHANCE_ARROW_TRIG_TRAP = 60;
 
 
 // Calls update_static_light for all those torches that are close enough
@@ -234,6 +235,53 @@ void flash_at(const Coords &pos)
 }
 
 
+void fireball_trigger(const list<Trap>::iterator tr, const Coords &pos,
+	const list<Player>::iterator triggerer)
+{
+	Coords c;
+	list<PCEnt>::iterator pc_it;
+	char ch;
+	string msg;
+	for(c.x = min(pos.x+2, Game::curmap->get_size()-2); c.x >= max(1, pos.x-2); --(c.x))
+	{
+		for(c.y = min(pos.y+2, Game::curmap->get_size()-2); c.y >= max(1, pos.y-2); --(c.y))
+		{
+			add_sound(c, S_BOOM);
+			if((c == pos /* occupied-flag might not be set for the triggerer yet;
+				we check this point unnecessarily when triggering with an arrow. */
+				|| (Game::curmap->get_tile(c).flags & TF_OCCUPIED))
+				&& (pc_it = any_pc_at(c)) != PCs.end())
+			{
+				// damage is (3-radius)d6:
+				for(ch = 0; ch < 3 - pos.dist_walk(c); ++ch)
+					pc_it->get_owner()->cl_props.hp -= 1 + random()%6;
+				if(pc_it->get_owner()->cl_props.hp <= 0) // died
+				{
+					if(pc_it->get_owner() == triggerer)
+						player_death(triggerer, " fried to a trap.", false);
+					else
+					{
+						msg = " was taken to the flames by ";
+						if(pc_it->get_owner()->team == triggerer->team)
+							msg += teammate_str;
+						msg += triggerer->nick + '.';
+						player_death(pc_it->get_owner(), msg, false);
+					}
+				}
+				else // survived
+				{
+					pc_it->get_owner()->needs_state_upd = true;
+					// light torch if any:
+					if(!pc_it->torch_is_lit() && pc_it->get_owner()->torch_left)
+						pc_it->toggle_torch();
+				}
+			}
+		}
+	}
+	fball_centers.push_back(pos);
+}
+
+
 void move_player_to(const list<Player>::iterator p, const Coords &c,
 	const bool do_flags); // (This needs to call trigger_trap needs to call this)
 
@@ -309,52 +357,10 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		Game::curmap->mod_tile(pos)->flags &= ~(TF_TRAP);
 		return !pit->is_alive(); // cannot set the destroyed trap as seen!
 	case TRAP_FIREB:
-	{
-		Coords c;
-		list<PCEnt>::iterator pc_it;
-		char ch;
-		string msg;
-		for(c.x = min(pos.x+2, Game::curmap->get_size()-2); c.x >= max(1, pos.x-2); c.x--)
-		{
-			for(c.y = min(pos.y+2, Game::curmap->get_size()-2); c.y >= max(1, pos.y-2); c.y--)
-			{
-				add_sound(c, S_BOOM);
-				if((c == pos /* occupied flag might not be set for the triggerer
-					yet, and this is perhaps faster, too. */
-					|| (Game::curmap->get_tile(c).flags & TF_OCCUPIED))
-					&& (pc_it = any_pc_at(c)) != PCs.end())
-				{
-					// damage is (3-radius)d6:
-					for(ch = 0; ch < 3 - pos.dist_walk(c); ++ch)
-						pc_it->get_owner()->cl_props.hp -= 1 + random()%6;
-					if(pc_it->get_owner()->cl_props.hp <= 0) // died
-					{
-						if(pc_it->get_owner() == pit)
-							player_death(pit, " fried to a trap.", false);
-						else
-						{
-							msg = " was taken to the flames by ";
-							if(pc_it->get_owner()->team == pit->team)
-								msg += teammate_str;
-							msg += pit->nick + '.';
-							player_death(pc_it->get_owner(), msg, false);
-						}
-					}
-					else // survived
-					{
-						pc_it->get_owner()->needs_state_upd = true;
-						// light torch if any:
-						if(!pc_it->torch_is_lit() && pc_it->get_owner()->torch_left)
-							pc_it->toggle_torch();
-					}
-				}
-			}
-		}
-		fball_centers.push_back(pos);
+		fireball_trigger(tr, pos, pit);
 		if(!pit->is_alive())
 			return true;
 		break;
-	}
 	//default: anything else is an error!
 	}
 	// If here, trap should be made known:
@@ -1393,5 +1399,40 @@ void trap_detection(const list<Player>::iterator pit)
 		}
 	} // if should detect traps
 }
+
+
+void arrow_fall(const OwnedEnt* arr, const Coords &c)
+{
+	Tile* tar = Game::curmap->mod_tile(c);
+	// Arrow falling on a trap might trigger the trap:
+	if(tar->flags & TF_TRAP && rand()%100 < CHANCE_ARROW_TRIG_TRAP)
+	{
+		list<Trap>::iterator tr_it = any_trap_at(c);
+		// Functionality is somewhat different from trigger_trap(...), but we
+		// also repeat some functionality here...
+		switch(tr_it->get_m())
+		{
+		case TRAP_WATER:
+			add_sound(c, S_SPLASH);
+			break;
+		case TRAP_LIGHT:
+			flash_at(c);
+			break;
+		case TRAP_BOOBY:
+			add_sound(c, S_CREAK);
+			// Boobytraps are always destroyed:
+			traps.erase(tr_it);
+			tar->flags &= ~(TF_TRAP);
+			break;
+		//case TRAP_TELE: // (detected by nothing happening!)
+		case TRAP_FIREB:
+			fireball_trigger(tr_it, c, arr->get_owner());
+			break;
+		}
+	} // trap found there
+	else
+		add_action_ind(c, A_MISS);
+}
+
 
 #endif // not maptest build

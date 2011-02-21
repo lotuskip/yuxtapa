@@ -26,5 +26,7 @@ class OwnedEnt;
 // Handles missile (arrow/mm/zap) collisions with anything; returns
 // true if a collision happens at 'c'.
 bool missile_coll(OwnedEnt* mis, const Coords &c);
+// Handles arrows falling (and potentially setting of traps):
+void arrow_fall(const OwnedEnt* arr, const Coords &c);
 
 #endif
