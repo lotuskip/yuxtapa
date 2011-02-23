@@ -14,9 +14,38 @@ might not be actual map files if the map directory is poorly defined).</p>
 game mode, flag positions, boulders, boulder sources, and portals. Moreover, if a map is modified by pushing boulders into water or by mining away some
 walls, these modifications <em>are</em> saved along with the map.</p>
 
-<p>The saved maps <em>are not</em> compressed! The size of a saved map file is 5+4*N<sup>2</sup> bytes, where N is the size (height, width) of the map.
-For a map of size 120 this means about 56.2Kb. The filesize of the largest allowed maps nears one megabyte. Great compressions ratios are usually achieved
+<p>The saved maps <em>are not</em> compressed!
+The filesize of the largest allowed maps nears one megabyte. Great compressions ratios are usually achieved
 by manual compression.</p>
+
+
+<h3>Map editing</h3>
+
+<p>The map files can be edited (or even created from scratch) manually with any text editor. The format of the file is the following:
+<pre>
+yux+apa mapfile v.2                     # line 1 should read exactly this for the map to work!
+Saved on: 22/02/2011 15:12              # line 2 is a comment line and is ignored by the server
+118                                     # line 3 gives the size of the map (number of lines/columns)
+0                                       # line 4: should the map have static torches (0: no, 1: yes)
+dun                                     # line 5: type of the map; 'dun' (dungeon), 'out' (outdoor)
+</pre>
+After this, the actual map data follows. There is one symbol per tile, and the number of
+rows and columns should be exactly the number given above as the map size.</p>
+
+<p>The symbols and corresponding tiles:
+<pre>
+.  ground (grass)
+,  road/dirt
+_  floor/rock
+;  rough terrain
+^  swamp
+~  water
++  closed door
+\  open door
+#  a wall, diggable
+H  an undiggable wall
+|- windows
+</pre></p>
 
 
 <h3>Generating maps without a running server&amp;client</h3>
@@ -31,8 +60,5 @@ with
 where <em>N</em> is the size of the map to generate (exact number, no randomisation takes place). The second argument is optional. If given, it is taken as
 the filename for the generated map (no argument: map is only printed on screen, not saved anywhere). Give full path if necessary; otherwise the file is
 placed in the working directory.</p>
-
-<p>It is planned that at some point there will be a simple map editor available to manually make modifications to stored maps. Modifications can already
-be done, but you have to understand the structure of the mapfiles (for now you'll just have to: see the source code).</p>
 
 </body></html>

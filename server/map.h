@@ -6,7 +6,6 @@
 #include "../common/coords.h"
 #include <vector>
 #include <utility>
-#include <string>
 
 struct Tile
 {
@@ -88,6 +87,7 @@ private:
 	std::vector< std::vector<Tile> > data;
 
 	void add_patch(const Coords c, const Tile t);
+	void fix_boundary();
 	
 	// This is used by miniview
 	Tile subsample_tile(const Tile &t) const;

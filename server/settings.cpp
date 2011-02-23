@@ -19,7 +19,6 @@ using namespace std;
 const unsigned char MAX_LIST_LEN = 80;
 
 const string short_mode_name[] = { "dom", "con", "ste", "des" };
-const string short_mtype_name[] = { "dun", "out" };
 
 // default settings:
 const unsigned int default_sets[Config::MAX_INT_SETTING] = {

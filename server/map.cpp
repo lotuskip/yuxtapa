@@ -29,14 +29,6 @@ const char EVERY_N_WALL_UNDIG[2] = { // every Nth wall is made undiggable (in ra
 	12 // outdoor
 };
 
-// to reject maps saved with older specifications
-const unsigned char MAP_STORE_VERSION = 1;
-
-// The tile flags that are static and relevant in a "raw map" that gets saved
-// to a file:
-const unsigned short STATIC_TF =
-	TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU|TF_BYWALL|TF_KILLS|TF_DROWNS|TF_NODIG;
-
 const Tile T_TREE = { TF_WALKTHRU|TF_SEETHRU, 'T', C_TREE };
 const Tile T_GROUND = { TF_WALKTHRU|TF_SEETHRU, '.', C_GRASS };
 const Tile T_WALL = { 0, '#', C_WALL };
@@ -53,6 +45,59 @@ const Tile T_ROAD = { TF_WALKTHRU|TF_SEETHRU,
 , C_ROAD };
 const Tile T_DOOR = { 0, '+', C_DOOR };
 const Tile T_WINDOW = { TF_SEETHRU, '|', C_WALL };
+
+const string mapfile_begin_string = "yux+apa mapfile v.2";
+
+char char_from_tile(const Tile& t)
+{
+	switch(t.symbol)
+	{
+	case '.': // floor, ground, or road
+		if(t.cpair == C_GRASS)
+			return t.symbol;
+		if(t.cpair == C_ROAD)
+			return ',';
+		// must be floor
+		return '_';
+	case '#': // wall, diggable or not
+		if(t.flags & TF_NODIG)
+			return 'H';
+		// fall down:
+	default:
+	/*case 'T': // tree
+	case ' ': // chasm
+	case '\"': // swamp
+	case '~': // water
+	case ';': // rough
+	case '+': // open door
+	case '\\': // closed door
+	case '|': case '-': // windows */
+		return t.symbol;
+	}
+}
+
+bool tile_from_char(const char ch, Tile& t)
+{
+	switch(ch)
+	{
+	case '.': t = T_GROUND; break;
+	case ',': t = T_ROAD; break;
+	case '_': t = T_FLOOR; break;
+	case '#': t = T_WALL; break;
+	case 'H': t = T_WALL; t.flags |= TF_NODIG; break;
+	case 'T': t = T_TREE; break;
+	case ' ': t = T_CHASM; break;
+	case '\"': t = T_SWAMP; break;
+	case '~': t = T_WATER; break;
+	case ';': t = T_ROUGH; break;
+	case '+':
+	case '\\': t = T_DOOR; t.symbol = ch; break;
+	case '|':
+	case '-': t = T_WINDOW; t.symbol = ch; break;
+	default: return true; // unrecognized!
+	}
+	return false;
+}
 
 typedef vector< vector<Tile> >::iterator rowit;
 
@@ -822,26 +867,7 @@ Map::Map(const short size, const short variation, const short players)
 	} // if create houses
 
 	// Always finish with the boundary wall, undiggable:
-	rowit rit = data.begin();
-	vector<Tile>::iterator it;
-	for(it = rit->begin(); it != rit->end(); ++it)
-	{
-		*it = T_WALL;
-		it->flags |= TF_NODIG;
-	}
-	rit = data.begin()+mapsize-1;
-	for(it = rit->begin(); it != rit->end(); ++it)
-	{
-		*it = T_WALL;
-		it->flags |= TF_NODIG;
-	}
-	for(rit = data.begin(); rit != data.end(); ++rit)
-	{
-		(*rit)[0] = (*rit)[mapsize-1] = T_WALL;
-		(*rit)[0].flags |= TF_NODIG;
-		(*rit)[mapsize-1].flags |= TF_NODIG;
-	}
-	
+	fix_boundary();
 
 	// Finally, initialize the BY_WALL flags (this might be doable faster, too)
 	// and make some walls undiggable. Note that no need to init for the edge
@@ -953,6 +979,30 @@ void Map::add_patch(const Coords c, const Tile t)
 	}
 }
 
+
+// Assures the boundary of the map is all undiggable wall
+void Map::fix_boundary()
+{
+	rowit rit = data.begin();
+	vector<Tile>::iterator it;
+	for(it = rit->begin(); it != rit->end(); ++it)
+	{
+		*it = T_WALL;
+		it->flags |= TF_NODIG;
+	}
+	rit = data.begin()+mapsize-1;
+	for(it = rit->begin(); it != rit->end(); ++it)
+	{
+		*it = T_WALL;
+		it->flags |= TF_NODIG;
+	}
+	for(rit = data.begin(); rit != data.end(); ++rit)
+	{
+		(*rit)[0] = (*rit)[mapsize-1] = T_WALL;
+		(*rit)[0].flags |= TF_NODIG;
+		(*rit)[mapsize-1].flags |= TF_NODIG;
+	}
+}
 
 #ifndef MAPTEST
 Tile Map::subsample_tile(const Tile &t) const
@@ -1078,34 +1128,71 @@ bool Map::LOS_between(const Coords &c1, Coords c2, const char maxrad)
 
 bool Map::load_from_file(const string &mapname)
 {
-	ifstream file((Config::get_mapdir() + mapname).c_str(), ios_base::binary);
+	ifstream file((Config::get_mapdir() + mapname).c_str());
 	if(!file)
 		return false;
 	// else:
-	unsigned char mapvers;	
-	file.read(reinterpret_cast<char*>(&mapvers), 1);
-	if(mapvers > MAP_STORE_VERSION)
-		return false; // the map is of newer version; can't be certain it will work
-	file.read(reinterpret_cast<char*>(&mapsize), sizeof(short));
+	string s;
+	getline(file, s);
+	if(s != mapfile_begin_string)
+		return false; // the map is of a different version; can't be certain it will work
+	// else:
+	getline(file, s); // (skip comment line)
+	file >> mapsize;
 	if(mapsize < MIN_MAP_SIZE || mapsize > MAX_MAP_SIZE)
 		return false; // a corrupt file or something
-	file.read(reinterpret_cast<char*>(&inhabited), sizeof(bool));
-	file.read(reinterpret_cast<char*>(&maptype), sizeof(e_MapType));
+	// else
+	file >> inhabited; // this should work regardless of locale?
+	/*DEBUG*/ cout << "Inhabited: " << inhabited << endl;
+	file.seekg(1, ios_base::cur); // skip newline
+	getline(file, s);
+	/*DEBUG*/ cout << "Typestring: " << s << endl;
+	char ch;
+	for(ch = 0; ch < MAX_MAPTYPE; ++ch)
+	{
+		if(s == short_mtype_name[ch])
+		{
+			maptype = e_MapType(ch);
+			break;
+		}
+	}
+	if(ch == MAX_MAPTYPE)
+		return false; // no recognized maptype found
+		
 	make_right_size(data);
-	vector<Tile>::iterator i;	
+	vector<Tile>::iterator i;
+	short ind;	
 	for(rowit it = data.begin(); it != data.end(); ++it)
 	{
+		getline(file, s);
+		if(s.size() != (unsigned short)mapsize)
+			return false; // bogus data!
+		ind = 0;
 		for(i = it->begin(); i != it->end(); ++i)
 		{
-			file.read(reinterpret_cast<char*>(&(*i)), sizeof(Tile));
-			// ignore the "non-static" flags (these get saved along with the rest!)
-			i->flags &= STATIC_TF;
-			// validate other data:
-			if(!isprint(i->symbol) || i->cpair > C_WATER || i->cpair < C_TREE)
-				return false; // this is bogus data!
+			if(tile_from_char(s[ind], *i))
+				return false; // bogus data
+			++ind;
 		}
 		if(!file)
 			return false; // file corrupt or something else wrong
+	}
+
+	// Manually edited maps might have something else than undiggable wall on
+	// the edges:
+	fix_boundary();
+	// Update BY_WALLs:
+	Coords c;
+	c.y = 1;
+	while(c.y < mapsize-1)
+	{
+		c.x = 1;
+		while(c.x < mapsize-1)
+		{
+			upd_by_wall_flag(c);
+			c.x++;
+		}
+		c.y++;
 	}
 	return true;
 }
@@ -1114,19 +1201,35 @@ bool Map::load_from_file(const string &mapname)
 
 bool Map::save_to_file(const std::string &mapname) const
 {
-	ofstream file((Config::get_mapdir() + mapname).c_str(), ios_base::binary);
+	ofstream file((Config::get_mapdir() + mapname).c_str());
 	if(!file)
 		return false;
 	// else:
-	file.write(reinterpret_cast<const char*>(&MAP_STORE_VERSION), 1);
-	file.write(reinterpret_cast<const char*>(&mapsize), sizeof(short));
-	file.write(reinterpret_cast<const char*>(&inhabited), sizeof(bool));
-	file.write(reinterpret_cast<const char*>(&maptype), sizeof(e_MapType));
+	file << mapfile_begin_string << endl;
+
+	time_t rawtime;
+	struct tm *timeinfo;
+	char buffer[17]; // eg. "01/02/2011 12:13" (and '\0')
+	time(&rawtime);
+ 	timeinfo = localtime(&rawtime);
+	strftime(buffer, 17, "%d/%m/%Y %H:%M", timeinfo);
+	file << "Saved on: " << buffer << endl;
+
+	file << mapsize << endl;
+	// force using "1" for true and "0" for false; can't trust locales:
+	if(inhabited)
+		file << '1';
+	else
+		file << '0';
+	file << endl;
+	file << short_mtype_name[maptype] << endl;
+
 	vector<Tile>::const_iterator i;	
 	for(vector< vector<Tile> >::const_iterator it = data.begin(); it != data.end(); ++it)
 	{
 		for(i = it->begin(); i != it->end(); ++i)
-			file.write(reinterpret_cast<const char*>(&(*i)), sizeof(Tile));
+			file << char_from_tile(*i);
+		file << endl;
 	}
 	return true;
 }
