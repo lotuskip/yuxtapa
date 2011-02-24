@@ -51,7 +51,13 @@ state, loads that map and starts an intermission. If no map by such name could b
 <ul>
 <li><strong>!storemap [name]</strong> saves the current map; see <a href="mapsaving.html">map saving</a></li>
 <li><strong>!log [text]</strong> add <em>text</em> to the <a href="serverlog.html">server log</a> file</li>
-</ul></p>
+<li><strong>!clearbans</strong> removes all bans (otherwise they remain until server restart)</li>
+<li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9 at a time</li>
+<li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
+<li><strong>!teambal [o/a/p]</strong> sets the <a href="teambalance.html">Team balance</a> option ([o]ff, [a]ctive, [p]assive)</li>
+<li><strong>!servermsg [new server greeting]</strong> sets the server greeting string</li>
+</ul>
+The last two commands only affect a session; they do not overwrite the settings in the <a href="serverconf.html">Server configuration</a>.</p>
 
 <p>Requiring AL higher than the target's:
 <ul>
@@ -65,13 +71,7 @@ state, loads that map and starts an intermission. If no map by such name could b
 <p>Requiring AL at least 3 and higher than the target's:
 <ul>
 <li><strong>!ban [nick]</strong> kicks a player and bans their IP</li>
-<li><strong>!clearbans</strong> removes all bans (otherwise they remain until server restart)</li>
-<li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9 at a time</li>
-<li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
-<li><strong>!teambal [o/a/p]</strong> sets the <a href="teambalance.html">Team balance</a> option ([o]ff, [a]ctive, [p]assive)</li>
-<li><strong>!servermsg [new server greeting]</strong> sets the server greeting string</li>
-</ul>
-The last two commands only affect a session; they do not overwrite the settings in the <a href="serverconf.html">Server configuration</a>.</p>
+</ul></p>
 
 <p>In all the commands that contain [nick], you can use a partial nick. For instance, if there is an 'anonymous' playing
 and you issue '!kick ano', and there is no other player with 'ano' in their name, 'anonymous' gets kicked.</p>
