@@ -445,6 +445,33 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 		}
 		return true; // no broadcast
 	}
+	else if(keyw == "putteam")
+	{
+		// "!putteam [nick, may contain spaces!] [g/p/s]"
+		size_t j = cmd.rfind(' ');
+		if(j <= i+1 || j == cmd.size()-1) // invalid structure
+			return false;
+		list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1, j-i-1));
+		if(nit != cur_players.end())
+		{
+			if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
+				&& pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
+			{
+				switch(cmd[j+1])
+				{
+				case 'g': if(nit->team == T_PURPLE)
+							Game::team_switch(nit);
+						break;
+				case 'p': if(nit->team == T_GREEN)
+							Game::team_switch(nit);
+						break;
+				case 's': Game::class_switch(nit, NO_CLASS);
+				//default: [ignore]
+				}
+			}
+			return false; // may broadcast (if not muted; that is checked again)
+		}
+	}
 	return false;
 }
 
