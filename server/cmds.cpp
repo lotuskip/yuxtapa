@@ -447,15 +447,14 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	}
 	else if(keyw == "putteam")
 	{
-		// "!putteam [nick, may contain spaces!] [g/p/s]"
-		size_t j = cmd.rfind(' ');
-		if(j <= i+1 || j == cmd.size()-1) // invalid structure
-			return false;
-		list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1, j-i-1));
-		if(nit != cur_players.end())
+		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
 		{
-			if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
-				&& pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
+			// "!putteam [nick, may contain spaces!] [g/p/s]"
+			size_t j = cmd.rfind(' ');
+			if(j <= i+1 || j == cmd.size()-1) // invalid structure
+				return false;
+			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1, j-i-1));
+			if(nit != cur_players.end() && pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
 			{
 				switch(cmd[j+1])
 				{
@@ -469,8 +468,34 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				//default: [ignore]
 				}
 			}
-			return false; // may broadcast (if not muted; that is checked again)
 		}
+		// may broadcast
+	}
+	else if(keyw == "setclass")
+	{
+		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
+		{
+			// "!setclass [nick, may contain spaces!] [class abbr.]"
+			size_t j = cmd.rfind(' ');
+			if(j <= i+1 || j == cmd.size()-1) // invalid structure
+				return false;
+			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1, j-i-1));
+			if(nit != cur_players.end() && pit->stats_i->ad_lvl > nit->stats_i->ad_lvl)
+			{
+				cmd = cmd.substr(j+1); // this should be just the class abbr.
+				// in case player gave "ar" instead of "Ar", for instance:
+				cmd[0] = toupper(cmd[0]);
+				for(j = 0; j < NO_CLASS; ++j)
+				{
+					if(cmd == classes[j].abbr)
+					{
+						Game::class_switch(nit, e_Class(j));
+						break;
+					}
+				}
+			}
+		}
+		// may broadcast
 	}
 	return false;
 }
