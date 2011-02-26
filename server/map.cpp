@@ -637,7 +637,11 @@ Map::Map(const short size, const short variation, const short players)
 	const Tile *tiles;
 	char num_tile_types;
 	// Determine map type:
+#ifndef MAPTEST
 	if((maptype = Config::next_map_type()) == MT_OUTDOOR)
+#else
+	if((maptype = e_MapType(random()%2)) == MT_OUTDOOR)
+#endif
 	{
 		// best values for h are in the range 0.28--0.34
 		h = 0.31f + fractRand(0.03f);
