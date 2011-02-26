@@ -15,9 +15,10 @@ enum e_GameMode {
 enum e_MapType {
 	MT_DUNGEON=0,
 	MT_OUTDOOR,
+	MT_COMPLEX,
 	MAX_MAPTYPE
 };
-const std::string short_mtype_name[MAX_MAPTYPE] = { "dun", "out" };
+const std::string short_mtype_name[MAX_MAPTYPE] = { "dun", "out", "com" };
 
 const unsigned char team_colour[3] = { C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
 

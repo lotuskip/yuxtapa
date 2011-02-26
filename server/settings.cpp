@@ -232,9 +232,10 @@ void Config::read_config()
 					poss_mtypes.push_back(MT_DUNGEON);
 				else if(keyw == "outdoor")
 					poss_mtypes.push_back(MT_OUTDOOR);
+				else if(keyw == "complex")
+					poss_mtypes.push_back(MT_COMPLEX);
 				else
 					to_log("Unrecognised map type string \'" + keyw + "\'!");
-				
 				if(ss.eof())
 					break;
 			}
@@ -267,6 +268,7 @@ void Config::read_config()
 	{
 		poss_mtypes.push_back(MT_DUNGEON);
 		poss_mtypes.push_back(MT_OUTDOOR);
+		poss_mtypes.push_back(MT_COMPLEX);
 	}
 	// Force at least one bot name:
 	if(botnames.empty())

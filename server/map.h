@@ -86,7 +86,8 @@ private:
 	// the map, mapsize*mapsize square
 	std::vector< std::vector<Tile> > data;
 
-	void add_patch(const Coords c, const Tile t);
+	void apply_house(const Coords &c);
+	void add_patch(const Coords &c, const Tile &t);
 	void fix_boundary();
 	
 	// This is used by miniview

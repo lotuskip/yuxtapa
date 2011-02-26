@@ -24,9 +24,10 @@ namespace
 using namespace std;
 
 const char CHANCE_ROUGH = 22; // how much of the floor in dungeons is rough, %
-const char EVERY_N_WALL_UNDIG[2] = { // every Nth wall is made undiggable (in random)
+const char EVERY_N_WALL_UNDIG[MAX_MAPTYPE] = { // every Nth wall is made undiggable (in random)
 	30, // dungeon
-	12 // outdoor
+	12, // outdoor
+	3 // complex
 };
 
 const Tile T_TREE = { TF_WALKTHRU|TF_SEETHRU, 'T', C_TREE };
@@ -275,6 +276,15 @@ const float ug_thresholds[NUM_UG_TILES] = {
 	/*...-1.0*/-2.0f // wall
 };
 
+const char NUM_CO_TILES = 4;
+const Tile complex_tiles[NUM_CO_TILES] = { T_WALL, T_WATER, T_FLOOR, T_CHASM };
+const float co_thresholds[NUM_CO_TILES] = {
+	/*1.0...*/0.5f, // wall
+	/*...*/0.0f, // water
+	/*...*/-0.5f, // floor
+	/*...*/-2.0f // chasm
+};
+
 ///////////////////////////////////////////////////////////////////
 
 // Don't modify these:
@@ -506,6 +516,7 @@ void gen_house(const bool outdoor)
 
 } // gen_house
 
+
 ///////////////////////////////////////////////////////////////////
 
 /* We'll typically generate a number of houses, and place them using
@@ -676,13 +687,23 @@ Map::Map(const short size, const short variation, const short players)
 	// mapsize cannot be larger than 511 (settings.cpp: 365 + 40%), so sh
 	// is at most 512.
 	++sh;
+
+	short i, j;
+	char k;
+	Tile *tp;
+
 	float* mesh = new float[sh*sh]; // required by the fractal algorithm
 	float h; // the coarseness factor for the map generation
 	const float *thresholds;
 	const Tile *tiles;
 	char num_tile_types;
+
 	// Determine map type:
+#ifndef MAPTEST
 	if((maptype = Config::next_map_type()) == MT_OUTDOOR)
+#else
+	if((maptype = e_MapType(random()%MAX_MAPTYPE)) == MT_OUTDOOR)
+#endif
 	{
 		// best values for h are in the range 0.28--0.34
 		h = 0.31f + fractRand(0.03f);
@@ -690,21 +711,26 @@ Map::Map(const short size, const short variation, const short players)
 		tiles = outdoor_tiles;
 		num_tile_types = NUM_OD_TILES;
 	}
-	else // dungeon, best values for h seem to be 0.4--0.5
+	else if(maptype == MT_DUNGEON)
 	{
+		// best values for h seem to be 0.4--0.5
 		h = 0.45f + fractRand(0.05f);
 		thresholds = ug_thresholds;
 		tiles = underground_tiles;
 		num_tile_types = NUM_UG_TILES;
 	}
+	else // comples
+	{
+		h = 0.6f;
+		thresholds = co_thresholds;
+		tiles = complex_tiles;
+		num_tile_types = NUM_CO_TILES;
+	}
 	fill2DFractArray(mesh, sh, h);
 	// The "fractal" was generated; convert into Tile-representation.
 	// Note that we ignore a lot of the generated data here, unless
 	// mapsize is a power of 2.
-    short i, j;
-	char k;
-	Tile *tp;
-    for(i = 0; i < mapsize; ++i)
+	for(i = 0; i < mapsize; ++i)
 	{
 		for(j = 0; j < mapsize; ++j)
 		{
@@ -720,17 +746,16 @@ Map::Map(const short size, const short variation, const short players)
 				}
 			}
 		}
-    }
+	}
 	delete[] mesh;
 
 	// If we are creating an underground map, we add corridors and randomly
 	// change the floor tiles to rough tiles:
-	char ch;
-	if(maptype != MT_OUTDOOR)
+	if(maptype == MT_DUNGEON)
 	{
 		// Corridor algorithm; kind of like maze generation:
-		ch = random()%8 + 8; // 8--15
-		sh = mapsize/ch;
+		k = random()%8 + 8; // 8--15
+		sh = mapsize/k;
 		Coords cell(random()%sh, random()%sh), cell2;
 		vector<Coords> mazed(1, cell);
 		bool widen;
@@ -752,7 +777,7 @@ Map::Map(const short size, const short variation, const short players)
 				// This means 'cell' is an end of a corridor; make a patch
 				// of floor there, possibly:
 				if(random()%2)
-					add_patch(Coords(cell.x*ch+ch/2, cell.y*ch+ch/2), T_FLOOR);
+					add_patch(Coords(cell.x*k+k/2, cell.y*k+k/2), T_FLOOR);
 				// see if have generated enough (5/8 a mapfull):
 				if(mazed.size() < 5u*sh*sh/8u) // no
 				{
@@ -768,10 +793,10 @@ Map::Map(const short size, const short variation, const short players)
 			mazed.push_back(cell2);
 			// make a corridor between 'cell' and 'cell2'
 			widen = random()%3; // every 3rd corridor is wide
-			cell.x = cell.x*ch + ch/2; // convert cells to middle pt coords
-			cell.y = cell.y*ch + ch/2;
-			cell2.x = cell2.x*ch + ch/2;
-			cell2.y = cell2.y*ch + ch/2;
+			cell.x = cell.x*k + k/2; // convert cells to middle pt coords
+			cell.y = cell.y*k + k/2;
+			cell2.x = cell2.x*k + k/2;
+			cell2.y = cell2.y*k + k/2;
 			while(!(cell == cell2))
 			{
 				data[cell.y][cell.x] = T_FLOOR;
@@ -792,79 +817,65 @@ Map::Map(const short size, const short variation, const short players)
 					data[j][i] = T_ROUGH;
 			}
 		}
-	}
+	} // generating a dungeon
 
-	// Next, we create some houses. The map is inhabited if the number of houses
-	// is high enough.
-	char num_houses = random()%(19*(mapsize+42)/469); // rand()%(3...22)
-	inhabited = (num_houses >= 19*(mapsize+42)/938);
-	if(num_houses)
+	// Next, we create some houses (except in complex type maps). The map is
+	// inhabited if the number of houses is high enough.
+	if(maptype != MT_COMPLEX)
 	{
-		vector<Coords> hcoords(num_houses);
-		fill_hcoord_func[rand()%NUM_FHC_FUNCTIONS](hcoords, num_houses, mapsize);
-		vector<Coords>::const_iterator ci;
-		for(; num_houses > 0; --num_houses)
+		char num_houses = random()%(19*(mapsize+42)/469); // rand()%(3...22)
+		inhabited = (num_houses >= 19*(mapsize+42)/938);
+		if(num_houses)
 		{
-			ci = hcoords.begin();
-			/*if(ci->x < 0 || ci->y < 0)
-				continue;*/
-			gen_house(maptype == MT_OUTDOOR);
-			// That generated a "house pattern" to the table 'house'. Now we
-			// must apply this pattern to the location 'ci' on the actual map (with
-			// 'ci' giving the NW corner of, not the house, but the house buffer).
-			// First loop blows up areas around doors&windows:
-			for(i = 0; i < MAX_HS; ++i)
+			vector<Coords> hcoords(num_houses);
+			fill_hcoord_func[rand()%NUM_FHC_FUNCTIONS](hcoords, num_houses, mapsize);
+			vector<Coords>::const_iterator ci;
+			for(; num_houses > 0; --num_houses)
 			{
-				for(j = 0; j < MAX_HS; ++j)
+				ci = hcoords.begin();
+				/*if(ci->x < 0 || ci->y < 0)
+					continue;*/
+				gen_house(maptype == MT_OUTDOOR);
+				// That generated a "house pattern" to the table 'house'. Now we
+				// must apply this pattern to the location 'ci' on the actual map (with
+				// 'ci' giving the NW corner of, not the house, but the house buffer).
+				// First loop blows up areas around doors&windows:
+				for(i = 0; i < MAX_HS; ++i)
 				{
-					ch = house[j*MAX_HS+i];
-					if(ch == '+')
+					for(j = 0; j < MAX_HS; ++j)
 					{
-						if(maptype == MT_OUTDOOR)
-							add_patch(Coords(ci->x+i, ci->y+j), T_ROAD);
-						else
-							add_patch(Coords(ci->x+i, ci->y+j), T_FLOOR);
-					}
-					else if(ch == '|' || ch == '-')
-						add_patch(Coords(ci->x+i, ci->y+j), T_GROUND);
-				}
-			}
-			// Second run actually puts the house there:
-			for(i = 0; i < MAX_HS; ++i)
-			{
-				if(ci->x+i >= mapsize)
-					break;
-				for(j = 0; j < MAX_HS; ++j)
-				{
-					if(ci->y+j >= mapsize)
-						break;
-					tp = mod_tile(ci->x + i, ci->y + j);
-					switch(house[j*MAX_HS+i])
-					{
-					case ':': case '.':
-						*tp = T_FLOOR; break;
-					case '#':
-						*tp = T_WALL; break;
-					case '+':
-						*tp = T_DOOR;
-						if(random()%2) // open instead of closed
+						k = house[j*MAX_HS+i];
+						if(k == '+')
 						{
-							tp->symbol = '\\';
-							tp->flags |= TF_WALKTHRU|TF_SEETHRU;
+							if(maptype == MT_OUTDOOR)
+								add_patch(Coords(ci->x+i, ci->y+j), T_ROAD);
+							else
+								add_patch(Coords(ci->x+i, ci->y+j), T_FLOOR);
 						}
-						break;
-					case '|': case '-':
-						*tp = T_WINDOW;
-						tp->symbol = house[j*MAX_HS+i];
-						break;
-					// default: do nothing
+						else if(k == '|' || k == '-')
+							add_patch(Coords(ci->x+i, ci->y+j), T_GROUND);
 					}
 				}
-			}
+				// Second run actually puts the house there:
+				apply_house(*ci);
 
-			hcoords.erase(hcoords.begin());
-		} // loop creating houses
-	} // if create houses
+				hcoords.erase(hcoords.begin());
+			} // loop creating houses
+		} // if create houses
+	} // not creating a complex type map
+	else
+	{
+		// Complex type map; we simply "fill the map with houses".
+		for(i = 0; i < mapsize; i += MAX_HS-1)
+		{
+			for(j = 0; j < mapsize; j += MAX_HS-1)
+			{
+				gen_house(false);
+				apply_house(Coords(i,j));
+			}
+		}
+		inhabited = true;
+	}
 
 	// Always finish with the boundary wall, undiggable:
 	fix_boundary();
@@ -964,8 +975,46 @@ bool Map::point_out_of_map(const Coords &c) const
 }
 
 
+void Map::apply_house(const Coords &c)
+{
+	short i, j;
+	Tile* tp;
+	for(i = 0; i < MAX_HS; ++i)
+	{
+		if(c.x+i >= mapsize)
+			break;
+		for(j = 0; j < MAX_HS; ++j)
+		{
+			if(c.y+j >= mapsize)
+				break;
+			tp = mod_tile(c.x + i, c.y + j);
+			switch(house[j*MAX_HS+i])
+			{
+			case ':': case '.':
+				*tp = T_FLOOR; break;
+			case '#':
+				*tp = T_WALL; break;
+			case '+':
+				*tp = T_DOOR;
+				if(random()%2) // open instead of closed
+				{
+					tp->symbol = '\\';
+					tp->flags |= TF_WALKTHRU|TF_SEETHRU;
+				}
+				break;
+			case '|': case '-':
+				*tp = T_WINDOW;
+				tp->symbol = house[j*MAX_HS+i];
+				break;
+			// default: do nothing
+			}
+		}
+	}
+}
+
+
 // Create a "circular" (the "wrong circular") patch with Tile t at c, rad. 2-4
-void Map::add_patch(const Coords c, const Tile t)
+void Map::add_patch(const Coords &c, const Tile &t)
 {
 	char radius = random()%3 + 2; //2..4
 	short x, y, cmp;
