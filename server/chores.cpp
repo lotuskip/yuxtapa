@@ -361,6 +361,14 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		if(!pit->is_alive())
 			return true;
 		break;
+	case TRAP_ACID:
+		if(test_hit(pit, 7, 3, 3, 0) // 3d3+0, +7 tohit
+			&& pit->cl_props.hp <= 0)
+			player_death(pit, " dissolved.", true);
+		add_sound(pos, S_SPLASH);
+		if(!pit->is_alive())
+			return true;
+		break;
 	//default: anything else is an error!
 	}
 	// If here, trap should be made known:
@@ -1427,6 +1435,9 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 		//case TRAP_TELE: // (detected by nothing happening!)
 		case TRAP_FIREB:
 			fireball_trigger(tr_it, c, arr->get_owner());
+			break;
+		case TRAP_ACID:
+			add_action_ind(c, A_POISON);
 			break;
 		}
 	} // trap found there

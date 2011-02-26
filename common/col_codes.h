@@ -49,7 +49,7 @@
 const char BASE_COLOURS = 16;
 
 const char NUM_DIM_COLS = 7;
-const char NUM_NORM_COLS = 19;
+const char NUM_NORM_COLS = 20;
 
 // These are the colours. Note that they begin after the 16 default colours
 enum {
@@ -57,12 +57,14 @@ enum {
 	C_FLOOR_DIM, C_WATER_DIM, // to change these to normal, simply add NUM_DIM_COLS
 	C_TREE, C_GRASS, C_ROAD, C_WALL, C_DOOR, C_FLOOR, C_WATER, // can be dimmed
 	C_GREEN_PC, C_PURPLE_PC, C_BROWN_PC, C_WATER_TRAP, C_LIGHT_TRAP,
-	C_TELE_TRAP, C_BOOBY_TRAP, C_FIREB_TRAP, C_NEUT_FLAG, C_PORTAL_IN,
+	C_TELE_TRAP, C_BOOBY_TRAP, C_FIREB_TRAP, C_ACID_TRAP,
+	C_NEUT_FLAG, C_PORTAL_IN,
 	C_PORTAL_OUT, C_ARROW, // to upgrade to lit, add NUM_NORM_COLS
 	C_TREE_LIT, C_GRASS_LIT, C_ROAD_LIT, C_WALL_LIT, C_DOOR_LIT,
 	C_FLOOR_LIT, C_WATER_LIT, // these have dims, too
 	C_GREEN_PC_LIT, C_PURPLE_PC_LIT, C_BROWN_PC_LIT, C_WATER_TRAP_LIT,
 	C_LIGHT_TRAP_LIT, C_TELE_TRAP_LIT, C_BOOBY_TRAP_LIT, C_FIREB_TRAP_LIT,
+	C_ACID_TRAP_LIT,
 	C_NEUT_FLAG_LIT, C_PORTAL_IN_LIT, C_PORTAL_OUT_LIT, C_ARROW_LIT,
 	// the rest can only be lit (since they *light*!)
 	C_MM1, C_MM2, C_TORCH, C_ZAP,

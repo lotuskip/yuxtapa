@@ -30,6 +30,7 @@ const short colour[MAX_PREDEF_COLOUR-BASE_COLOURS][3] = {
 { 43, 701, 243 }, //  teletrap
 { 509, 376, 376 }, //  boobytap
 { 831, 215, 0 }, //  firebtrap
+{ 240, 550, 340 }, //  acidtrap
 { 705, 768, 784 }, //  neutrlflag
 { 258, 592, 690 }, //  portal_in
 { 403, 482, 501 }, //  portal_out
@@ -50,6 +51,7 @@ const short colour[MAX_PREDEF_COLOUR-BASE_COLOURS][3] = {
 { 50, 839, 298 }, //  teletrap, lit
 { 607, 450, 450 }, //  boobytrap, lit
 { 1000, 258, 0 }, //  firebtrap, lit
+{ 324, 746, 461 }, //  acidtrap, lit
 { 847, 917, 941 }, //  neutrlflag, lit
 { 309, 713, 827 }, //  portal_in, lit
 { 482, 572, 600 }, //  portal_out, lit
@@ -96,6 +98,7 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 	76, // tele trap
 	241, // booby trap
 	160, // fireb trap
+	35, // acid trap
 	7, // neutral flag
 	6, // portal in
 	8, // portal out
@@ -116,6 +119,7 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 	118, // tele trap
 	250, // booby trap
 	196, // fireb trap
+	41, // acid trap
 	15, // neutral flag
 	14, // portal in
 	245, // portal out
@@ -163,6 +167,7 @@ const char col_remap[C_BG_HEAL-BASE_COLOURS] = {
 	BASE_GREEN, // tele trap
 	BASE_LIGHT_GRAY, // booby trap
 	BASE_RED, // fireb trap
+	BASE_CYAN, // acid trap
 	BASE_LIGHT_GRAY, // neutral flag
 	BASE_BLUE, // portal in
 	BASE_LIGHT_GRAY, // portal out
@@ -183,6 +188,7 @@ const char col_remap[C_BG_HEAL-BASE_COLOURS] = {
 	BASE_LIGHT_GREEN, // tele trap
 	BASE_WHITE, // booby trap
 	BASE_LIGHT_RED, // fireb trap
+	BASE_LIGHT_CYAN, // acid trap
 	BASE_WHITE, // neutral flag
 	BASE_LIGHT_BLUE, // portal in
 	BASE_WHITE, // portal out

@@ -874,7 +874,7 @@ Map::Map(const short size, const short variation, const short players)
 				apply_house(Coords(i,j));
 			}
 		}
-		inhabited = true;
+		inhabited = random()%2;
 	}
 
 	// Always finish with the boundary wall, undiggable:

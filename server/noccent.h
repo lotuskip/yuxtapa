@@ -26,7 +26,8 @@ protected:
 };
 
 // trap types
-enum { TRAP_WATER=0, TRAP_LIGHT, TRAP_TELE, TRAP_BOOBY, TRAP_FIREB, MAX_TRAP_TYPE };
+enum { TRAP_WATER=0, TRAP_LIGHT, TRAP_TELE, TRAP_BOOBY, TRAP_FIREB, TRAP_ACID,
+	MAX_TRAP_TYPE };
 
 class Trap : public NOccEnt
 {

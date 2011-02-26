@@ -27,7 +27,7 @@ const char CARRIED_TORCH_RAD = 6;
 const short BIG_MAP_LIM = 150;
 
 // constants for placement:
-const short TRAP_ONE_IN = 90;
+const short TRAP_ONE_IN = 85;
 const short BLOCK_ONE_IN = 190;
 const char TORCH_GRID = 17;
 const char CHANCE_NO_TORCH = 30;
