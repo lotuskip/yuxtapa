@@ -62,10 +62,10 @@ void update_lights_around(const Coords &c)
 
 bool can_dig_in(const Coords &c, const e_Dir d)
 {
-	// Mining requires one of: (A) there is a wall, (B) there is a blocked
+	// Mining requires one of: (A) there is a wall/window, (B) there is a blocked
 	// boulder, (C) there is a boulder source.
 	Tile* tp = Game::curmap->mod_tile(c);
-	if(tp->symbol == '#'
+	if(tp->symbol == '#' || tp->symbol == '|' || tp->symbol == '-'
 		|| (tp->flags & TF_NOCCENT && any_noccent_at(c, NOE_BLOCK_SOURCE)
 			!= noccents[NOE_BLOCK_SOURCE].end()))
 		return true;
@@ -751,6 +751,31 @@ void limiter_upd(const list<Player>::iterator pit)
 	pit->wait_turns += 2*pit->limiter;
 }
 
+// Used when mining open a tile. If it is a wall tile (not window), this should
+// be follows by finish_wall_dig([coords]). Otherwise (if window), it should be
+// followed by event_set.insert(c).
+void dig_open(Tile* const tp)
+{
+	tp->symbol = '.';
+	tp->flags |= TF_WALKTHRU|TF_SEETHRU;
+}
+
+void finish_wall_dig(const Coords &c)
+{
+	update_lights_around(c);
+	// Need to update BYWALL for neighbours:
+	e_Dir dir = D_N;
+	Coords cn;
+	for(;;)
+	{
+		cn = c.in(dir);
+		Game::curmap->upd_by_wall_flag(cn);
+		if(++dir == D_N)
+			break;
+	}
+	event_set.insert(c);
+}
+
 } // end local namespace
 
 
@@ -963,8 +988,6 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	case XN_MINE:
 	{
 		pit->facing = e_Dir(axn.var1);
-		// Mining requires one of: (A) there is a wall, (B) there is a blocked
-		// boulder, (C) there is a boulder source.
 		Coords c = pit->own_pc->getpos().in(e_Dir(axn.var1));
 		if(can_dig_in(c, e_Dir(axn.var1)))
 		{
@@ -1192,19 +1215,13 @@ void progress_chore(const list<Player>::iterator pit)
 					Network::send_to_player(*pit);
 					break;
 				}
-				tp->symbol = '.';
-				tp->flags |= TF_WALKTHRU|TF_SEETHRU;
-				update_lights_around(c);
-				// Need to update BYWALL for neighbours:
-				e_Dir dir = D_N;
-				Coords cn;
-				for(;;)
-				{
-					cn = c.in(dir);
-					Game::curmap->upd_by_wall_flag(cn);
-					if(++dir == D_N)
-						break;
-				}
+				dig_open(tp);
+				finish_wall_dig(c);
+			}
+			// windows -- same thing but no NODIG check:
+			else if(tp->symbol == '|' || tp->symbol == '-')
+			{
+				dig_open(tp);
 				event_set.insert(c);
 			}
 			// Destroying a boulder:
@@ -1421,6 +1438,7 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 		switch(tr_it->get_m())
 		{
 		case TRAP_WATER:
+		case TRAP_ACID:
 			add_sound(c, S_SPLASH);
 			break;
 		case TRAP_LIGHT:
@@ -1435,9 +1453,6 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 		//case TRAP_TELE: // (detected by nothing happening!)
 		case TRAP_FIREB:
 			fireball_trigger(tr_it, c, arr->get_owner());
-			break;
-		case TRAP_ACID:
-			add_action_ind(c, A_POISON);
 			break;
 		}
 	} // trap found there
