@@ -79,5 +79,22 @@ in the directory containing the executable otherwise.</p>
 
 <p>Some notes about setting up a server are in the <a href="serverconf.html">server configuration</a> page.</p>
 
+
+<h3>On other platforms</h3>
+
+<p>The yuxtapa client has been succesfully compiled on OSX (10.6), and with some work the server <em>should</em>
+compile, too. OSX is not actually <em>supported</em>, though, so if you want to compile yuxtapa on your OSX, be prepared
+to modify the Makefile and possibly even some source code.</p>
+
+<p>Some points you might find useful on OSX:
+<ul>
+<li>you will need a gcc style compiler and boost installed; consider using MacPorts</li>
+<li>zlib and ncurses <em>should</em> be present by default; if not, make them available</li>
+<li>add '-D_XOPEN_SOURCE_EXTENDED' to the Makefile CPPFLAGS (this appeared to be required to include wide character
+support in ncurses)</li>
+<li>also add the path to the C++ boost header files to the CPPFLAGS; possibly something like '-I/opt/local/include'</li>
+<li>as mentioned, the client has been compiled succesfully; the server code might require minor modifications to compile</li>
+</ul></p>
+
 </body></html>
 
