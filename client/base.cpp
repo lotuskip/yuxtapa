@@ -26,7 +26,7 @@ enum e_ColorMode { CM_FULL=0, //full colours that can be changed
 e_ColorMode colmode;
 
 short *term_colours;
-WINDOW *windows[MAX_WIN]; // STAT_WIN, CHAT_WIN, MSG_WIN, PC_WIN, VIEW_WIN
+WINDOW *windows[MAX_WIN]; // STAT_WIN, CHAT_WIN, MSG_WIN, VIEW_WIN
 
 unsigned char animind = 0;
 vector<string> anim_syms; // since the symbols can be UTF_8, they might be multibyte!
@@ -176,8 +176,6 @@ bool Base::init_ncurses()
 	windows[VIEW_WIN] = newwin(VIEWSIZE, VIEWSIZE, 0, MIN_SCREEN_X - VIEWSIZE);
 	windows[MSG_WIN] = newwin(MSG_WIN_Y, MSG_WIN_X, VIEWSIZE - MSG_WIN_Y, 0);
 	windows[CHAT_WIN] = newwin(scr_y - VIEWSIZE, scr_x, VIEWSIZE, 0);
-	windows[PC_WIN] = newwin(MSG_WIN_Y, MIN_SCREEN_X - VIEWSIZE - MSG_WIN_X,
-		VIEWSIZE - MSG_WIN_Y, MSG_WIN_X);
 
 	refresh();
 	flushinp();
@@ -287,10 +285,10 @@ void Base::type_cursor(const char ind)
 
 void Base::viewtick()
 {
-	wmove(windows[PC_WIN], 8, 3);
-	change_colour(windows[PC_WIN], C_WALL_LIT);
-	waddstr(windows[PC_WIN], anim_syms[animind].c_str());
-	wrefresh(windows[PC_WIN]);
+	wmove(windows[STAT_WIN], 4, 53);
+	change_colour(windows[STAT_WIN], C_WALL_LIT);
+	waddstr(windows[STAT_WIN], anim_syms[animind].c_str());
+	wrefresh(windows[STAT_WIN]);
 	if(++animind == anim_syms.size())
 		animind = 0;
 	return_cursor(cursor_in_view);
@@ -298,10 +296,10 @@ void Base::viewtick()
 
 void Base::print_walk(const bool w)
 {
-	wmove(windows[PC_WIN], 8, 5);
-	change_colour(windows[PC_WIN], C_WALL_LIT);
-	waddch(windows[PC_WIN], walk_syms[w]);
-	wrefresh(windows[PC_WIN]);
+	wmove(windows[STAT_WIN], 4, 55);
+	change_colour(windows[STAT_WIN], C_WALL_LIT);
+	waddch(windows[STAT_WIN], walk_syms[w]);
+	wrefresh(windows[STAT_WIN]);
 	return_cursor(cursor_in_view);
 }
 

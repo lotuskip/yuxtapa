@@ -5,10 +5,9 @@
 #include <string>
 
 enum e_Win {
-	STAT_WIN=0, // status window contains server, team & objective info
+	STAT_WIN=0, // status window contains a bunch of info
 	CHAT_WIN, // chat window has chat messages
 	MSG_WIN, // message window has messages and typing space
-	PC_WIN, // PC window has PC information and some indicators
 	VIEW_WIN, // view window has the game view
 	MAX_WIN };
 

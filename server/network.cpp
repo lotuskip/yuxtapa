@@ -370,7 +370,7 @@ void Network::construct_msg(string &s, const unsigned char cpair)
 	// Note: all message are server-generated, and pretty much the only content
 	// unknown at compile time are the player nicks, which have limited lenght.
 	// Hence, we can rest assured that the strings do not contain words of
-	// lenght > MSG_WIN_X (=47).
+	// lenght > MSG_WIN_X (=57).
 	vector<string> blocks;
 	unsigned int i;
 	// break up at spaces:

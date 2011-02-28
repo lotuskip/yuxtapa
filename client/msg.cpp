@@ -113,13 +113,13 @@ void redraw_clocks()
 	if(secs < 10)
 		timestr += '0';
 	timestr += boost::lexical_cast<string>(secs);
-	Base::print_str(timestr.c_str(), 7, 2, 10, PC_WIN, true);
+	Base::print_str(timestr.c_str(), 7, 51, 6, STAT_WIN, true);
 
 	timestr.clear();
 	if(spawntime < 10)
 		timestr += ' ';
 	timestr += boost::lexical_cast<string>((unsigned short)spawntime);
-	Base::print_str(timestr.c_str(), 7, 5, 11, PC_WIN, true);
+	Base::print_str(timestr.c_str(), 7, 54, 7, STAT_WIN, true);
 }
 
 } // end local namespace

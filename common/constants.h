@@ -6,7 +6,7 @@
 #define VERSION "5"
 
 const unsigned char VIEWSIZE = 23;
-const unsigned char MSG_WIN_X = 47;
+const unsigned char MSG_WIN_X = 80 - VIEWSIZE;
 const unsigned char MSG_WIN_Y = 15;
 
 // The architecture of yuxtapa is such that most changes take place

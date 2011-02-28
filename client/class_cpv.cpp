@@ -15,13 +15,23 @@ namespace
 {
 using namespace std;
 
+const char PC_INFO_X = 37;
+
 e_Class myclass = NO_CLASS;
 e_Team myteam = T_SPEC;
 
 // at most 10 character long names for the classes:
 const string pcview_classname[NO_CLASS] = {
-	"Archer", "Assassin", "Combat M.", "Mindcraf.", "Scout", "Fighter",
-	"Miner", "Healer", "Wizard", "Trapper" };
+	"Archer     ",
+	"Assassin   ",
+	"Combat Mage",
+	"Mindcrafter",
+	"Scout      ",
+	"Fighter    ",
+	"Miner      ",
+	"Healer     ",
+	"Wizard     ",
+	"Trapper    " };
 
 const unsigned char team_col[] = {
 	C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
@@ -32,21 +42,29 @@ bool poisoned;
 e_Dir sector;
 char torch_sym[2] = " ";
 
+void fill_to_ten(string &s)
+{
+	while(s.size() < 10)
+		s += ' ';
+}
+
 
 void reprint_pcinfo()
 {
 	string tmpstr = "(";
 	tmpstr += sector_name[sector];
-	tmpstr += ')';
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 3, 0, PC_WIN, true);
+	tmpstr += ") ";
+	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 52, 3, STAT_WIN, false);
 
 	tmpstr = "HP: " + boost::lexical_cast<string>(short(hp))
 		+ '/' + boost::lexical_cast<string>(short(classes[myclass].hp));
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 0, 3, PC_WIN, true);
+	fill_to_ten(tmpstr);
+	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 4, STAT_WIN, false);
 
 	tmpstr = "DV/PV " + boost::lexical_cast<string>(short(dv))
 		+ '/' + boost::lexical_cast<string>(short(pv));
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 0, 4, PC_WIN, true);
+	fill_to_ten(tmpstr);
+	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 5, STAT_WIN, false);
 
 	tmpstr.clear();
 	if(tohit > 0)
@@ -57,15 +75,16 @@ void reprint_pcinfo()
 		tmpstr += '+';
 	if(dam_add)
 		tmpstr += boost::lexical_cast<string>(short(dam_add));
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 0, 5, PC_WIN, true);
+	fill_to_ten(tmpstr);
+	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 6, STAT_WIN, false);
 
 	if(poisoned)
 		tmpstr = "[poisoned]";
 	else
-		tmpstr.clear();
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 0, 6, PC_WIN, true);
+		tmpstr = "          ";
+	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 7, STAT_WIN, false);
 
-	Base::print_str(torch_sym, C_TORCH, 1, 8, PC_WIN, false);
+	Base::print_str(torch_sym, C_TORCH, 51, 4, STAT_WIN, false);
 }
 
 } // end local namespace
@@ -190,19 +209,19 @@ void ClassCPV::state_change(const unsigned char cl, const unsigned char t)
 
 	// print PC info:
 	if((myclass = e_Class(cl)) == NO_CLASS) // spectator
-		Base::print_str("Spectator", team_col[0], 0, 2, PC_WIN, true);
-	else // actual class
+		Base::print_str("Spectator  ", team_col[0], PC_INFO_X, 3, STAT_WIN, false);
+	else // actual class 
 	{
 		Base::print_str(pcview_classname[myclass].c_str(), team_col[myteam-1],
-			0, 2, PC_WIN, true);
+			PC_INFO_X, 3, STAT_WIN, false);
 		dam_die = classes[myclass].dam_die;
 		dv = classes[myclass].dv;
 		pv = classes[myclass].pv;
 	}
 	// Clear the rest:
-	for(char y = 3; y < 7; ++y)
-		Base::print_str("", team_col[0], 0, y, PC_WIN, true);
-	Base::print_str("", team_col[0], 3, 0, PC_WIN, true);
+	for(char y = 4; y < 7; ++y)
+		Base::print_str("          ", team_col[0], PC_INFO_X, y, STAT_WIN, false);
+	Base::print_str("    ", team_col[0], 52, 3, STAT_WIN, false); // map area
 
 	// class/team change requires any class-specific action to end:
 	if(clientstate >= CS_AIMING)
