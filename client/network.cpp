@@ -123,7 +123,6 @@ void store_id_for_server(const unsigned short id,
 
 } // end local namespace
 
-
 extern e_ClientState clientstate;
 
 
@@ -202,7 +201,9 @@ bool Network::connect(string &errors)
 				unsigned char mid = recv_buffer.read_ch();
 				switch(mid)
 				{
-				case MID_HELLO: return true;
+				case MID_HELLO:
+					Base::print_str("(identified)", 7, 0, 5, STAT_WIN, false);
+					return true;
 				case MID_HELLO_FULL:
 				case MID_HELLO_BANNED:
 				case MID_HELLO_VERSION:
@@ -217,6 +218,7 @@ bool Network::connect(string &errors)
 					string passw;
 					recv_buffer.read_str(passw);
 					store_id_for_server(cur_id, sip, passw);
+					Base::print_str("(new id)", 7, 0, 5, STAT_WIN, false);
 					return true;
 				}
 				default: break; // ignore other messages
@@ -323,6 +325,14 @@ bool Network::receive_n_handle()
 			if(!st_str2.empty())
 				st_str1 += ", " + st_str2;
 			Base::print_teams_upd(mid, ch, st_str1);	
+			break;
+		}
+		case MID_FLAG_UPD:
+		{
+			string tmp;
+			for(unsigned char ch = recv_buffer.read_ch(); ch > 0; --ch)
+				tmp += recv_buffer.read_ch();
+			Base::print_flags(tmp, ClassCPV::get_cur_team_col());
 			break;
 		}
 		case MID_TIME_UPD:

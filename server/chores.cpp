@@ -96,6 +96,7 @@ void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 	// In dominion&conquest this always changes objective status:
 	if(gamemode == GM_DOM || gamemode == GM_CONQ)
 		Game::send_team_upds(cur_players.end());
+	Game::send_flag_upds(cur_players.end());
 }
 
 

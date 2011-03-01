@@ -26,6 +26,7 @@ enum {
 	MID_STATE_CHANGE, // class or team has changed (redraw entire PC info)
 	MID_GAME_UPD, // the amounts of players in the teams and objective update
 	MID_TIME_UPD, // clock sync
+	MID_FLAG_UPD, // flag control info
 	// various replies to client hello:
 	MID_HELLO_FULL, // kick, we're full
 	MID_HELLO_BANNED, // kick, you're banned

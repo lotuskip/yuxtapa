@@ -26,6 +26,8 @@ namespace Game
 	void construct_team_msgs(const std::list<Player>::const_iterator to);
 	// send team update:
 	void send_team_upds(const std::list<Player>::const_iterator to);	
+	// send team flag info:
+	void send_flag_upds(const std::list<Player>::const_iterator to);
 	// send clocksyncs:
 	void send_times(const std::list<Player>::const_iterator to);
 	// send new PC info (no broadcasting!)

@@ -44,6 +44,8 @@ namespace Base
 	void viewtick(); // updates the view update animation
 	void print_walk(const bool w); // walkmode indicator
 
+	void print_flags(const std::string &dirs, const unsigned char dim_cpair);
+
 	// Moving the cursor; the cursor is always in the view or in the typing space:
 	void def_cursor();
 	void type_cursor(const char ind);

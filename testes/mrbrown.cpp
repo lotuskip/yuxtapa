@@ -178,6 +178,8 @@ connected:
 	}
 	short msglen;
 	bool alive = false;
+	e_Team myteam;
+	e_Class myclass = NO_CLASS;
 
 	// Send spawn request: (no sense having spectator bots!)
 	send_buffer.clear();
@@ -233,8 +235,13 @@ connected:
 				// new hp tell us whether we are alive:
 				alive = (static_cast<char>(recv_buffer.read_ch()) > 0);
 			}
+			else if(mid == MID_STATE_CHANGE)
+			{
+				if((myclass = e_Class(recv_buffer.read_ch())) == NO_CLASS)
+					alive = false; // was forced into a spectator
+				myteam = e_Team(recv_buffer.read_ch());
+			}
 			//TODO: FANCY AI SHIT!!
-			else if(mid == MID_STATE_CHANGE) { }
 			else if(mid == MID_GAME_UPD) { }
 			else if(mid == MID_TIME_UPD) { }
 		} // received a msg

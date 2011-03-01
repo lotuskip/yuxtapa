@@ -19,6 +19,10 @@ const char MIN_SCREEN_Y = 24;
 
 const char walk_syms[2] = { ' ', 'W' };
 
+// These match to e_Dir values:
+const char flagy[9] = { 4, 4, 5, 6, 6, 6, 5, 4, 5 };
+const char flagx[9] = { 31, 33, 33, 33, 31, 29, 29, 29, 31 };
+
 short scr_x, scr_y;
 enum e_ColorMode { CM_FULL=0, //full colours that can be changed
 	CM_MANY, //full, immutable colours
@@ -326,5 +330,31 @@ void Base::print_teams_upd(const unsigned char greens,
 	wclrtoeol(windows[STAT_WIN]);
 	wrefresh(windows[STAT_WIN]);
 	return_cursor(cursor_in_view);
+}
+
+
+void Base::print_flags(const string &dirs, const unsigned char dim_cpair)
+{
+	// First print the empty box:
+	print_str("_______", 7, 28, 3, STAT_WIN);
+	print_str("|     |", 7, 28, 4, STAT_WIN);
+	print_str("|     |", 7, 28, 5, STAT_WIN);
+	print_str("|_____|", 7, 28, 6, STAT_WIN);
+	if(!dirs.empty())
+	{
+		// Last flag in bright team colour:
+		wmove(windows[STAT_WIN], flagy[dirs[dirs.size()-1]],
+			flagx[dirs[dirs.size()-1]]);
+		change_colour(windows[STAT_WIN], dim_cpair + NUM_NORM_COLS);
+		waddch(windows[STAT_WIN], '&');
+		// Rest of the flags in dim team colour:
+		for(char i = dirs.size()-2; i >= 0; --i)
+		{
+			wmove(windows[STAT_WIN], flagy[dirs[i]], flagx[dirs[i]]);
+			change_colour(windows[STAT_WIN], dim_cpair);
+			waddch(windows[STAT_WIN], '&');
+		}
+		wrefresh(windows[STAT_WIN]);
+	}
 }
 

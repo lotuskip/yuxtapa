@@ -291,6 +291,17 @@ bool spawn_team(const e_Team t)
 	return false;
 }
 
+
+void build_flag_msg(const bool for_purples)
+{
+	Network::send_buffer.clear();
+	Network::send_buffer.add((unsigned char)MID_FLAG_UPD);
+	Network::send_buffer.add((unsigned char)team_flags[for_purples].size());
+	for(list<list<NOccEnt>::iterator>::const_iterator fit = team_flags[for_purples].begin();
+		fit != team_flags[for_purples].end(); ++fit)
+		Network::send_buffer.add((unsigned char)Game::curmap->coords_in_sector((*fit)->getpos()));
+}
+
 } // end local namespace
 
 unsigned short map_over_turn = 1; /* init to nonzero, so that
@@ -462,6 +473,7 @@ void Game::start()
 	
 	send_times(cur_players.end());
 	send_team_upds(cur_players.end());
+	send_flag_upds(cur_players.end());
 	for(list<Player>::iterator it = cur_players.begin();
 		it != cur_players.end(); ++it)
 	{
@@ -835,7 +847,7 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 			obj_status_str = str_team[0];
 		obj_status_str += " won!";
 	}
-	else
+	else // not intermission
 	{
 		switch(gamemode)
 		{
@@ -872,6 +884,32 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		Network::broadcast();
 	else
 		Network::send_to_player(*to);
+}
+
+
+void Game::send_flag_upds(const list<Player>::const_iterator to)
+{
+	if(to == cur_players.end()) // send to all
+	{
+		list<Player>::const_iterator i;
+		build_flag_msg(false); // green team
+		for(i = cur_players.begin(); i != cur_players.end(); ++i)
+		{
+			if(i->team == T_GREEN)
+				Network::send_to_player(*i);
+		}
+		build_flag_msg(true); // purple team
+		for(i = cur_players.begin(); i != cur_players.end(); ++i)
+		{
+			if(i->team == T_PURPLE)
+				Network::send_to_player(*i);
+		}
+	}
+	else // only send to 'to'
+	{
+		build_flag_msg(to->team == T_PURPLE);
+		Network::send_to_player(*to);
+	}
 }
 
 
@@ -984,6 +1022,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			if(!intermission)
 			{
 				send_times(pit);
+				send_flag_upds(pit);
 				pit->stats_i->time_specced += time(NULL)
 					- pit->last_switched_cl;
 				time(&(pit->last_switched_cl));
@@ -1042,6 +1081,7 @@ void Game::team_switch(const list<Player>::iterator pit)
 			player_left_team(pit);
 			post_spawn_msg(pit);
 			send_state_change(pit);
+			send_flag_upds(pit);;
 			pit->own_vp->clear_memory();
 		}
 	}

@@ -8,7 +8,23 @@
 #include <clocale>
 #include <iostream>
 
+namespace
+{
 using namespace std;
+
+const unsigned char MAX_SERVERINFO_X = 24;
+
+void fix_str_to_fit(string &s)
+{
+	if(s.size() > MAX_SERVERINFO_X)
+	{
+		s.erase(MAX_SERVERINFO_X-3);
+		s += "...";
+	}
+}
+
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -41,6 +57,16 @@ int main(int argc, char *argv[])
 		cerr << server << endl;
 		return 1;
 	}
+	// If here, we are connected, and 'server' string is unmodified.
+	// Print server info, which is constant for the whole session:
+	server.insert(0, "Server: ");
+	fix_str_to_fit(server);
+	Base::print_str(server.c_str(), 7, 0, 3, STAT_WIN, false);
+	// an IPv6 address might be too long to fit on one line:
+	fix_str_to_fit((server = Config::get_server_ip()));
+	Base::print_str(server.c_str(), 7, 0, 4, STAT_WIN, false);
+	
+	//Config::get_server_ip() jaettuna kahdella riville tarvittaessa
 
 	bool server_disconnect = false;
 	for(;;)
