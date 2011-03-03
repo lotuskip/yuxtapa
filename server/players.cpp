@@ -29,8 +29,16 @@ namespace
 {
 using namespace std;
 
+// The statistic versions run backwards from -1 (this assures "compatability"
+// with IAv1 branch where there is no statistics version stored).
+const short STAT_VERSION = -1;
+
 const string playerfilename = ".playerdata";
 const string statfilename = "yuxtapa_stat";
+
+const string kill_way_name[MAX_WAY_TO_KILL] = { "melee", "arrow",
+	"slice", "zap", "boobytrap", "fireball", "mm", "backstab",
+	"squash", "poison", "scare to death" };
 
 // We remember at most this many players. A limit exists because if the
 // server settings are such that players are never forgotten, we might
@@ -193,12 +201,15 @@ list<Player> cur_players;
 list<sockaddr_storage> banned_ips;
 
 
-PlayerStats::PlayerStats() : last_known_as(""), kills(0), deaths(0),
+PlayerStats::PlayerStats() : last_known_as(""), deaths(0), tks(0),
 	healing_recvd(0), total_time(0), time_specced(0), arch_hits(0),
 	arch_shots(0), cm_hits(0), cm_shots(0), ad_lvl(AL_GUEST)
 {
-	for(int i = 0; i < NO_CLASS; ++i)
-		time_played[i] = 0;	
+	int i;
+	for(i = 0; i < NO_CLASS; ++i)
+		time_played[i] = 0;
+	for(i = 0; i < MAX_WAY_TO_KILL; ++i)
+		kills[i] = 0;
 }
 
 
@@ -287,6 +298,13 @@ void init_known_players(const bool nopurge)
 
 	short numpl;
 	file.read(reinterpret_cast<char*>(&numpl), sizeof(short));
+	if(numpl != STAT_VERSION)
+	{
+		to_log("Wrong statistics version in player data! All statistics will be cleared!");
+		return;
+	}
+
+	file.read(reinterpret_cast<char*>(&numpl), sizeof(short));
 	if(numpl < 0 || numpl > MAX_STORED_PLAYERS)
 	{
 		to_log("Player datafile is corrupt! Ignoring the data!");
@@ -307,8 +325,9 @@ void init_known_players(const bool nopurge)
 	{
 		file.read(reinterpret_cast<char*>(&tmpstats.ID), sizeof(short));
 		file.read(tmpstats.password, PASSW_LEN);
-		file.read(reinterpret_cast<char*>(&tmpstats.kills), sizeof(long));
+		file.read(reinterpret_cast<char*>(tmpstats.kills), MAX_WAY_TO_KILL*sizeof(long));
 		file.read(reinterpret_cast<char*>(&tmpstats.deaths), sizeof(long));
+		file.read(reinterpret_cast<char*>(&tmpstats.tks), sizeof(long));
 		file.read(reinterpret_cast<char*>(&tmpstats.healing_recvd), sizeof(long));
 		file.read(reinterpret_cast<char*>(&tmpstats.total_time), sizeof(long));
 		file.read(reinterpret_cast<char*>(&tmpstats.time_specced), sizeof(long));
@@ -364,6 +383,8 @@ void store_known_players()
 		return;
 	}
 
+	file.write(reinterpret_cast<const char*>(&STAT_VERSION), sizeof(short));
+
 	short numpl;
 	if(known_players.size() > MAX_STORED_PLAYERS)
 		numpl = MAX_STORED_PLAYERS;
@@ -375,8 +396,9 @@ void store_known_players()
 	{
 		file.write(reinterpret_cast<char*>(&known_players.front().ID), sizeof(short));
 		file.write(known_players.front().password, PASSW_LEN);
-		file.write(reinterpret_cast<char*>(&known_players.front().kills), sizeof(long));
+		file.write(reinterpret_cast<char*>(known_players.front().kills), MAX_WAY_TO_KILL*sizeof(long));
 		file.write(reinterpret_cast<char*>(&known_players.front().deaths), sizeof(long));
+		file.write(reinterpret_cast<char*>(&known_players.front().tks), sizeof(long));
 		file.write(reinterpret_cast<char*>(&known_players.front().healing_recvd), sizeof(long));
 		file.write(reinterpret_cast<char*>(&known_players.front().total_time), sizeof(long));
 		file.write(reinterpret_cast<char*>(&known_players.front().time_specced), sizeof(long));
@@ -537,7 +559,18 @@ void output_stats()
 						<< 100*it->time_played[sh]/l << '%' << endl;
 			}
 		}
-		cout << "kills: " << it->kills << endl;
+		l = 0;
+		cout << "kills: ";
+		for(sh = 0; sh < MAX_WAY_TO_KILL; ++sh)
+		{
+			if(it->kills[sh])
+			{
+				cout << it->kills[sh]  << " (" << kill_way_name[sh] << "), ";
+				l += it->kills[sh];
+			}
+		}
+		cout << "TOTAL: " << l << endl;
+		cout << "team kills: " << it->tks << endl;
 		cout << "deaths: " << it->deaths << endl;
 		cout << "healing: " << it->healing_recvd << endl;
 		cout << "arch: ";

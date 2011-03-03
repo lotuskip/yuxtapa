@@ -16,6 +16,10 @@ const std::string admin_lvl_str[5] = { " (G)", " (R)", " (TU)", " (A)", " (SA)" 
 
 const char PASSW_LEN = 8;
 
+// For recording different ways of earning kills:
+enum { WTK_MELEE=0, WTK_ARROW, WTK_CIRCLE, WTK_ZAP, WTK_BOOBY, WTK_FIREB,
+	WTK_MM, WTK_BACKSTAB, WTK_SQUASH, WTK_POISON, WTK_SCARE, MAX_WAY_TO_KILL };
+
 /* This class holds information about a player *the server knows about*. This
  * is also the stuff that gets written into a file when the server is closed. */
 struct PlayerStats
@@ -24,7 +28,9 @@ struct PlayerStats
 	char password[PASSW_LEN+1];
 
 	std::string last_known_as; // most recent nick this player used
-	unsigned long kills, deaths;
+	unsigned long deaths;
+	unsigned long kills[MAX_WAY_TO_KILL];
+	unsigned long tks; // team kills
 	unsigned long healing_recvd;
 	unsigned long total_time; // seconds
 	unsigned long time_specced;

@@ -527,7 +527,7 @@ bool Game::process_turn()
 			{
 				if(--(it->cl_props.hp) <= 0)
 				{
-					it->poisoner->stats_i->kills++;
+					it->poisoner->stats_i->kills[WTK_POISON]++;
 					player_death(it, " was poisoned by " + it->poisoner->nick + '.', true);
 				}
 				else

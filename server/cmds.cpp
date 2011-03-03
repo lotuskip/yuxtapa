@@ -37,6 +37,17 @@ const string ad_lvl_name[4] = { "guest", "regular", "trusted user",
 const string team_balance_str[] = { "no", "passive", "active" };
 
 
+// Count total kills, reduce team kills, return always >= 0
+unsigned long total_kills(const list<PlayerStats>::iterator st)
+{
+	unsigned long res = 0;
+	for(char i = 0; i < MAX_WAY_TO_KILL; ++i)
+		res += st->kills[i];
+	if(res > st->tks)
+		res -= st->tks;
+	return res;
+}
+
 // For sorting players by their "level" for team shuffling.
 // We want a *descending* order; return true if i should be before j.
 // Note that this ordering is completely hidden from the players!
@@ -56,9 +67,9 @@ bool pl_level_cmp(const list<Player>::iterator i, const list<Player>::iterator j
 	resj /= NO_CLASS;
 	// only take kill/death ratio into account if have enough deaths:
 	if(i->stats_i->deaths >= 20)
-		resi *= float(i->stats_i->kills)/i->stats_i->deaths;
+		resi *= float(total_kills(i->stats_i))/i->stats_i->deaths;
 	if(j->stats_i->deaths >= 20)
-		resj *= float(j->stats_i->kills)/j->stats_i->deaths;
+		resj *= float(total_kills(j->stats_i))/j->stats_i->deaths;
 	// It might be that resi == resj, although this is very unlikely.
 	// In that case, we just arbitrarily let j win:
 	return (resi > resj);

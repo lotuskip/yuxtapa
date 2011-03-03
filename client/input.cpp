@@ -26,7 +26,7 @@ using namespace std;
  * platforms (using precompiler #if .. #else if ... #else ... #endif) */
 const char KEYCODE_ENTER = 13; // != '\n'
 
-const char* offon[2] = { "off", "on" };
+const char* offon[2] = { "off.", "on." };
 
 vector<string> prev_strs;
 vector<string>::const_iterator prev_str_it;

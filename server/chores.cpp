@@ -138,9 +138,12 @@ void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 			{
 				string msg = " was shot by ";
 				if(pit->team == shooter->team)
+				{
 					msg += teammate_str;
+					shooter->stats_i->tks++;
+				}
 				else // shot enemy, count kill
-					shooter->stats_i->kills++;
+					shooter->stats_i->kills[WTK_ARROW]++;
 				player_death(pit, msg + shooter->nick + '.', true);
 			}
 			else
@@ -169,9 +172,12 @@ void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 				else
 				{
 					if(pit->team == shooter->team)
+					{
 						msg += teammate_str;
+						shooter->stats_i->tks++;
+					}
 					else
-						shooter->stats_i->kills++;
+						shooter->stats_i->kills[is_zap ? WTK_ZAP : WTK_MM]++;
 					msg += shooter->nick;
 					if(!is_zap)
 						msg += "\'s ";
@@ -264,7 +270,9 @@ void fireball_trigger(const list<Trap>::iterator tr, const Coords &pos,
 					{
 						msg = " was taken to the flames by ";
 						if(pc_it->get_owner()->team == triggerer->team)
-							msg += teammate_str;
+							msg += teammate_str; // note: no team kill recorded
+						else
+							pc_it->get_owner()->stats_i->kills[WTK_FIREB]++;
 						msg += triggerer->nick + '.';
 						player_death(pc_it->get_owner(), msg, false);
 					}
@@ -345,7 +353,12 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 				else
 				{
 					if(tr->get_owner()->team == pit->team)
+					{
 						msg += teammate_str;
+						tr->get_owner()->stats_i->tks++;
+					}
+					else
+						tr->get_owner()->stats_i->kills[WTK_BOOBY]++;
 					msg += tr->get_owner()->nick + "\'s";
 				}
 				msg += " boobytrap.";
@@ -548,11 +561,16 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 					multip*(pit->cl_props.dam_add)) // was hit...
 					&& them->cl_props.hp <= 0) // ...and died
 				{
-					pit->stats_i->kills++;
 					if(multip == 2)
+					{
 						player_death(them, " was backstabbed by " + pit->nick + '.', true);
+						pit->stats_i->kills[WTK_BACKSTAB]++;
+					}
 					else
+					{
 						player_death(them, " was killed by " + pit->nick + '.', true);
+						pit->stats_i->kills[WTK_MELEE]++;
+					}
 				}
 				pit->own_pc->set_disguised(false);
 			}
@@ -869,7 +887,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 			{
 				player_death(pit, " was scared to death by "
 					+ it->get_owner()->nick + '.', true);
-				it->get_owner()->stats_i->kills++;
+				it->get_owner()->stats_i->kills[WTK_SCARE]++;
 				break;
 			}
 			++it;
@@ -1187,9 +1205,12 @@ void progress_chore(const list<Player>::iterator pit)
 				{
 					string msg = " was sliced in half by ";
 					if(pit->team == them->team)
+					{
 						msg += teammate_str;
+						pit->stats_i->tks++;
+					}
 					else
-						pit->stats_i->kills++;
+						pit->stats_i->kills[WTK_CIRCLE]++;
 					player_death(them, msg + pit->nick + '.', true);
 				}
 			}
@@ -1245,8 +1266,10 @@ void progress_chore(const list<Player>::iterator pit)
 					{
 						list<Player>::iterator pit2 = pc_it->get_owner();
 						string msg = " was squashed by ";
-						if(pit->team == pit2->team)
+						if(pit->team == pit2->team) // note: no team kill recorded
 							msg += teammate_str;
+						else
+							pit->stats_i->kills[WTK_SQUASH]++;
 						msg += pit->nick + "\'s carving frenzy.";
 						player_death(pit2, msg, false);
 					}
