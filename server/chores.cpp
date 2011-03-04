@@ -1064,6 +1064,11 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		}
 		break;
 	}
+	case XN_MINDS_EYE:
+	{
+		// TODO
+		break;
+	}
 	}
 }
 

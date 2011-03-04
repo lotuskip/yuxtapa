@@ -2,8 +2,8 @@
 #ifndef CLASSES_COMMON_H
 #define CLASSES_COMMON_H
 
-enum e_Class { C_ARCHER=0, C_ASSASSIN, C_COMBAT_MAGE, C_MINDCRAFTER,
-	C_SCOUT, C_FIGHTER, C_MINER, C_HEALER, C_WIZARD, C_TRAPPER, NO_CLASS };
+enum e_Class { C_ARCHER=0, C_ASSASSIN, C_COMBAT_MAGE, C_MINDCRAFTER, C_SCOUT,
+	C_FIGHTER, C_MINER, C_HEALER, C_WIZARD, C_TRAPPER, C_PLANEWALKER, NO_CLASS };
 // NO_CLASS functions as the number of the classes and denotes being a spectator
 
 enum e_Team { T_NO_TEAM=0, /* no one's team variable ever has this value, but
@@ -33,7 +33,8 @@ const ClassProperties classes[] =
 { "Mi", 12,  6,  0, 10, 1, 13, 3,  5, false,  true },
 { "He",  6, -1, 30,  6, 1, 12, 0,  5,  true, false },
 { "Wi",  4,  0, 70,  6, 0, 11, 0,  7,  true, false },
-{ "Tr",  8,  3,  0,  8, 0, 16, 1,  6, false,  true }
+{ "Tr",  8,  3,  0,  8, 0, 16, 1,  6, false,  true },
+{ "Pw",  5,  7, 60,  6, 2, 14, 2,  6,  true, false }
 };
 
 #endif

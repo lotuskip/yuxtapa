@@ -31,7 +31,8 @@ const string pcview_classname[NO_CLASS] = {
 	"Miner      ",
 	"Healer     ",
 	"Wizard     ",
-	"Trapper    " };
+	"Trapper    ",
+	"Planewalker" };
 
 const unsigned char team_col[] = {
 	C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
@@ -176,6 +177,9 @@ void ClassCPV::space()
 			break;
 		case C_WIZARD:
 			Network::send_action(XN_MM);
+			break;
+		case C_PLANEWALKER:
+			Network::send_action(XN_MINDS_EYE);
 			break;
 		default: //C_FIGHTER, C_HEALER, C_MINER, C_COMBAT_MAGE
 			clientstate = CS_DIR;

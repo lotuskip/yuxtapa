@@ -241,7 +241,7 @@ bool Input::inputhandle()
 			if(isalpha(key))
 			{
 				key = tolower(key);
-				if(key <= 'j' && key >= 'a') // switch class
+				if(key <= 'k' && key >= 'a') // switch class
 				{
 					Network::send_spawn((unsigned char)(key - 'a'));
 					leave_limbo();

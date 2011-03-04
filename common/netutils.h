@@ -56,6 +56,7 @@ enum {
 	XN_HEAL, // + dir, can be MAX_D for self
 	XN_MM,
 	XN_SET_TRAP,
+	XN_MINDS_EYE,
 	// finally, for deads&specs:
 	XN_FOLLOW_SWITCH,
 	XN_FOLLOW_PREV

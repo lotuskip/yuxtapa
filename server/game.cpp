@@ -51,7 +51,8 @@ const char game_mode_mins[] = {
 const string team_name[2] = { "green", "purple" };
 const string team_name_long[3] = { "spectators!", "green team!", "purple team!" };
 const string classnames[NO_CLASS] = { "archer", "assassin", "combat mage",
-	"mindcrafter", "scout", "fighter", "miner", "healer", "wizard", "trapper" };
+	"mindcrafter", "scout", "fighter", "miner", "healer", "wizard", "trapper",
+	"planewalker" };
 
 bool team_unbalance = false;
 time_t teams_unbal_since;
