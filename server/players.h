@@ -98,7 +98,7 @@ struct Player
 	unsigned short turns_without_axn;
 	e_Dir wants_to_move_to; // for swapping places with teammates
 	char limiter; /* used for one purpose by mindcrafters/wizards/combat magi,
-		and to another by assassins */
+		and to another by assassins and planewalkers */
 	char wait_turns;
 	char doing_a_chore;
 

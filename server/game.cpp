@@ -130,6 +130,7 @@ void send_state_upd(const list<Player>::iterator it)
 		static_cast<unsigned char>(it->cl_props.tohit));
 	Network::send_buffer.add(
 		static_cast<unsigned char>(it->cl_props.dam_add));
+	Network::send_buffer.add((unsigned char)it->cl_props.dv);
 	Network::send_buffer.add((unsigned char)(it->poisoner != cur_players.end()));
 	Network::send_buffer.add((unsigned char)it->sector);
 	Network::send_buffer.add(it->torch_symbol(it->is_alive() && it->own_pc->torch_is_lit()));
@@ -643,7 +644,8 @@ bool Game::process_turn()
 				else if(it->action_queue.empty())
 				{
 					it->turns_without_axn++;
-					if(it->cl != C_ASSASSIN && it->limiter)
+					if(it->cl != C_ASSASSIN && it->cl != C_PLANEWALKER
+						&& it->limiter)
 						it->limiter--;
 					trap_detection(it);
 				}
@@ -759,6 +761,13 @@ void Game::player_action(const list<Player>::iterator pit, const Axn action)
 	// Not spectator:
 	if(pit->is_alive())
 	{
+		// Planewalkers' mind's eye movement is not restricted by timing:
+		if(pit->cl == C_PLANEWALKER && pit->limiter && action.xncode == XN_MOVE)
+		{
+			pit->own_vp->move(e_Dir(action.var1));
+			return;
+		}
+		// Everything else:
 		if(action.xncode == XN_FOLLOW_SWITCH || action.xncode == XN_FOLLOW_PREV)
 		{
 			// these codes makes no sense when alive; resend class info

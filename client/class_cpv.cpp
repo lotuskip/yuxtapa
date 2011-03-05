@@ -248,6 +248,7 @@ void ClassCPV::state_upd(SerialBuffer &data)
 		Network::send_line(Config::get_ouch(), false);
 	tohit = static_cast<char>(data.read_ch());
 	dam_add = static_cast<char>(data.read_ch());
+	dv = data.read_ch();
 	poisoned = bool(data.read_ch());
 	sector = e_Dir(data.read_ch());
 	torch_sym[0] = data.read_ch();

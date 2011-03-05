@@ -209,6 +209,14 @@ void heal_PC(const list<Player>::iterator pit)
 	}
 }
 
+void conditional_blind(const Coords &c)
+{
+	list<PCEnt>::iterator pc_it = any_pc_at(c);
+	// Must be valid PC, not assassin, and not a mind's eye using planewalker:
+	if(pc_it != PCs.end() && pc_it->get_owner()->cl != C_ASSASSIN
+		&& (pc_it->get_owner()->cl != C_PLANEWALKER || !pc_it->get_owner()->limiter))
+		pc_it->get_owner()->own_vp->blind();
+}
 
 void flash_at(const Coords &pos)
 {
@@ -225,19 +233,13 @@ void flash_at(const Coords &pos)
 			c.x = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind] + pos.x;
 			c.y = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind+1] + pos.y;
 			if((f = Game::curmap->get_tile(c).flags) & TF_OCCUPIED)
-			{
-				if((pc_it = any_pc_at(c)) != PCs.end()
-					&& pc_it->get_owner()->cl != C_ASSASSIN)
-					pc_it->get_owner()->own_vp->blind();
-			}
+				conditional_blind(c);
 			else if(!(f & TF_SEETHRU))
 				break;
 		}
 	}
 	// At pos itself, too:
-	if((pc_it = any_pc_at(pos)) != PCs.end()
-		&& pc_it->get_owner()->cl != C_ASSASSIN)
-		pc_it->get_owner()->own_vp->blind();
+	conditional_blind(pos);
 	add_sound(pos, S_ZAP);
 }
 
@@ -1066,7 +1068,18 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	}
 	case XN_MINDS_EYE:
 	{
-		// TODO
+		if(!(pit->limiter = !pit->limiter)) // turning mind's eye off
+		{
+			pit->own_vp->set_pos(pit->own_pc->getpos());
+			pit->cl_props.dv = classes[pit->cl].dv;
+		}
+		else // turning mind's eye on
+		{
+			pit->cl_props.dv = 11;
+			while(pit->own_vp->is_blind())
+				pit->own_vp->reduce_blind();
+		}
+		pit->needs_state_upd = true;
 		break;
 	}
 	}
@@ -1126,6 +1139,11 @@ void kill_player(const list<Player>::iterator pit)
 		Network::broadcast();
 	}
 	
+	// If was a planewalker on a trip, return to view own corpse:
+	if(pit->cl == C_PLANEWALKER && pit->limiter)
+		pit->own_vp->set_pos(pit->own_pc->getpos());
+	// (limiter and pv are reset upon next spawn)
+
 	tp->flags &= ~(TF_OCCUPIED);
 	pit->own_pc->makevoid();
 	
@@ -1133,6 +1151,7 @@ void kill_player(const list<Player>::iterator pit)
 	pit->action_queue.clear();
 	pit->poisoner = cur_players.end();
 
+	// If requested to change class:
 	if(pit->next_cl != pit->cl)
 		Game::send_state_change(pit);
 
@@ -1427,7 +1446,8 @@ void trap_detection(const list<Player>::iterator pit)
 	{
 		pit->turns_without_axn = 0; // detection counts as an action!
 		// Go through traps in a radius of 3 squares:
-		Coords pos = pit->own_pc->getpos();
+		Coords pos = pit->own_vp->get_pos(); /* Note: using viewpoints pos
+			instead of PC's assures that planewalkers can detect traps with mind's eye. */
 		Coords c;
 		short f;
 		char line, ind;
