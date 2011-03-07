@@ -186,6 +186,11 @@ void Config::read_config()
 			size_t ind;
 			while(ss >> keyw)
 			{
+				if(num_syms(keyw) > MAX_NICK_LEN)
+				{
+					to_log("Warning: bot name '" + keyw + "' is too long.");
+					del_syms(keyw, MAX_NICK_LEN);
+				}
 				ind = 0;
 				while((ind = keyw.find('_', ind)) != string::npos)
 					keyw.replace(ind, 1, 1, ' ');
