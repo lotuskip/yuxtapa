@@ -20,7 +20,6 @@ namespace ClassCPV
 	void state_upd(SerialBuffer &data);
 
 	bool im_alive();
-	unsigned char get_cur_team_col();
 }
 
 #endif

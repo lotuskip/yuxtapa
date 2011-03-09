@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 #include "../common/constants.h"
+#include "../common/coords.h"
 #include "colourdef.h"
 #include <boost/lexical_cast.hpp>
 
@@ -333,28 +334,23 @@ void Base::print_teams_upd(const unsigned char greens,
 }
 
 
-void Base::print_flags(const string &dirs, const unsigned char dim_cpair)
+void Base::print_flags(const string &fs)
 {
 	// First print the empty box:
 	print_str("_______", 7, 28, 3, STAT_WIN);
 	print_str("|     |", 7, 28, 4, STAT_WIN);
 	print_str("|     |", 7, 28, 5, STAT_WIN);
 	print_str("|_____|", 7, 28, 6, STAT_WIN);
-	if(!dirs.empty())
+
+	for(char i = 0; i < MAX_D+1; ++i)
 	{
-		// Last flag in bright team colour:
-		wmove(windows[STAT_WIN], flagy[dirs[dirs.size()-1]],
-			flagx[dirs[dirs.size()-1]]);
-		change_colour(windows[STAT_WIN], dim_cpair + NUM_NORM_COLS);
-		waddch(windows[STAT_WIN], '&');
-		// Rest of the flags in dim team colour:
-		for(char i = dirs.size()-2; i >= 0; --i)
+		if(fs[i] != MAX_PREDEF_CPAIR)
 		{
-			wmove(windows[STAT_WIN], flagy[dirs[i]], flagx[dirs[i]]);
-			change_colour(windows[STAT_WIN], dim_cpair);
+			wmove(windows[STAT_WIN], flagy[i], flagx[i]);
+			change_colour(windows[STAT_WIN], fs[i]);
 			waddch(windows[STAT_WIN], '&');
 		}
-		wrefresh(windows[STAT_WIN]);
 	}
+	wrefresh(windows[STAT_WIN]);
 }
 

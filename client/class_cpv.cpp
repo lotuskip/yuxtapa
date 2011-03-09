@@ -10,7 +10,7 @@
 
 extern e_ClientState clientstate;
 extern bool walkmode;
- // clear flags view
+
 namespace
 {
 using namespace std;
@@ -213,10 +213,7 @@ void ClassCPV::state_change(const unsigned char cl, const unsigned char t)
 
 	// print PC info:
 	if((myclass = e_Class(cl)) == NO_CLASS) // spectator
-	{
 		Base::print_str("Spectator  ", team_col[0], PC_INFO_X, 3, STAT_WIN, false);
-		Base::print_flags("", 0); // clear flags view
-	}
 	else // actual class 
 	{
 		Base::print_str(pcview_classname[myclass].c_str(), team_col[myteam-1],
@@ -266,7 +263,4 @@ void ClassCPV::state_upd(SerialBuffer &data)
 
 
 bool ClassCPV::im_alive() { return (myclass != NO_CLASS && hp > 0); }
-
-
-unsigned char ClassCPV::get_cur_team_col() { return team_col[myteam-1]; }
 

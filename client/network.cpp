@@ -330,9 +330,9 @@ bool Network::receive_n_handle()
 		case MID_FLAG_UPD:
 		{
 			string tmp;
-			for(unsigned char ch = recv_buffer.read_ch(); ch > 0; --ch)
+			for(char ch = 0; ch < MAX_D+1; ++ch)
 				tmp += recv_buffer.read_ch();
-			Base::print_flags(tmp, ClassCPV::get_cur_team_col());
+			Base::print_flags(tmp);
 			break;
 		}
 		case MID_TIME_UPD:

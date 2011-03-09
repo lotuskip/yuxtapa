@@ -36,7 +36,7 @@ bool no_walk_to(const e_Dir d)
 	Coords c = center.in(d);
 	// colour is at (y*SIZE+x)*2, symbol at that+1
 	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
-	return (sym == '?' || sym == '~' || sym == '#');
+	return (sym == '?' || sym == '~' || sym == '#' || sym == '^');
 }
 
 msTimer last_sent_axn, reftimer;
