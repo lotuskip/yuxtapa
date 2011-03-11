@@ -91,8 +91,8 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 	245, // floor
 	12, // water
 	10, // green pc
-	5, // purple pc
-	208, // brown pc
+	91, // purple pc
+	172, // brown pc
 	33, // water trap
 	220, // light trap
 	76, // tele trap
@@ -112,7 +112,7 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 	250, // floor
 	32, // water
 	46, // green pc
-	13, // purple pc
+	128, // purple pc
 	214, // brown pc
 	69, // water trap
 	226, // light trap
@@ -131,7 +131,7 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 };
 
 const unsigned char fixed_bgc[6] = { 4, 3, 2, 6, 1, 240 };
-const unsigned char fixed_fgc[7] = { 10, 13, 11, 16, 12, 9, 11 };
+const unsigned char fixed_fgc[7] = { 10, 91, 11, 16, 12, 9, 11 };
 
 // "FEW" mode (8+8 colours):
 //

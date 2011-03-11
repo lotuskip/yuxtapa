@@ -44,8 +44,8 @@ void change_colour(unsigned char cpair)
 
 const char ctestsym[] = "abcdefghijklmnop" // 16 base colours
 "T..#+.~" // dims
-"T..#+.~@@@^^^^^&AV/" // normals
-"T..#+.~@@@^^^^^&AV/**t\\" // lits
+"T..#+.~@@@^^^^^^&AV/" // normals
+"T..#+.~@@@^^^^^^&AV/**t\\" // lits
 "T@+#~^/T@+#~^/T@+#~^/T@+#~^/T@+#~^/T@+#~^/" // backgroundeds
 "?"; // unknown
 
