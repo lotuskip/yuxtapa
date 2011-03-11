@@ -89,8 +89,8 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 	245, // floor
 	12, // water
 	10, // green pc
-	5, // purple pc
-	208, // brown pc
+	91, // purple pc
+	172, // brown pc
 	33, // water trap
 	220, // light trap
 	76, // tele trap
@@ -109,7 +109,7 @@ const unsigned char fixed_remap[C_BG_HEAL-BASE_COLOURS] = {
 	250, // floor
 	32, // water
 	46, // green pc
-	13, // purple pc
+	128, // purple pc
 	214, // brown pc
 	69, // water trap
 	226, // light trap
