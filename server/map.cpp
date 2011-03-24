@@ -1192,10 +1192,8 @@ bool Map::load_from_file(const string &mapname)
 		return false; // a corrupt file or something
 	// else
 	file >> inhabited; // this should work regardless of locale?
-	/*DEBUG*/ cout << "Inhabited: " << inhabited << endl;
 	file.seekg(1, ios_base::cur); // skip newline
 	getline(file, s);
-	/*DEBUG*/ cout << "Typestring: " << s << endl;
 	char ch;
 	for(ch = 0; ch < MAX_MAPTYPE; ++ch)
 	{

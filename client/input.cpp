@@ -123,8 +123,7 @@ bool check_typing()
 			}
 			break;
 		case KEY_HOME:
-			type_pos = 0;
-			printb_pos = 0;
+			type_pos = printb_pos = 0;
 			break;
 		case KEY_END:
 			type_pos = str_syms;
