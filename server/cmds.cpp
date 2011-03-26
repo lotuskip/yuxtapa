@@ -532,14 +532,19 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			}
 			/* Now 'sum' is between 0 (all purples better than all greens) and
 			 * ngreen*npurple (all greens better than all purples). */
-			sum = 100*sum/(ngreen*npurple) - 50;
-			keyw = boost::lexical_cast<string>(sum) + " for greens -- the teams are ";
-			if(sum < -35 || sum > 35)
-				keyw += "VERY uneven!";
-			else if(sum < -15 || sum > 15)
-				keyw += "not even";
-			else
-				keyw += "even";
+			if(ngreen*npurple)
+			{
+				sum = 100*sum/(ngreen*npurple) - 50;
+				keyw = boost::lexical_cast<string>(sum) + " for greens -- the teams are ";
+				if(sum < -35 || sum > 35)
+					keyw += "VERY uneven!";
+				else if(sum < -15 || sum > 15)
+					keyw += "not even";
+				else
+					keyw += "even";
+			}
+			else // one or both teams is empty
+				keyw = "Cannot compute evenness!";
 			Network::to_chat(keyw);
 		}
 		// may broadcast
