@@ -1,6 +1,6 @@
 # Maintainer: Onni R. <onnir at iki dot fi>
 pkgname=yuxtapa
-pkgver=5
+pkgver=6
 pkgrel=1
 license=('None')
 pkgdesc="a text-mode team-based real-time multiplayer game"
@@ -10,7 +10,7 @@ makedepends=('boost')
 depends=('zlib' 'boost-libs' 'ncurses')
 source=(http://tempoanon.net/lotuskip/tervat/$pkgname-$pkgver.tar.gz)
 install=yuxtapa.install
-md5sums=('019b31226e69fc6ecbbff9403d17aa95')
+md5sums=('5dc11ad0943b1e7da716dde6db54ccb0')
 
 build() {
   mkdir -p "${pkgdir}/usr/bin" || return 1
