@@ -220,6 +220,8 @@ void Config::read_config()
 					poss_modes.push_back(GM_STEAL);
 				else if(keyw == "destroy")
 					poss_modes.push_back(GM_DESTR);
+				else if(keyw == "team-dm")
+					poss_modes.push_back(GM_TDM);
 				else
 					to_log("Unrecognised game mode string \'" + keyw + "\'!");
 				
@@ -267,6 +269,7 @@ void Config::read_config()
 		poss_modes.push_back(GM_CONQ);
 		poss_modes.push_back(GM_STEAL);
 		poss_modes.push_back(GM_DESTR);
+		poss_modes.push_back(GM_TDM);
 	}
 	// Similarly check map types:
 	if(poss_mtypes.empty())

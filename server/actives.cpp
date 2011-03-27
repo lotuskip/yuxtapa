@@ -311,7 +311,8 @@ void do_placement()
 		next_unused_tile(d, used_coords);
 		add_noccent(d, NOE_FLAG, T_NO_TEAM);
 		break;
-	}
+	case GM_TDM: break; // no additional flags
+	} // switch game-mode (for flag positioning)
 	//
 	// Portals:
 	// The possibilities are:

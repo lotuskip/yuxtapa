@@ -24,6 +24,7 @@
 #endif
 
 extern bool intermission;
+extern unsigned char num_players[2]; // defined in game.cpp
 
 namespace
 {
@@ -512,14 +513,13 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	{
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 		{
-			int ngreen = 0, npurple = 0, sum = 0;
+			int sum = 0;
 			list<Player>::const_iterator it2;
 			for(list<Player>::const_iterator it = cur_players.begin();
 				it != cur_players.end(); ++it)
 			{
 				if(it->team == T_GREEN)
 				{
-					++ngreen;
 					// Compute how many purple players this player "beats":
 					for(it2 = cur_players.begin(); it2 != cur_players.end(); ++it2)
 					{
@@ -527,14 +527,12 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 							++sum;
 					}
 				}
-				else if(it->team == T_PURPLE)
-					++npurple;
 			}
 			/* Now 'sum' is between 0 (all purples better than all greens) and
 			 * ngreen*npurple (all greens better than all purples). */
-			if(ngreen*npurple)
+			if(num_players[0]*num_players[1])
 			{
-				sum = 100*sum/(ngreen*npurple) - 50;
+				sum = 100*sum/(num_players[0]*num_players[1]) - 50;
 				keyw = boost::lexical_cast<string>(sum) + " for greens -- the teams are ";
 				if(sum < -35 || sum > 35)
 					keyw += "VERY uneven!";
@@ -574,7 +572,6 @@ void shuffle_teams()
 
 	char ch, num;
 	e_Team t;
-	extern unsigned char num_players[2]; // defined in game.cpp
 	num_players[0] = num_players[1] = 0;
 	while(!playing_players.empty())
 	{

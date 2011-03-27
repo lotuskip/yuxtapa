@@ -18,6 +18,7 @@
 
 namespace Game { extern Map *curmap; }
 extern e_GameMode gamemode;
+extern unsigned short tdm_kills[2]; // defined in game.cpp
 
 namespace
 {
@@ -100,6 +101,22 @@ void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 }
 
 
+void record_kill(const list<Player>::iterator pit, const char method)
+{
+	++(pit->stats_i->kills[method]);
+	if(gamemode == GM_TDM)
+	{
+		int cmp = int(tdm_kills[0]) - tdm_kills[1];
+		tdm_kills[pit->team == T_PURPLE]++;
+		// First cmp = A-B, then either A or B is incremented by one, and
+		// we want to know whether their relative order has changed. This
+		// test suffices:
+		if((int(tdm_kills[0]) - tdm_kills[1])*cmp == 0)
+			Game::send_team_upds(cur_players.end());
+	}
+}
+
+
 bool test_hit(const list<Player>::iterator def, const char tohit,
 	char numdies, const char ddie, const char dadd)
 {
@@ -143,7 +160,7 @@ void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 					shooter->stats_i->tks++;
 				}
 				else // shot enemy, count kill
-					shooter->stats_i->kills[WTK_ARROW]++;
+					record_kill(shooter, WTK_ARROW);
 				player_death(pit, msg + shooter->nick + '.', true);
 			}
 			else
@@ -177,7 +194,7 @@ void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 						shooter->stats_i->tks++;
 					}
 					else
-						shooter->stats_i->kills[is_zap ? WTK_ZAP : WTK_MM]++;
+						record_kill(shooter, is_zap ? WTK_ZAP : WTK_MM);
 					msg += shooter->nick;
 					if(!is_zap)
 						msg += "\'s ";
@@ -274,7 +291,7 @@ void fireball_trigger(const list<Trap>::iterator tr, const Coords &pos,
 						if(pc_it->get_owner()->team == triggerer->team)
 							msg += teammate_str; // note: no team kill recorded
 						else
-							pc_it->get_owner()->stats_i->kills[WTK_FIREB]++;
+							record_kill(pc_it->get_owner(), WTK_FIREB);
 						msg += triggerer->nick + '.';
 						player_death(pc_it->get_owner(), msg, false);
 					}
@@ -360,7 +377,7 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 						tr->get_owner()->stats_i->tks++;
 					}
 					else
-						tr->get_owner()->stats_i->kills[WTK_BOOBY]++;
+						record_kill(tr->get_owner(), WTK_BOOBY);
 					msg += tr->get_owner()->nick + "\'s";
 				}
 				msg += " boobytrap.";
@@ -566,12 +583,12 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 					if(multip == 2)
 					{
 						player_death(them, " was backstabbed by " + pit->nick + '.', true);
-						pit->stats_i->kills[WTK_BACKSTAB]++;
+						record_kill(pit, WTK_BACKSTAB);
 					}
 					else
 					{
 						player_death(them, " was killed by " + pit->nick + '.', true);
-						pit->stats_i->kills[WTK_MELEE]++;
+						record_kill(pit, WTK_MELEE);
 					}
 				}
 				pit->own_pc->set_disguised(false);
@@ -889,7 +906,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 			{
 				player_death(pit, " was scared to death by "
 					+ it->get_owner()->nick + '.', true);
-				it->get_owner()->stats_i->kills[WTK_SCARE]++;
+				record_kill(it->get_owner(), WTK_SCARE);
 				break;
 			}
 			++it;
@@ -1234,7 +1251,7 @@ void progress_chore(const list<Player>::iterator pit)
 						pit->stats_i->tks++;
 					}
 					else
-						pit->stats_i->kills[WTK_CIRCLE]++;
+						record_kill(pit, WTK_CIRCLE);
 					player_death(them, msg + pit->nick + '.', true);
 				}
 			}
@@ -1293,7 +1310,7 @@ void progress_chore(const list<Player>::iterator pit)
 						if(pit->team == pit2->team) // note: no team kill recorded
 							msg += teammate_str;
 						else
-							pit->stats_i->kills[WTK_SQUASH]++;
+							record_kill(pit, WTK_SQUASH);
 						msg += pit->nick + "\'s carving frenzy.";
 						player_death(pit2, msg, false);
 					}

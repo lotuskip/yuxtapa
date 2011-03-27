@@ -9,7 +9,8 @@ enum e_GameMode {
 	GM_DOM=0, // dominion
 	GM_CONQ, // conquest
 	GM_STEAL, // steal
-	GM_DESTR // destroy
+	GM_DESTR, // destroy
+	GM_TDM // team deathmatch
 };
 
 enum e_MapType {

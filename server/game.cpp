@@ -29,6 +29,7 @@ unsigned char num_players[2] = { 0, 0 };
 
 e_GameMode gamemode;
 e_Dir obj_sector = MAX_D;
+unsigned short tdm_kills[2]; // teams' total kills for team deathmatch
 
 namespace
 {
@@ -45,7 +46,8 @@ const char game_mode_mins[] = {
 	15, // dominion
 	18, // conquest
 	20, // steal
-	22 // destroy
+	22, // destroy
+	8 // team-dm
 };
 
 const string team_name[2] = { "green", "purple" };
@@ -365,6 +367,11 @@ void Game::init_game()
 			spawn_cycle = min(6*spawn_cycle/5, int(MAX_SPAWN_CYCLE));
 		else if(gamemode == GM_DOM) // Dominion has a shorter spawn_cycle:
 			spawn_cycle = max(5*spawn_cycle/6, int(MIN_SPAWN_CYCLE));
+		else if(gamemode == GM_TDM) // Team death match has a VERY short spawn cycle:
+		{
+			spawn_cycle = MIN_SPAWN_CYCLE;
+			tdm_kills[0] = tdm_kills[1] = 0;
+		}
 		// Do these regardless of whether mode is steal or not:
 		item_moved = false;
 		pl_with_item = cur_players.end();
@@ -412,6 +419,8 @@ void Game::init_game()
 			break;
 		case GM_DESTR:
 			objective_str = "Destroy " + sector_name[obj_sector] + " boulders";
+		case GM_TDM:
+			objective_str = "Team deathmatch";
 			break;
 		}
 		strcpy(miniview + VIEWSIZE*VIEWSIZE*2 + 3, objective_str.c_str());
@@ -839,13 +848,24 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		// Check what happened; by default we assume a tie:
 		obj_status_str = "neither team";
 		// Conditions under which purple wins:
-		if((curturn == map_over_turn && gamemode != GM_DOM)
-			|| team_flags[0].empty())
+		if(team_flags[0].empty()
+			|| (curturn == map_over_turn && gamemode != GM_DOM && gamemode != GM_TDM)
+			|| (gamemode == GM_TDM && tdm_kills[1] > tdm_kills[0]))
 			obj_status_str = str_team[1];
 		// Conditions under which green wins:
-		else if(team_flags[1].empty())
+		else if(team_flags[1].empty()
+			|| (gamemode == GM_TDM && tdm_kills[0] > tdm_kills[1]))
 			obj_status_str = str_team[0];
-		obj_status_str += " won!";
+		obj_status_str += " won";
+		if(gamemode == GM_TDM)
+		{
+			if(tdm_kills[0] == tdm_kills[1])
+				obj_status_str += "; score " + boost::lexical_cast<string>(tdm_kills[0]) + " even";
+			else
+				obj_status_str += " by " + boost::lexical_cast<string>(max(tdm_kills[1],tdm_kills[0]))
+					+ " to " + boost::lexical_cast<string>(min(tdm_kills[1],tdm_kills[0]));
+		}
+		obj_status_str += '!';
 	}
 	else // not intermission
 	{
@@ -874,6 +894,12 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		case GM_DESTR:
 			obj_status_str = boost::lexical_cast<string>(boulders_left)
 				+ " left";
+			break;
+		case GM_TDM:
+			if(tdm_kills[0] == tdm_kills[1])
+				obj_status_str = "tie!";
+			else
+				obj_status_str = str_team[(tdm_kills[1] > tdm_kills[0])] + " is in the lead";
 			break;
 		default: obj_status_str = ""; break;
 		}
