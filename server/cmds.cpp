@@ -117,8 +117,25 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	size_t i = cmd.find(' ');
 	string keyw = cmd.substr(0, i);
 	transform(keyw.begin(), keyw.end(), keyw.begin(), (int(*)(int))tolower);
-	if(keyw == "serverinfo") // req: not muted
+
+	char ind;
+	for(ind = 0; ind < MAX_SERVER_CMD; ++ind)
 	{
+		if(keyw == server_cmd[ind])
+			break;
+	}
+	if(ind == MAX_SERVER_CMD) // unrecognized
+		return false;
+	if(Config::is_cmd_banned(ind))
+	{
+		if(!pit->muted)
+			Network::to_chat("Command \'!" + keyw + "\' disabled on this server.");
+		return false;
+	}
+
+	switch(ind)
+	{
+	case CMD_SERVERINFO: // req: not muted
 		if(!pit->muted)
 		{
 			using namespace Config;
@@ -141,11 +158,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			keyw += " teambalance, modes: " + game_modes_str();
 			keyw += ", map types: " + map_types_str() + '.';
 			Network::to_chat(keyw);
-			// may broadcast
 		}
-	}
-	else if(keyw == "adminlvl") // req: none
-	{
+		return false; // may broadcast
+	case CMD_ADMINLVL: // req: none
 		if(i != string::npos && i < cmd.size()-1)
 		{
 			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1));
@@ -159,20 +174,14 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			}
 		}
 		return true; // a "private" request
-	}
-	/*else*/ if(keyw == "teams") // req: none
-	{
+	case CMD_TEAMS: // req: none
 		Game::construct_team_msgs(pit);
 		return true; // a "private" request
-	}
-	/*else*/ if(keyw == "shuffle") //req: AL >= 2 && not muted
-	{
+	case CMD_SHUFFLE: //req: AL >= 2 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 			shuffle_teams();
-		// may broadcast
-	}
-	else if(keyw == "storemap") // req: AL >= 3 && not muted
-	{
+		return false; // may broadcast
+	case CMD_STOREMAP: // req: AL >= 3 && not muted
 		if(!intermission && !pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
 			&& !Config::get_mapdir().empty()
 			&& i != string::npos && i < cmd.size()-1)
@@ -183,10 +192,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				keyw = "Could not save the map!";
 			Network::to_chat(keyw);
 		}
-		// may broadcast
-	}
-	else if(keyw == "listmaps") // req: AL >= 2 && not muted
-	{
+		return false; // may broadcast
+	case CMD_LISTMAPS: // req: AL >= 2 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 		{
 			DIR *dp;
@@ -214,10 +221,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				Network::to_chat(keyw);
 			}
 		}
-		// may broadcast
-	}
-	else if(keyw == "nextmap") // req: AL >= 2 && not muted
-	{
+		return false; // may broadcast
+	case CMD_NEXTMAP: // req: AL >= 2 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 		{
 			// Check if requested a map by name:
@@ -227,10 +232,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				keyw.clear();
 			next_map_forced(keyw);
 		}
-		// may broadcast
-	}
-	else if(keyw == "teambal") // req: AL >= 3 && not muted
-	{
+		return false; // may broadcast
+	case CMD_TEAMBAL: // req: AL >= 3 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
 			&& i != string::npos && i < cmd.size()-1)
 		{
@@ -248,11 +251,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			keyw = "Team balance set to: \""
 				+ team_balance_str[int_settings[IS_TEAMBALANCE]] + "\".";
 			Network::to_chat(keyw);
-			// may broadcast
 		}
-	}
-	else if(keyw == "kick") // req: AL > max(1, target's) && not muted
-	{
+		return false; // may broadcast
+	case CMD_KICK: // req: AL > max(1, target's) && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU && i != string::npos
 			&& i < cmd.size()-1)
 		{
@@ -265,11 +266,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				Network::send_to_player(*nit);
 				Game::remove_player(nit, " kicked by " + pit->nick + '.');
 			}
-			// may broadcast
 		}
-	}
-	else if(keyw == "mute") // req: AL > target's && not muted
-	{
+		return false; // may broadcast
+	case CMD_MUTE: // req: AL > target's && not muted
 		if(!pit->muted && i != string::npos && i < cmd.size()-1)
 		{
 			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1));
@@ -281,11 +280,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				Network::construct_msg(keyw, cmd_respond_msg_col);
 				Network::send_to_player(*nit);
 			}
-			// may broadcast
 		}
-	}
-	else if(keyw == "unmute") // req: AL > target's && not muted
-	{
+		return false; // may broadcast
+	case CMD_UNMUTE: // req: AL > target's && not muted
 		if(!pit->muted && i != string::npos && i < cmd.size()-1)
 		{
 			list<Player>::iterator nit = id_pl_by_nick_part(cmd.substr(i+1));
@@ -297,11 +294,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				Network::construct_msg(keyw, cmd_respond_msg_col);
 				Network::send_to_player(*nit);
 			}
-			// may broadcast
 		}
-	}
-	else if(keyw == "setal")
-	{
+		return false; // may broadcast
+	case CMD_SETAL:
 		// there has to be room for !setal [nick] X, where X is a digit
 		if(!pit->muted && i != string::npos && i < cmd.size()-3
 			&& cmd[cmd.size()-1] <= '4' && cmd[cmd.size()-1] >= '0')
@@ -321,7 +316,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 							+ lexical_cast<string>(known_players.front().ID) + '.';
 						Network::construct_msg(keyw, cmd_respond_msg_col);
 						Network::send_to_player(*pit);
-						return true;
+						return true; // no broadcast
 					}
 				}
 				else if(al <= pit->stats_i->ad_lvl
@@ -334,10 +329,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					Network::send_to_player(*nit);
 				}
 			} // player identified
-		} // command valid for !setal
-	}
-	else if(keyw == "ban") // req: AL > max(2, target's) && not muted
-	{
+		}
+		return false; // may broadcast
+	case CMD_BAN: // req: AL > max(2, target's) && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
 			&& i != string::npos && i < cmd.size()-1)
 		{
@@ -351,32 +345,26 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				banlist().push_back(nit->address);
 				Game::remove_player(nit, " banned by " + pit->nick + '.');
 			}
-			// may broadcast
 		}
-	}
-	else if(keyw == "servermsg") // req: AL >= 3 && not muted
-	{
+		return false; // may broadcast
+	case CMD_SERVERMSG: // req: AL >= 3 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN && i != string::npos)
 		{
 			if(i < cmd.size()-1)
 				Config::set_greeting_str(cmd.substr(i+1));
 			else
 				Config::set_greeting_str("");
-			// may broadcast
 		}
-	}
-	else if(keyw == "clearbans") // req: AL >= 3 && not muted
-	{
+		return false; // may broadcast
+	case CMD_CLEARBANS: // req: AL >= 3 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
 			banlist().clear();
-		// may broadcast
-	}
-	else if(keyw == "spawnbots") // req: AL >= 3 && not muted
-	{
-		using namespace Config;
-		if(!get_botexe().empty() && pit->stats_i->ad_lvl >= AL_ADMIN && !pit->muted
+		return false; // may broadcast
+	case CMD_SPAWNBOTS: // req: AL >= 3 && not muted
+		if(!Config::get_botexe().empty() && pit->stats_i->ad_lvl >= AL_ADMIN && !pit->muted
 			&& i != string::npos && i < cmd.size()-1 && isdigit(cmd[i+1]))
 		{
+			using namespace Config;
 			// Spawn as many as requested, as long as that won't make the
 			// server over-full:
 			char num = min(int(cmd[i+1]-'0'),
@@ -407,28 +395,23 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				}
 				// else bot is running and network will handle its connection attempt
 			}
-			// may broadcast
 		}
-	}
-	else if(keyw == "dropbots") // req: AL >= 3 && not muted
-	{
+		return false; // may broadcast
+	case CMD_DROPBOTS: // req: AL >= 3 && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
 		{
 			while(drop_a_bot()); // not fast, but simple
-			// may broadcast
 		}
-	}
-	else if(keyw == "log") // req: AL >= 3
-	{
+		return false; // may broadcast
+	case CMD_LOG: // req: AL >= 3
 		if(pit->stats_i->ad_lvl >= AL_ADMIN && i != string::npos
 			&& i < cmd.size()-1)
 		{
 			timed_log(pit->nick + " wrote: " + cmd.substr(i+1));
 			return true; // do not broadcast succesful logging
 		}
-	}
-	else if(keyw == "plinfo") // req: AL >= 2
-	{
+		return false; // may broadcast
+	case CMD_PLINFO: // req: AL >= 2
 		if(pit->stats_i->ad_lvl >= AL_TU
 			&& i != string::npos && i < cmd.size()-1)
 		{
@@ -456,9 +439,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			}
 		}
 		return true; // no broadcast
-	}
-	else if(keyw == "putteam")
-	{
+	case CMD_PUTTEAM:
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
 		{
 			// "!putteam [nick, may contain spaces!] [g/p/s]"
@@ -481,10 +462,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				}
 			}
 		}
-		// may broadcast
-	}
-	else if(keyw == "setclass")
-	{
+		return false; // may broadcast
+	case CMD_SETCLASS:
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN)
 		{
 			// "!setclass [nick, may contain spaces!] [class abbr.]"
@@ -507,10 +486,8 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				}
 			}
 		}
-		// may broadcast
-	}
-	else if(keyw == "howfair") // must be TU
-	{
+		return false; // may broadcast
+	case CMD_HOWFAIR: // must be TU
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 		{
 			int sum = 0;
@@ -545,9 +522,37 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				keyw = "Cannot compute evenness!";
 			Network::to_chat(keyw);
 		}
-		// may broadcast
+		return false; // may broadcast
+	case CMD_LSCMD:
+	{
+		if(!pit->muted)
+		{
+			keyw = "Enabled commands:";
+			for(ind = 0; ind < MAX_SERVER_CMD; ++ind)
+			{
+				if(!Config::is_cmd_banned(ind))
+				{
+					// additional checks for various commands:
+					if(ind == CMD_STOREMAP && Config::get_mapdir().empty())
+						continue;
+					if(ind == CMD_CLEARBANS && Config::is_cmd_banned(CMD_BAN))
+						continue;
+					if((ind == CMD_SPAWNBOTS || ind == CMD_DROPBOTS)
+						&& Config::get_botexe().empty())
+						continue;
+					keyw += ' ' + server_cmd[ind];
+				}
+			}
+			Network::to_chat(keyw);
+		}
+		return false; // may broadcast
 	}
-	return false;
+	default:
+#ifdef DEBUG
+		to_log("BUG: something wrong with command handling, keyw=\'" + keyw + '\'');
+#endif
+		return false;
+	} // switch ind
 }
 
 

@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <fstream>
+#include <vector>
 #ifdef BOTMSG
 #include <iostream>
 #endif
@@ -28,16 +29,93 @@ struct addrinfo *servinfo, *the_serv;
 unsigned short cur_id;
 unsigned short curturn = 0;
 unsigned char axn_counter = 0;
+char wait_turns = 0;
+char myhp = 0;
+e_Team myteam;
+e_Class myclass = NO_CLASS;
 char viewbuffer[BUFFER_SIZE];
 
 const Coords center(VIEWSIZE/2, VIEWSIZE/2);
-bool no_walk_to(const e_Dir d)
+bool no_walk_to(const e_Dir d, const bool incl_pcs = false)
 {
 	Coords c = center.in(d);
 	// colour is at (y*SIZE+x)*2, symbol at that+1
 	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
-	return (sym == '?' || sym == '~' || sym == '#' || sym == '^');
+	return (sym == '?' || sym == '~' || sym == '#' || sym == '^'
+		|| (incl_pcs && sym == '@'));
 }
+
+vector<Coords> pcs[2];
+void extract_pcs()
+{
+	pcs[0].clear();
+	pcs[1].clear();
+	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
+	{
+		// get all PCs, not including self (center of view)
+		if(viewbuffer[i] == '@' && i != VIEWSIZE*(VIEWSIZE+1)+1)
+		{
+			switch(viewbuffer[i-1])
+			{
+			case C_GREEN_PC: case C_GREEN_PC_LIT:
+				pcs[0].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
+				break;
+			case C_PURPLE_PC: case C_PURPLE_PC_LIT:
+				pcs[1].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
+				break;
+			}
+			// TODO: brown PCs? And the above checks also miss PCs that have an indicator colour going on!
+		}
+	}
+}
+
+e_Dir neighb_teammate()
+{
+	if(!pcs[myteam-T_GREEN].empty())
+	{
+		for(char d = 0; d < MAX_D; ++d)
+		{
+			if(find(pcs[myteam-T_GREEN].begin(), pcs[myteam-T_GREEN].end(), center.in(e_Dir(d))) != pcs[myteam-T_GREEN].end())
+				return e_Dir(d);
+		}
+	}
+	return MAX_D;
+}
+
+e_Dir should_cs()
+{
+	if(neighb_teammate() != MAX_D)
+		return MAX_D;
+	if(!pcs[(myteam+1)%2].empty())
+	{
+		for(char d = 0; d < MAX_D; ++d)
+		{
+			if(find(pcs[(myteam+1)%2].begin(), pcs[(myteam+1)%2].end(), center.in(e_Dir(d))) != pcs[(myteam+1)%2].end())
+				return e_Dir(d);
+		}
+	}
+	return MAX_D;
+}
+
+inline bool mmsafe()
+{
+	return pcs[myteam-T_GREEN].empty() && !pcs[(myteam+1)%2].empty();
+}
+
+e_Dir get_sound_to_follow()
+{
+	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
+	{
+		// get first sound effect, not including center of view
+		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1)
+		{
+			Coords c(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE);
+			return center.dir_of(c);
+		}
+	}
+	return MAX_D;
+}
+
 
 msTimer last_sent_axn, reftimer;
 
@@ -46,6 +124,43 @@ bool do_send()
 	return sendto(s_me, send_buffer.getr(), send_buffer.amount(), 0,
 		the_serv->ai_addr, the_serv->ai_addrlen) == -1;
 }
+
+void send_action(const unsigned char xncode, const unsigned char var1 = 0, const unsigned char var2 = 0)
+{
+	send_buffer.clear();
+	send_buffer.add((unsigned char)MID_TAKE_ACTION);
+	send_buffer.add(cur_id);
+	send_buffer.add(curturn);
+	send_buffer.add(axn_counter);
+	send_buffer.add(xncode);
+	if(xncode == XN_MOVE || xncode == XN_SHOOT || xncode == XN_ZAP
+		|| xncode == XN_CIRCLE_ATTACK || xncode == XN_HEAL || xncode == XN_MINE)
+	{
+		send_buffer.add(static_cast<unsigned char>(var1));
+		if(xncode == XN_SHOOT)
+			send_buffer.add(static_cast<unsigned char>(var2));
+	}
+	do_send();
+	++axn_counter;
+}
+
+
+void try_walk_towards(const e_Dir d, const bool avoid_pcs = false, const bool do_turn = true)
+{
+	// Try d; then randomly either ++d or --d:
+	if(!no_walk_to(d, avoid_pcs))
+		send_action(XN_MOVE, d);
+	else if(do_turn)
+	{
+		e_Dir c = d;
+		if(random()%2)
+			++c;
+		else
+			--c;
+		try_walk_towards(c, avoid_pcs, false);
+	}
+}
+
 
 sockaddr them;
 size_t addr_len;
@@ -177,9 +292,6 @@ connected:
 		urf.close();
 	}
 	short msglen;
-	bool alive = false;
-	e_Team myteam;
-	e_Class myclass = NO_CLASS;
 
 	// Send spawn request: (no sense having spectator bots!)
 	send_buffer.clear();
@@ -189,6 +301,7 @@ connected:
 	do_send();
 
 	e_Dir walkdir;
+	vector<Coords>::const_iterator picked, ci;
 	for(;;)
 	{
 		if((msglen = do_receive()) != -1)
@@ -207,7 +320,10 @@ connected:
 				do_send();
 
 				if(msglen > 5) // msg is not very small => view has changed
+				{
 					recv_buffer.read_compressed(viewbuffer);
+					extract_pcs();
+				}
 			}
 #ifdef BOTMSG
 			else if(mid == MID_ADD_MSG)
@@ -232,13 +348,13 @@ connected:
 #endif
 			else if(mid == MID_STATE_UPD)
 			{
-				// new hp tell us whether we are alive:
-				alive = (static_cast<char>(recv_buffer.read_ch()) > 0);
+				// new hp:
+				myhp = static_cast<char>(recv_buffer.read_ch());
 			}
 			else if(mid == MID_STATE_CHANGE)
 			{
 				if((myclass = e_Class(recv_buffer.read_ch())) == NO_CLASS)
-					alive = false; // was forced into a spectator
+					myhp = 0; // was forced into a spectator
 				myteam = e_Team(recv_buffer.read_ch());
 			}
 			//TODO: FANCY AI SHIT!!
@@ -247,35 +363,72 @@ connected:
 		} // received a msg
 		else usleep(10000);
 		
-		if(alive) // When alive, get movin'
+		if(myhp > 0) // When alive, do sum'n
 		{
-			//TODO: fancy AI shit here, as well.
-
 			if(reftimer.update() - last_sent_axn > 250)
 			{
-				// Figure out a dir to walk to (avoid chasms&water and don't run into walls)
-				walkdir = e_Dir(random()%MAX_D);
-				for(rv = 0; rv < MAX_D; ++rv)
+				if(wait_turns)
+					--wait_turns;
+				else
 				{
-					if(!no_walk_to(walkdir)) // can walk there
-						break;
-					++walkdir;
-				}
-				if(rv < MAX_D) // found a dir to walk to
-				{
-					send_buffer.clear();
-					send_buffer.add((unsigned char)MID_TAKE_ACTION);
-					send_buffer.add(cur_id);
-					send_buffer.add(curturn);
-					send_buffer.add(axn_counter);
-					send_buffer.add((unsigned char)XN_MOVE);
-					send_buffer.add((unsigned char)walkdir);
-					do_send();
-					++axn_counter;
-				} // else we're stuck or something...
-				last_sent_axn.update();
-			}
-		}
+					// First check if we could do something special:
+					if(myclass == C_HEALER && (rv = neighb_teammate()) != MAX_D)
+						send_action(XN_HEAL, rv); // heal teammate
+					else if(myclass == C_HEALER && myhp < 2*classes[C_HEALER].hp/3)
+						send_action(XN_HEAL, MAX_D); // heal self
+					else if(myclass == C_WIZARD && mmsafe())
+					{
+						send_action(XN_MM);
+						wait_turns = 2;
+					}
+					else if(myclass == C_FIGHTER && (rv = should_cs()) != MAX_D)
+					{
+						send_action(XN_CIRCLE_ATTACK, rv);
+						wait_turns = 3;
+					}
+					else // try to walk
+					{
+						// If no enemies in sight, either move randomly or follow teammates:
+						if(pcs[(myteam+1)%2].empty())
+						{
+							if((walkdir = get_sound_to_follow()) == MAX_D)
+							{
+								// A small chance to just stand still: (1 in 9)
+								if(random()%9)
+								{
+									// Figure out a random dir to walk to (avoid chasms&water and don't run into walls)
+									walkdir = e_Dir(random()%MAX_D);
+									for(rv = 0; rv < MAX_D; ++rv)
+									{
+										if(!no_walk_to(walkdir)) // can walk there
+											break;
+										++walkdir;
+									}
+									if(rv < MAX_D)
+										send_action(XN_MOVE, walkdir);
+								}
+							}
+							else
+								try_walk_towards(walkdir, true); // don't walk on PCs
+						}
+						else // there are enemies in sight
+						{
+							rv = VIEWSIZE; // find the closest one
+							for(picked = ci = pcs[(myteam+1)%2].begin(); ci != pcs[(myteam+1)%2].end(); ++ci)
+							{
+								if(ci->dist_walk(center) < rv)
+								{
+									rv = ci->dist_walk(center);
+									picked = ci;
+								}
+							}
+							try_walk_towards(center.dir_of(*picked)); // *do* walk on PCs
+						}
+					} // walking
+				} // no need to wait until previous action is done
+				last_sent_axn.update(); // behave as if acted even if didn't
+			} // enough time passed to take next action
+		} // is alive
 	} // for eva
 
 	// Disconnect

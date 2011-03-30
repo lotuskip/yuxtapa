@@ -419,6 +419,7 @@ void Game::init_game()
 			break;
 		case GM_DESTR:
 			objective_str = "Destroy " + sector_name[obj_sector] + " boulders";
+			break;
 		case GM_TDM:
 			objective_str = "Team deathmatch";
 			break;

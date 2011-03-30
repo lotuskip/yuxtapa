@@ -1,0 +1,49 @@
+<html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
+<h2>Technicalities</h2>
+
+<p>This page is intended to answer some questions about the &quot;architecture&quot;, &quot;design principles&quot;, and &quot;layout&quot; of the yuxtapa
+source code. (The quotation marks refer to lack in actuality.) So, unless you're a programmer who's interested in how yuxtapa works and too lazy to look at
+the code, don't bother reading on.</p>
+
+<p>In a certain sense, the yuxtapa client and server are very strictly separated. The client <em>only</em> reads player input and displays stuff on the
+screen, without understanding much about what is going on. The server handles <em>all</em> in-game logic, and it even does the &quot;rendering&quot;.
+(Imagine a 3D-shooter where the server renders a ready <em>picture</em> for each client for each frame...). In other words, the client doesn't know about
+any &quot;objects in the game&quot;, it only receives a ready-made picture to display for the player.</p>
+
+<p>There are certain reasons for this kind of design:
+<ul>
+<li>makes coding more simple; a change in the server rarely requires a change in the client and vice versa</li>
+<li>makes many (but not all) forms of cheating literally impossible</li>
+</ul></p>
+
+<p>This pattern cannot feasibly be followed all that extremely. Ideally, the client wouldn't need to know about <em>any</em> game variables. But in
+practice, it knows the PC's current class, for instance, so that it can directly allow the player to aim with her bow without asking the server first if this
+is right or not.</p>
+
+
+<h4>Dependencies, and reasons behind them</h4>
+
+<p>The requirement of Ncurses should be obvious: we use it to display things on the client side.</p>
+
+<p>C++ Boost is used for:
+<ul>
+<li>lexical casts (change interger 123 into string &quot;123&quot;); <em>could be removed</em></li>
+<li>trimming strings of whitespaces; <em>could be removed</em></li>
+<li>boost arrays, which are sort of nice; I haven't looked into how involved coding these myself would be</li>
+</ul>
+All and all, getting rid of boost-dependencies would be nice, but for now it remains required.</p>
+
+<p>zlib is used to compress the &quot;rendered&quot; views the server sends to clients. I think this is smart. A view update is always over a KiB big, and
+we might send up to 4 of them per second to each player, and there might be something like 50 players (that would be 200 packages per second). The
+compression also doesn't seem to contribute much to the server's workload.</p>
+
+<h4>About the bots</h4>
+
+<p>To keep things, and in particular the server, simple and manageable, the bots are separate programs that from the server's point of view are almost like
+any clients. This means that the bots do not have direct access to game data: they see only what the server sends them just like regular clients! While
+perhaps unefficient in certain ways, this makes writing realistic AI much easier, and in particular the development of the AI is entirely separate from the
+server code. It also, in principle, allows using remote bots: since the bot executable is separate from the server executable, it doesn't matter if it is
+running on a separate machine. Most importantly, changes in the AI (where <em>most</em> changes in the future quite likely will take place) do not require
+changing or recompiling the server.</p>
+
+</body></html>

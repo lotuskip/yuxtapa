@@ -4,7 +4,7 @@ be of interest only to people who develop yuxtapa.
 anims.cpp
 	Used to test the "update animations"; you can use this to see how a non-
 	laggy update indicator looks like... Doesn't do unicode like the client
-	does. Compile with -lncurses
+	does, just ASCII (1 byte per symbol). Compile with -lncurses
 
 lostbl.cpp
 	Used to generate the ../common/los_lookup.h file. (Runs Bresenham's
@@ -19,9 +19,9 @@ scenecol.cpp
 mrbrown.cpp
 	Since I don't have enough interested Linux-using friends to test the
 	game with multiple players, I wrote this idiot bot client, that just
-	kind of walks around randomly (hence the name). It keeps running until
-	the server shuts down. If anyone wants to write actual bots for yuxtapa,
-	this is the starting point: all it needs is a bit of AI!
+	kind of walks around randomly (hence the name). It is usually spawned
+	as a child process to the server.
+	UPDATE: now they actually do some not-quite-idiotic stuff, too.
 
 To compile any of these except mrbrown, do
 	g++ -o NAME -O2 NAME.cpp [-lncurses]

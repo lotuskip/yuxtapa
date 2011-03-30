@@ -1,22 +1,14 @@
 <html><head><title>yuxtapa manual</title></head><body><p><a href=index.html>Index</a></p>
 <h2>Bots</h2>
 
-<p>At the moment, there are no real, competitive bots in yuxtapa. What there are
-are <em>Mr. Browns</em>.</p>
-
-<p>Mr. Browns are bot programs that function like bots in many other multiplayer
-games, but don't have any kind of AI. They just move around randomly (hence
-the name).</p>
-
-<p>What are they good for? Well...
-<ul>
-<li>Testing. The main reason they were introduced was that there were not enough people to test multiplaying otherwise.</li>
-<li>Target practise. It can actually be difficult to beat them in melee.</li>
-</ul></p>
+<p>The yuxtapa bots are called <em>Mr. Browns</em>. Their AI is primitive, but growing piecemeal.
+It will never be really awesome, since this is not an experiment in AI theory.</p>
 
 <p>Admins (see <a href="adminlevels.html">Admin levels</a>) can spawn Mr. Browns in-game (see
-<a href="chatting.html">Chatting and shouting</a>).
-There is also a command for dropping all the bots.</p>
+<a href="chatting.html">Chatting and shouting</a>). There is also a command for dropping all the bots.
+All of this requires that the server admin has setup the bots properly, see <a href="serverconf.html">server configuration</a>.</p>
+
+<p>The bots will automatically join a team, and do their best to be useful, which so far is not much.</p>
 
 <p>Spawning several bots can introduce a significant momentary delay as all the bot processes are initiated.
 Also, the server machine now has to run not only the server but all the bots; drop the bots if it seems that they
@@ -34,7 +26,7 @@ you must compile it separately with
 <pre>
 make mrbrown
 </pre>
-If at some point the bots get an AI and become generally <em>useful</em>,
+If at some point the bots become widely <em>useful</em> and <em>desirable</em>,
 they will be added to the release as a third component, just like the client and the server are now.</p>
 
 <p>The above make call should build an executable called 'mrbrown' in the 'yuxtapa' parent directory. You can move this executable

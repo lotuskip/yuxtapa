@@ -55,6 +55,7 @@ final map size span of 42--511 */
 string confdir_str = "";
 string greeting = "";
 string botexe = "";
+string banned_cmds = "";
 #endif // not maptest build
 std::string mapdir = "";
 #ifndef MAPTEST
@@ -248,6 +249,26 @@ void Config::read_config()
 			}
 			continue;
 		}
+		if(keyw == "ban_command")
+		{
+			for(;;)
+			{
+				ss >> keyw;
+				for(i = 0; i < MAX_SERVER_CMD; ++i)
+				{
+					if(keyw == server_cmd[i] && banned_cmds.find(char(i)) == string::npos)
+					{
+						banned_cmds += char(i);
+						break;
+					}
+				}
+				if(i == MAX_SERVER_CMD)
+					to_log("Unrecognised banned command \'" + keyw + "\' in config!");
+				if(ss.eof())
+					break;
+			}
+			continue;
+		}
 		// if here, not all is okay:
 		to_log("Warning: could not parse the following line in config file:");
 		to_log("\t\"" + s + "\"");
@@ -330,6 +351,11 @@ const string &Config::new_bot_name()
 	if(++botname_iter == botnames.end())
 		botname_iter = botnames.begin();
 	return *botname_iter;
+}
+
+bool Config::is_cmd_banned(const char index)
+{
+	return banned_cmds.find(index) != string::npos;
 }
 
 #endif // not maptest build

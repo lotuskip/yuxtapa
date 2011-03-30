@@ -35,15 +35,22 @@ void draw_titles()
 	char len;
 	char *pos = &(viewbuffer[VIEWSIZE*VIEWSIZE*2+1]);
 	char x,y;
+	char syms;
 	for(char num = viewbuffer[VIEWSIZE*VIEWSIZE*2]; num > 0; --num)
 	{
-		x = *pos;
 		y = *(pos+1); // pos&pos+1 are x/y pair, string begins at pos+2.
 		len = strlen(pos+2);
+		// x-position might need shifting so the string doesn't go over the edge:
+		syms = num_syms(string(pos+2));
+		x = *pos - syms/2;
+		if(x < 0)
+			x = 0;
+		else if(x + syms > VIEWSIZE)
+			x = VIEWSIZE - syms;
 		// If we are alive, don't draw any title coming to the center (that
 		// would be our OWN title)
 		if(x != VIEWSIZE/2 || y != VIEWSIZE/2 || !ClassCPV::im_alive())
-			Base::print_str(pos+2, TITLE_CPAIR, x-num_syms(string(pos+2))/2, y, VIEW_WIN);
+			Base::print_str(pos+2, TITLE_CPAIR, x, y, VIEW_WIN);
 		pos += len+3; // lenght of string + '\0' + 2 chars
 	}
 }

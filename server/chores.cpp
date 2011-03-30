@@ -1210,7 +1210,7 @@ void process_swaps()
 
 void progress_chore(const list<Player>::iterator pit)
 {
-	pit->doing_a_chore--;
+	--(pit->doing_a_chore);
 	switch(pit->cl)
 	{
 	case C_SCOUT: // disguise

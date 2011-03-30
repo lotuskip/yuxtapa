@@ -1,9 +1,9 @@
 # yuxtapa Makefile
 #
 #This option for a pedantic, warnful debug build:
-#CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG
+CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG
 #This one for optimised version:
-CPPFLAGS=-O2 -g0 -fsigned-char
+#CPPFLAGS=-O2 -g0 -fsigned-char
 # Add -DMAPTEST to either one to build a "server" for testing & creating maps
 #
 # Add -DBOTMSG to make the bot client print messages.
