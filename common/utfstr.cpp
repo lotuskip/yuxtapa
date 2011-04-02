@@ -152,3 +152,10 @@ const char* mb_substr(const string &s, const short beg, short len)
 	return s.substr(b, e).c_str();
 }
 
+
+short low_bound(const std::string &s, short n)
+{
+	while(!invalid_cont_byte(s[n-1]))
+		--n;
+	return n;
+}

@@ -4,6 +4,7 @@
 #include "../common/netutils.h"
 #include "../common/constants.h"
 #include "../common/timer.h"
+#include "../common/utfstr.h"
 #include "view.h"
 #include "base.h"
 #include "msg.h"
@@ -371,9 +372,13 @@ void Network::send_line(const string &s, const bool chat)
 	else
 		send_buffer.add((unsigned char)MID_SAY_ALOUD);
 	send_buffer.add(cur_id);
-	send_buffer.add(s);
+	if(s.size() <= MAXIMUM_STR_LEN)	
+		send_buffer.add(s);
+	else
+		send_buffer.add(s.substr(0, low_bound(s, MAXIMUM_STR_LEN)));
 	do_send();
 }
+
 
 void Network::send_spawn(const unsigned char newclass)
 {

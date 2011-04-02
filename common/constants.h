@@ -3,7 +3,7 @@
 #define COMMON_CONSTANTS_H
 
 #define PACKAGE "yux+apa"
-#define VERSION "4a"
+#define VERSION "4b"
 
 const unsigned char VIEWSIZE = 23;
 const unsigned char MSG_WIN_X = 47;
