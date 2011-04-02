@@ -49,7 +49,7 @@ void draw_titles()
 			x = VIEWSIZE - syms;
 		// If we are alive, don't draw any title coming to the center (that
 		// would be our OWN title)
-		if(x != VIEWSIZE/2 || y != VIEWSIZE/2 || !ClassCPV::im_alive())
+		if(*pos != VIEWSIZE/2 || y != VIEWSIZE/2 || !ClassCPV::im_alive())
 			Base::print_str(pos+2, TITLE_CPAIR, x, y, VIEW_WIN);
 		pos += len+3; // lenght of string + '\0' + 2 chars
 	}
