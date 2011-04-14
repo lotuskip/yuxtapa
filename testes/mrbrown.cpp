@@ -4,6 +4,7 @@
 #include "../common/classes_common.h"
 #include "../common/coords.h"
 #include "../common/col_codes.h"
+#include "../common/los_lookup.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -57,14 +58,18 @@ void extract_pcs()
 		{
 			switch(viewbuffer[i-1])
 			{
-			case C_GREEN_PC: case C_GREEN_PC_LIT:
+			case C_GREEN_PC: case C_GREEN_PC_LIT: case C_GREEN_ON_HEAL:
+			case C_GREEN_ON_TRAP: case C_GREEN_ON_POIS: case C_GREEN_ON_DISG:
+			case C_GREEN_ON_HIT: case C_GREEN_ON_MISS:
 				pcs[0].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
 				break;
-			case C_PURPLE_PC: case C_PURPLE_PC_LIT:
+			case C_PURPLE_PC: case C_PURPLE_PC_LIT: case C_PURPLE_ON_HEAL:
+			case C_PURPLE_ON_TRAP: case C_PURPLE_ON_POIS: case C_PURPLE_ON_DISG:
+			case C_PURPLE_ON_HIT: case C_PURPLE_ON_MISS:
 				pcs[1].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
 				break;
 			}
-			// TODO: brown PCs? And the above checks also miss PCs that have an indicator colour going on!
+			// TODO: brown PCs?
 		}
 	}
 }
@@ -97,9 +102,57 @@ e_Dir should_cs()
 	return MAX_D;
 }
 
+e_Dir should_dig()
+{
+	Coords c;
+	e_Dir d = e_Dir(random()%MAX_D);
+	for(char i = 0; i < MAX_D; ++i)
+	{
+	 	c = center.in(d);
+		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2+1] == '#')
+			return d;
+		++d;
+	}
+	return MAX_D;
+}
+
 inline bool mmsafe()
 {
 	return pcs[myteam-T_GREEN].empty() && !pcs[(myteam+1)%2].empty();
+}
+
+// Returns true if a shootable target is found and puts the coordinates in 'target'
+bool could_shoot(Coords &target)
+{
+	// Go through enemies in sight:
+	vector<Coords>::const_iterator oti, eti;
+	char r, line, ind;
+	for(eti = pcs[(myteam+1)%2].begin(); eti != pcs[(myteam+1)%2].end(); ++eti)
+	{
+		if((r = center.dist_walk(*eti)) == 1) // enemy right next to us!
+		{
+			target = *eti;
+			return true;
+		}
+		// Check that there are no teammates on the line of fire:
+		if(eti->y == -r) line = eti->x + r;
+		else if(eti->x == r) line = 3*r + eti->y;
+		else if(eti->y == r) line = 5*r - eti->x;
+		else /* eti->x == -r */ line = 7*r - eti->y;
+		for(ind = 0; ind < 2*r; ind += 2)
+		{
+			if(find(pcs[myteam-T_GREEN].begin(), pcs[myteam-T_GREEN].end(),
+				Coords(loslookup[r-2][line*2*r+ind], loslookup[r-2][line*2*r+ind+1]))
+				!= pcs[myteam-T_GREEN].end())
+				break;
+		}
+		if(ind == 2*r) // no teammates broke the loop:
+		{
+			target = *eti;
+			return true;
+		}
+	}
+	return false; // no targets found
 }
 
 e_Dir get_sound_to_follow()
@@ -301,6 +354,7 @@ connected:
 	do_send();
 
 	e_Dir walkdir;
+	Coords shoot_targ;
 	vector<Coords>::const_iterator picked, ci;
 	for(;;)
 	{
@@ -374,24 +428,31 @@ connected:
 					// First check if we could do something special:
 					if(myclass == C_HEALER && (rv = neighb_teammate()) != MAX_D)
 						send_action(XN_HEAL, rv); // heal teammate
-					else if(myclass == C_HEALER && myhp < 2*classes[C_HEALER].hp/3)
+					else if(myclass == C_HEALER && myhp <= 2*classes[C_HEALER].hp/3)
 						send_action(XN_HEAL, MAX_D); // heal self
 					else if(myclass == C_WIZARD && mmsafe())
 					{
-						send_action(XN_MM);
+						send_action(XN_MM); // cast magic missile
 						wait_turns = 2;
 					}
 					else if(myclass == C_FIGHTER && (rv = should_cs()) != MAX_D)
 					{
-						send_action(XN_CIRCLE_ATTACK, rv);
+						send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
 						wait_turns = 3;
 					}
+					else if(myclass == C_MINER && (rv = should_dig()) != MAX_D)
+					{
+						send_action(XN_MINE, rv);
+						wait_turns = 7;
+					}
+					else if(myclass == C_ARCHER && could_shoot(shoot_targ))
+						send_action(XN_SHOOT, shoot_targ.x, shoot_targ.y); // fire arrow
 					else // try to walk
 					{
-						// If no enemies in sight, either move randomly or follow teammates:
+						// If no enemies in sight, either move randomly or follow sounds:
 						if(pcs[(myteam+1)%2].empty())
 						{
-							if((walkdir = get_sound_to_follow()) == MAX_D)
+							if((walkdir = get_sound_to_follow()) == MAX_D) // no sound to follow
 							{
 								// A small chance to just stand still: (1 in 9)
 								if(random()%9)
@@ -408,7 +469,7 @@ connected:
 										send_action(XN_MOVE, walkdir);
 								}
 							}
-							else
+							else // follow sound
 								try_walk_towards(walkdir, true); // don't walk on PCs
 						}
 						else // there are enemies in sight
