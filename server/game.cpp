@@ -629,10 +629,14 @@ bool Game::process_turn()
 					progress_chore(it);
 				else if(it->action_queue.empty())
 				{
-					it->turns_without_axn++;
 					if(it->cl != C_ASSASSIN && it->limiter)
 						it->limiter--;
-					trap_detection(it);
+					// Being blind prevents trap detection and is not considered idling:
+					if(!it->own_vp->is_blind())
+					{
+						it->turns_without_axn++;
+						trap_detection(it);
+					}
 				}
 				else
 				{
