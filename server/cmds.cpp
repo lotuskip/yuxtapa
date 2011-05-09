@@ -219,6 +219,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					keyw.replace(keyw.rfind(' ', MAXIMUM_STR_LEN-4),
 						keyw.size(), "...");
 				Network::to_chat(keyw);
+				closedir(dp);
 			}
 		}
 		return false; // may broadcast

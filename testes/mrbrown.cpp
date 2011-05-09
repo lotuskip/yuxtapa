@@ -104,6 +104,10 @@ e_Dir should_cs()
 
 e_Dir should_dig()
 {
+	// We don't want to just dig all the time; only dig with 1/5 chance:
+	if(random()%5)
+		return MAX_D;
+	// else:
 	Coords c;
 	e_Dir d = e_Dir(random()%MAX_D);
 	for(char i = 0; i < MAX_D; ++i)
@@ -446,7 +450,10 @@ connected:
 						wait_turns = 7;
 					}
 					else if(myclass == C_ARCHER && could_shoot(shoot_targ))
-						send_action(XN_SHOOT, shoot_targ.x, shoot_targ.y); // fire arrow
+					{
+						send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2); // fire arrow
+						wait_turns = 2; // just to cut some slack...
+					}
 					else // try to walk
 					{
 						// If no enemies in sight, either move randomly or follow sounds:
