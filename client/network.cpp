@@ -124,8 +124,8 @@ void store_id_for_server(const unsigned short id,
 
 } // end local namespace
 
-
 extern e_ClientState clientstate;
+extern char viewbuffer[BUFFER_SIZE]; // defined in view.cpp
 
 
 bool Network::connect(string &errors)
@@ -278,7 +278,6 @@ bool Network::receive_n_handle()
 
 			if(msglen > 5) // msg is not very small => view has changed
 			{
-				extern char viewbuffer[BUFFER_SIZE]; // defined in view.cpp
 				recv_buffer.read_compressed(viewbuffer);
 				if(clientstate != CS_LIMBO && clientstate != CS_HELP)
 					redraw_view();
