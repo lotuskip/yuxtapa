@@ -22,6 +22,9 @@ void player_death(const std::list<Player>::iterator pit, const std::string &way,
 // Use only kill_player when "internally" removing a player without
 // recording a death.
 
+// this calls player_death and records a kill to the poisoner
+void player_poisoned(const std::list<Player>::iterator it);
+
 class OwnedEnt;
 // Handles missile (arrow/mm/zap) collisions with anything; returns
 // true if a collision happens at 'c'.

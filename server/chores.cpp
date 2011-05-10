@@ -63,10 +63,10 @@ void update_lights_around(const Coords &c)
 
 bool can_dig_in(const Coords &c, const e_Dir d)
 {
-	// Mining requires one of: (A) there is a wall/window, (B) there is a blocked
+	// Mining requires one of: (A) there is a wall/window/door, (B) there is a blocked
 	// boulder, (C) there is a boulder source.
 	Tile* tp = Game::curmap->mod_tile(c);
-	if(tp->symbol == '#' || tp->symbol == '|' || tp->symbol == '-'
+	if(tp->symbol == '#' || tp->symbol == '|' || tp->symbol == '-' || tp->symbol == '+'
 		|| (tp->flags & TF_NOCCENT && any_noccent_at(c, NOE_BLOCK_SOURCE)
 			!= noccents[NOE_BLOCK_SOURCE].end()))
 		return true;
@@ -789,8 +789,8 @@ void limiter_upd(const list<Player>::iterator pit)
 	pit->wait_turns += 2*pit->limiter;
 }
 
-// Used when mining open a tile. If it is a wall tile (not window), this should
-// be follows by finish_wall_dig([coords]). Otherwise (if window), it should be
+// Used when mining open a tile. If it is a wall tile (not window or door), this should
+// be follows by finish_wall_dig([coords]). Otherwise (if window or door), it should be
 // followed by event_set.insert(c).
 void dig_open(Tile* const tp)
 {
@@ -913,8 +913,11 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		}
 		if(it != PCs.end()) // was broken
 			break;
-		// If here, just suicide:
-		player_death(pit, " suicided.", true);
+		// If here, check for being poisoned with just 1 hp:
+		if(pit->poisoner != cur_players.end() && pit->cl_props.hp == 1)
+			player_poisoned(pit);
+		else // a valid suicide
+			player_death(pit, " suicided.", true);
 		break;
 	}
 	case XN_MOVE:
@@ -1176,6 +1179,11 @@ void kill_player(const list<Player>::iterator pit)
 	time(&(pit->last_switched_cl));
 }
 
+void player_poisoned(const list<Player>::iterator it)
+{
+	it->poisoner->stats_i->kills[WTK_POISON]++;
+	player_death(it, " was poisoned by " + it->poisoner->nick + '.', true);
+}
 
 void process_swaps()
 {
@@ -1281,10 +1289,12 @@ void progress_chore(const list<Player>::iterator pit)
 				dig_open(tp);
 				finish_wall_dig(c);
 			}
-			// windows -- same thing but no NODIG check:
-			else if(tp->symbol == '|' || tp->symbol == '-')
+			// windows&doors -- same thing but no NODIG check:
+			else if(tp->symbol == '|' || tp->symbol == '-' || tp->symbol == '+')
 			{
 				dig_open(tp);
+				if(tp->symbol == '+') // since doors are not seethru
+					update_lights_around(c);
 				event_set.insert(c);
 			}
 			// Destroying a boulder:

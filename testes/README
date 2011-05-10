@@ -3,8 +3,9 @@ be of interest only to people who develop yuxtapa.
 
 anims.cpp
 	Used to test the "update animations"; you can use this to see how a non-
-	laggy update indicator looks like... Doesn't do unicode like the client
-	does, just ASCII (1 byte per symbol). Compile with -lncurses
+	laggy update indicator looks like... Give the animation string (just like
+	the ones in client.conf) as the 1st argument, and turn length as the 2nd;
+	default for this is 250ms. Compile with -lncursesw
 
 lostbl.cpp
 	Used to generate the ../common/los_lookup.h file. (Runs Bresenham's
@@ -14,7 +15,7 @@ scenecol.cpp
 	Used to test the colour values in ../client/colourdef.h. Prints stuff
 	like you see when playing, using the colour definitions given in the
 	header file. Also works for testing terminals and fonts, obviously.
-	Compile with -lncurses
+	Compile with -lncursesw
 
 mrbrown.cpp
 	Since I don't have enough interested Linux-using friends to test the
@@ -24,6 +25,6 @@ mrbrown.cpp
 	UPDATE: now they actually do some not-quite-idiotic stuff, too.
 
 To compile any of these except mrbrown, do
-	g++ -o NAME -O2 NAME.cpp [-lncurses]
+	g++ -o NAME -O2 NAME.cpp [-lncursesw]
 See the manual page on bots for mrbrown's installation information.
 

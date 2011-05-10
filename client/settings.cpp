@@ -21,7 +21,7 @@ const char MAX_ANIM_LEN = 15;
 
 const char CTRL_ADD = 64; // 'A'-1
 
-const string default_key_bds = "896321475 pCscTXuwt+-lQo"; // cf. enum e_Key_binding
+const string default_key_bds = "896321475 p\tscTXuwt+-lQo"; // cf. enum e_Key_binding
 const string default_nick = "player";
 const string default_anim = "-\\|/";
 

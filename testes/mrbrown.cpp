@@ -74,6 +74,7 @@ void extract_pcs()
 	}
 }
 
+// Returns direction of first neighbouring teammate if any (MAX_D if not found)
 e_Dir neighb_teammate()
 {
 	if(!pcs[myteam-T_GREEN].empty())
@@ -87,10 +88,9 @@ e_Dir neighb_teammate()
 	return MAX_D;
 }
 
-e_Dir should_cs()
+// Returns direction of first neighbouring enemy if any (MAX_D if not found)
+e_Dir neighb_enemy()
 {
-	if(neighb_teammate() != MAX_D)
-		return MAX_D;
 	if(!pcs[(myteam+1)%2].empty())
 	{
 		for(char d = 0; d < MAX_D; ++d)
@@ -102,10 +102,18 @@ e_Dir should_cs()
 	return MAX_D;
 }
 
+e_Dir should_cs()
+{
+	if(neighb_teammate() != MAX_D)
+		return MAX_D;
+	return neighb_enemy();
+}
+
 e_Dir should_dig()
 {
-	// We don't want to just dig all the time; only dig with 1/5 chance:
-	if(random()%5)
+	// If there are enemies in view, don't dig.
+	// Also, we don't want to just dig all the time; only dig with 1/5 chance:
+	if(random()%5 || !pcs[(myteam+1)%2].empty())
 		return MAX_D;
 	// else:
 	Coords c;
@@ -430,8 +438,9 @@ connected:
 				else
 				{
 					// First check if we could do something special:
-					if(myclass == C_HEALER && (rv = neighb_teammate()) != MAX_D)
-						send_action(XN_HEAL, rv); // heal teammate
+					if(myclass == C_HEALER &&
+						((rv = neighb_enemy()) != MAX_D || (rv = neigh_teammate()) != MAX_D))
+						send_action(XN_HEAL, rv); // poison enemy or heal temmate
 					else if(myclass == C_HEALER && myhp <= 2*classes[C_HEALER].hp/3)
 						send_action(XN_HEAL, MAX_D); // heal self
 					else if(myclass == C_WIZARD && mmsafe())
@@ -464,7 +473,7 @@ connected:
 								// A small chance to just stand still: (1 in 9)
 								if(random()%9)
 								{
-									// Figure out a random dir to walk to (avoid chasms&water and don't run into walls)
+									// Figure out a random dir to walk
 									walkdir = e_Dir(random()%MAX_D);
 									for(rv = 0; rv < MAX_D; ++rv)
 									{
