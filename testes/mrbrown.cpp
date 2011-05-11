@@ -36,14 +36,151 @@ e_Team myteam;
 e_Class myclass = NO_CLASS;
 char viewbuffer[BUFFER_SIZE];
 
+/// Networking related:
+////////////////////////
+
+msTimer last_sent_axn, reftimer;
+
+bool do_send()
+{
+	return sendto(s_me, send_buffer.getr(), send_buffer.amount(), 0,
+		the_serv->ai_addr, the_serv->ai_addrlen) == -1;
+}
+
+void send_action(const unsigned char xncode, const unsigned char var1 = 0, const unsigned char var2 = 0)
+{
+	send_buffer.clear();
+	send_buffer.add((unsigned char)MID_TAKE_ACTION);
+	send_buffer.add(cur_id);
+	send_buffer.add(curturn);
+	send_buffer.add(axn_counter);
+	send_buffer.add(xncode);
+	if(xncode == XN_MOVE || xncode == XN_SHOOT || xncode == XN_ZAP
+		|| xncode == XN_CIRCLE_ATTACK || xncode == XN_HEAL || xncode == XN_MINE)
+	{
+		send_buffer.add(static_cast<unsigned char>(var1));
+		if(xncode == XN_SHOOT)
+			send_buffer.add(static_cast<unsigned char>(var2));
+	}
+	do_send();
+	++axn_counter;
+}
+
+sockaddr them;
+socklen_t addr_len;
+short do_receive()
+{
+	addr_len = sizeof(them);
+	return recvfrom(s_me, recv_buffer.getw(), BUFFER_SIZE, 0, &them, &addr_len);
+}
+
+/// AI related:
+////////////////////////////////////////////
+
 const Coords center(VIEWSIZE/2, VIEWSIZE/2);
-bool no_walk_to(const e_Dir d, const bool incl_pcs = false)
+
+enum { WALK_DONT=0, WALK_OKAY, WALK_GOOD, WALK_GREAT };
+
+// Estimate how wise it is to take a step in the current direction.
+char score_walk(const e_Dir d, const bool avoid_pcs)
 {
 	Coords c = center.in(d);
 	// colour is at (y*SIZE+x)*2, symbol at that+1
 	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
-	return (sym == '?' || sym == '~' || sym == '#' || sym == '^'
-		|| (incl_pcs && sym == '@'));
+	if(sym == '?' || sym == '~' || sym == '#' // always to be avoided
+		|| (sym == '^' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_NEUT_FLAG) // traps to be avoided in the dark
+		|| (avoid_pcs && sym == '@')) // and PCs if requested
+		return WALK_DONT;
+	// Assassins prefer nonlit tiles by walls; trappers prefer nonlit tree squares:
+	if(myclass == C_ASSASSIN)
+	{
+		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_TREE_LIT) // not lit
+		{
+			Coords cn;
+			for(char ch = 0; ch < MAX_D; ++ch)
+			{
+				cn = c.in(e_Dir(ch));
+				if(viewbuffer[(cn.y*VIEWSIZE+cn.x)*2+1] == '#')
+					return WALK_GREAT; // by a wall
+			}
+		}
+	}
+	else if(myclass == C_TRAPPER)
+	{
+		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2] == C_TREE)
+			return WALK_GREAT;
+	}
+	// give lower score for rough and marsh (except with scouts and trappers)
+	if((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
+		return WALK_OKAY;
+	return WALK_GOOD; // just a walkable tile
+}
+
+e_Dir prev_committed_walk = MAX_D; // direction of last step taken
+
+// Walk to direction d if can. If cannot, try ++d and --d in random order.
+// Returns whether did move.
+bool random_turn_from_dir(e_Dir d, const bool avoid_pcs)
+{
+	char score_d = score_walk(d, avoid_pcs);
+	char score_pd = score_walk(++d, avoid_pcs);
+	char score_md = score_walk(--(--d), avoid_pcs);
+
+	if(score_d >= max(score_pd, score_md)) // d has best score
+	{
+		if(!score_d) // this means all scores == 0
+			return false;
+		// else:
+		// note that ++d returns d to original value
+		send_action(XN_MOVE, (prev_committed_walk = ++d));
+	}
+	else if(score_pd > score_md) // ++d has best score
+		send_action(XN_MOVE, (prev_committed_walk = ++(++d)));
+	else // --d has best score
+		send_action(XN_MOVE, (prev_committed_walk = d));
+	return true;
+}
+
+void random_walk()
+{
+	// if can, continue in previous direction
+	if(!random_turn_from_dir(prev_committed_walk, true))
+	{
+		// walk entirely randomly, then.
+		// A small chance to just stand still: (1 in 9)
+		if(random()%9)
+		{
+			// Figure out a random dir to walk
+			e_Dir walkdir = e_Dir(random()%MAX_D);
+			e_Dir goodscorer = MAX_D;
+			e_Dir onescorer = MAX_D;
+			char i, j;
+			for(i = 0; i < MAX_D; ++i)
+			{
+				if((j = score_walk(walkdir, true)) == WALK_GREAT)
+					break; // pick direction with score > 1 immediately
+				if(j == WALK_GOOD)
+					goodscorer = walkdir;
+				else if(j != WALK_DONT)
+					onescorer = walkdir;
+				++walkdir;
+			}
+			if(i < MAX_D) // found a very good direction
+				send_action(XN_MOVE, (prev_committed_walk = walkdir));
+			else if(goodscorer != MAX_D) // found a good direction
+				send_action(XN_MOVE, (prev_committed_walk = goodscorer));
+			else if(onescorer != MAX_D) // found an acceptable direction
+				send_action(XN_MOVE, (prev_committed_walk = onescorer));
+			// else can't walk anywhere!
+		}
+	}
+}
+
+void try_walk_towards(const Coords &c, const bool avoid_pcs)
+{
+	// if cannot walk towards c (trying 3 different steps), walk randomly.
+	if(!random_turn_from_dir(center.dir_of(c), avoid_pcs))
+		random_walk();
 }
 
 vector<Coords> pcs[2];
@@ -167,73 +304,23 @@ bool could_shoot(Coords &target)
 	return false; // no targets found
 }
 
-e_Dir get_sound_to_follow()
+bool get_sound_to_follow(Coords &t)
 {
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
 		// get first sound effect, not including center of view
 		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1)
 		{
-			Coords c(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE);
-			return center.dir_of(c);
+			t = Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE);
+			return true;
 		}
 	}
-	return MAX_D;
+	return false;
 }
 
 
-msTimer last_sent_axn, reftimer;
-
-bool do_send()
-{
-	return sendto(s_me, send_buffer.getr(), send_buffer.amount(), 0,
-		the_serv->ai_addr, the_serv->ai_addrlen) == -1;
-}
-
-void send_action(const unsigned char xncode, const unsigned char var1 = 0, const unsigned char var2 = 0)
-{
-	send_buffer.clear();
-	send_buffer.add((unsigned char)MID_TAKE_ACTION);
-	send_buffer.add(cur_id);
-	send_buffer.add(curturn);
-	send_buffer.add(axn_counter);
-	send_buffer.add(xncode);
-	if(xncode == XN_MOVE || xncode == XN_SHOOT || xncode == XN_ZAP
-		|| xncode == XN_CIRCLE_ATTACK || xncode == XN_HEAL || xncode == XN_MINE)
-	{
-		send_buffer.add(static_cast<unsigned char>(var1));
-		if(xncode == XN_SHOOT)
-			send_buffer.add(static_cast<unsigned char>(var2));
-	}
-	do_send();
-	++axn_counter;
-}
-
-
-void try_walk_towards(const e_Dir d, const bool avoid_pcs = false, const bool do_turn = true)
-{
-	// Try d; then randomly either ++d or --d:
-	if(!no_walk_to(d, avoid_pcs))
-		send_action(XN_MOVE, d);
-	else if(do_turn)
-	{
-		e_Dir c = d;
-		if(random()%2)
-			++c;
-		else
-			--c;
-		try_walk_towards(c, avoid_pcs, false);
-	}
-}
-
-
-sockaddr them;
-size_t addr_len;
-short do_receive()
-{
-	addr_len = sizeof(them);
-	return recvfrom(s_me, recv_buffer.getw(), BUFFER_SIZE, 0, &them, &addr_len);
-}
+// MAIN:
+// ///////////////////////////////
 
 int main(int argc, char *argv[])
 {
@@ -365,7 +452,6 @@ connected:
 	send_buffer.add((unsigned char)(random()%NO_CLASS));
 	do_send();
 
-	e_Dir walkdir;
 	Coords shoot_targ;
 	vector<Coords>::const_iterator picked, ci;
 	for(;;)
@@ -439,7 +525,7 @@ connected:
 				{
 					// First check if we could do something special:
 					if(myclass == C_HEALER &&
-						((rv = neighb_enemy()) != MAX_D || (rv = neigh_teammate()) != MAX_D))
+						((rv = neighb_enemy()) != MAX_D || (rv = neighb_teammate()) != MAX_D))
 						send_action(XN_HEAL, rv); // poison enemy or heal temmate
 					else if(myclass == C_HEALER && myhp <= 2*classes[C_HEALER].hp/3)
 						send_action(XN_HEAL, MAX_D); // heal self
@@ -468,25 +554,10 @@ connected:
 						// If no enemies in sight, either move randomly or follow sounds:
 						if(pcs[(myteam+1)%2].empty())
 						{
-							if((walkdir = get_sound_to_follow()) == MAX_D) // no sound to follow
-							{
-								// A small chance to just stand still: (1 in 9)
-								if(random()%9)
-								{
-									// Figure out a random dir to walk
-									walkdir = e_Dir(random()%MAX_D);
-									for(rv = 0; rv < MAX_D; ++rv)
-									{
-										if(!no_walk_to(walkdir)) // can walk there
-											break;
-										++walkdir;
-									}
-									if(rv < MAX_D)
-										send_action(XN_MOVE, walkdir);
-								}
-							}
-							else // follow sound
-								try_walk_towards(walkdir, true); // don't walk on PCs
+							if(get_sound_to_follow(shoot_targ)) // have sound to follow
+								try_walk_towards(shoot_targ, true); // don't walk on PCs
+							else
+								random_walk();
 						}
 						else // there are enemies in sight
 						{
@@ -499,7 +570,7 @@ connected:
 									picked = ci;
 								}
 							}
-							try_walk_towards(center.dir_of(*picked)); // *do* walk on PCs
+							try_walk_towards(*picked, false); // *do* walk on PCs
 						}
 					} // walking
 				} // no need to wait until previous action is done

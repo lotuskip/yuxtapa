@@ -27,7 +27,7 @@ yux+apa mapfile v.2                     # line 1 should read exactly this for th
 Saved on: 22/02/2011 15:12              # line 2 is a comment line and is ignored by the server
 118                                     # line 3 gives the size of the map (number of lines/columns)
 0                                       # line 4: should the map have static torches (0: no, 1: yes)
-dun                                     # line 5: type of the map; 'dun' (dungeon), 'out' (outdoor)
+dun                                     # line 5: type of the map; 'dun' (dungeon), 'out' (outdoor), 'com' (complex)
 </pre>
 After this, the actual map data follows. There is one symbol per tile, and the number of
 rows and columns should be exactly the number given above as the map size.</p>
@@ -50,9 +50,8 @@ H  an undiggable wall
 
 <h3>Generating maps without a running server&amp;client</h3>
 
-<p>By configuring the building process with
-<pre>./configure --enable-maptest</pre>
-you can build a server binary that only generates a random map and exits. (Add '--disable-client' to disable building the client, too.)</p>
+<p>By definine MAPTEST in the Makefile,
+you can build a server binary that only generates a random map and exits. (run with 'make server' to not build the client.)</p>
 
 <p>The produced executable is still called 'yuxtapa_sv', but you might want to rename it to something else, like 'yuxtapa_mg' (map generator). Then run it
 with

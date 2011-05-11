@@ -29,20 +29,8 @@ make the map larger than specified by the config, but never smaller.</p>
 
 <h3>General about running a yuxtapa server</h3>
 <p>yuxtapa is designed to follow an architecture where the server 'does all the work' and
-the client only works as an interpreter between the player and the server. This has
-certain advantages:</p>
-<ul>
-<li>easier development; (most) mutable functionality is restricted to one end of the system</li>
-<li>harder to cheat; clients have very little power over things</li>
-<li>less fuzz with updates; usually old versions of the client will function with the newest server</li>
-</ul>
-and it has one major disadvantage:
-<ul>
-<li>the server can get really busy</li>
-</ul>
-This is because the server, for instance, <em>renders the views</em> for all the players.
-(Okay, rendering a view in yuxtapa is not the same as rendering a 3D world in an FPS game,
-but with 50+ players it can be a considerable workload.)</p>
+the client only works as an interpreter between the player and the server. See the <a
+href="progtech.html">technicalities</a> page for more details.</p>
 
 <p><strong>What kind of a connection does the server need?</strong> A rough formula, assuming
 you follow the default 'pace' of 250ms per turn, is

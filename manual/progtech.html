@@ -12,8 +12,9 @@ any &quot;objects in the game&quot;, it only receives a ready-made picture to di
 
 <p>There are certain reasons for this kind of design:
 <ul>
-<li>makes coding more simple; a change in the server rarely requires a change in the client and vice versa</li>
+<li>makes coding more simple; most changes happen only in one end of the client/server pair</li>
 <li>makes many (but not all) forms of cheating literally impossible</li>
+<li>less fuzz with updates; usually old versions of the client will function with the newest server</li>
 </ul></p>
 
 <p>This pattern cannot feasibly be followed all that extremely. Ideally, the client wouldn't need to know about <em>any</em> game variables. But in
