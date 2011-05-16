@@ -84,17 +84,22 @@ enum { WALK_DONT=0, WALK_OKAY, WALK_GOOD, WALK_GREAT };
 // Estimate how wise it is to take a step in the current direction.
 char score_walk(const e_Dir d, const bool avoid_pcs)
 {
+	// Figure out what is where we're thinking of walking:
 	Coords c = center.in(d);
 	// colour is at (y*SIZE+x)*2, symbol at that+1
 	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
-	if(sym == '?' || sym == '~' || sym == '#' // always to be avoided
-		|| (sym == '^' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_NEUT_FLAG) // traps to be avoided in the dark
+
+	// Check for things we absolutely don't want to walk into:
+	if(sym == '?' // don't walk when blind
+		|| sym == '~' || sym == '#' // always to be avoided
+		|| (sym == 'O' && !classes[myclass].can_push) // a boulder you can't push is like a wall
 		|| (avoid_pcs && sym == '@')) // and PCs if requested
 		return WALK_DONT;
+	
 	// Assassins prefer nonlit tiles by walls; trappers prefer nonlit tree squares:
 	if(myclass == C_ASSASSIN)
 	{
-		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_TREE_LIT) // not lit
+		if(sym != '+' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_TREE_LIT) // no door, not lit
 		{
 			Coords cn;
 			for(char ch = 0; ch < MAX_D; ++ch)
@@ -110,10 +115,15 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2] == C_TREE)
 			return WALK_GREAT;
 	}
-	// give lower score for rough and marsh (except with scouts and trappers)
-	if((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
+	// Give lower score for rough and marsh (except with scouts and trappers),
+	// as well as for pushing boulders (myclass is one that can push, by the above),
+	// as well as for traps that might be accidentally triggered
+	if(sym == 'O'
+		|| ((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
+		|| (sym == '^' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_NEUT_FLAG))
+
 		return WALK_OKAY;
-	return WALK_GOOD; // just a walkable tile
+	return WALK_GOOD; // just a walkable tile (this includes doors)
 }
 
 e_Dir prev_committed_walk = MAX_D; // direction of last step taken
@@ -428,7 +438,7 @@ int main(int argc, char *argv[])
 connected:
 	/* Doing the usual "srandom(time(NULL));" has a nasty side effect: bots
 	 * spawned at the same time usually spawn at the same second, so they
-	 * have the same random seed. Instead, seed from dev/randon: */
+	 * have the same random seed. Instead, seed from dev/urandom: */
 	ifstream urf("/dev/urandom", ios_base::binary);
 	if(!urf)
 	{
@@ -453,6 +463,7 @@ connected:
 	do_send();
 
 	Coords shoot_targ;
+	char limiter = 0; // used to prevent bots from repeating the same action too often
 	vector<Coords>::const_iterator picked, ci;
 	for(;;)
 	{
@@ -508,6 +519,7 @@ connected:
 				if((myclass = e_Class(recv_buffer.read_ch())) == NO_CLASS)
 					myhp = 0; // was forced into a spectator
 				myteam = e_Team(recv_buffer.read_ch());
+				limiter = 0;
 			}
 			//TODO: FANCY AI SHIT!!
 			else if(mid == MID_GAME_UPD) { }
@@ -523,12 +535,20 @@ connected:
 					--wait_turns;
 				else
 				{
+					if(limiter)
+						--limiter;
 					// First check if we could do something special:
-					if(myclass == C_HEALER &&
+					if(myclass == C_HEALER && !limiter &&
 						((rv = neighb_enemy()) != MAX_D || (rv = neighb_teammate()) != MAX_D))
+					{
 						send_action(XN_HEAL, rv); // poison enemy or heal temmate
-					else if(myclass == C_HEALER && myhp <= 2*classes[C_HEALER].hp/3)
+						limiter = 5; // don't heal again for this many turns
+					}
+					else if(myclass == C_HEALER && !limiter && myhp <= 2*classes[C_HEALER].hp/3)
+					{
 						send_action(XN_HEAL, MAX_D); // heal self
+						limiter = 3;
+					}
 					else if(myclass == C_WIZARD && mmsafe())
 					{
 						send_action(XN_MM); // cast magic missile
@@ -544,10 +564,16 @@ connected:
 						send_action(XN_MINE, rv);
 						wait_turns = 7;
 					}
-					else if(myclass == C_ARCHER && could_shoot(shoot_targ))
+					else if(myclass == C_ARCHER && !limiter && could_shoot(shoot_targ))
 					{
 						send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2); // fire arrow
-						wait_turns = 2; // just to cut some slack...
+						limiter = 2; // just to cut some slack...
+					}
+					else if(myclass == C_TRAPPER && !limiter && pcs[(myteam+1)%2].empty())
+					{
+						send_action(XN_SET_TRAP);
+						wait_turns = 8;
+						limiter = 40; // wait a good while before setting another one
 					}
 					else // try to walk
 					{

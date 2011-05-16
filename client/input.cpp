@@ -30,7 +30,7 @@ const char* offon[2] = { "off.", "on." };
 
 vector<string> prev_strs;
 vector<string>::const_iterator prev_str_it;
-string typed_str;
+string typed_str, viewn_str;
 short type_pos; // in *UTF-8 symbols*, not chars
 short str_syms;
 short printb_pos;
@@ -54,26 +54,27 @@ void walkmode_off()
 void init_type()
 {
 	typed_str.clear();
+	viewn_str.clear();
 	Base::type_cursor((type_pos = str_syms = 0));
 	printb_pos = 0;
 }
 
 void typing_done()
 {
-	if(!typed_str.empty())
+	if(!viewn_str.empty())
 	{
-		if(prev_strs.empty() || typed_str != prev_strs.back())
-			prev_strs.push_back(typed_str);
-		Config::do_aliasing(typed_str);
-		Network::send_line(typed_str, clientstate == CS_TYPE_CHAT);
+		if(prev_strs.empty() || viewn_str != prev_strs.back())
+			prev_strs.push_back(viewn_str);
+		Config::do_aliasing(viewn_str);
+		Network::send_line(viewn_str, clientstate == CS_TYPE_CHAT);
 	}
 	Base::print_str("", 0, 0, MSG_WIN_Y-1, MSG_WIN, true);
 	Base::def_cursor();
 }
 
-void set_typed_str(const string &s)
+void set_viewn_str(const string &s)
 {
-	type_pos = str_syms = num_syms((typed_str = s));
+	type_pos = str_syms = num_syms((viewn_str = s));
 	printb_pos = max(0, str_syms - MSG_WIN_X + 1);
 }
 
@@ -95,7 +96,9 @@ bool check_typing()
 		case KEY_BACKSPACE:
 			if(type_pos > 0)
 			{
-				del(typed_str, type_pos-1);
+				del(viewn_str, type_pos-1);
+				typed_str = viewn_str;
+				prev_str_it = prev_strs.end();
 				if(--type_pos < printb_pos)
 					printb_pos = max(0, printb_pos - MSG_WIN_X/2);
 				--str_syms;
@@ -104,7 +107,9 @@ bool check_typing()
 		case KEY_DC: // delete key
 			if(type_pos < str_syms)
 			{
-				del(typed_str, type_pos);
+				del(viewn_str, type_pos);
+				typed_str = viewn_str;
+				prev_str_it = prev_strs.end();
 				--str_syms;
 			}
 			break;
@@ -130,29 +135,47 @@ bool check_typing()
 			printb_pos = max(0, str_syms - MSG_WIN_X + 1);
 			break;
 		case KEY_UP:
-			if(prev_str_it != prev_strs.begin())
-				set_typed_str(*(--prev_str_it));
+			if(prev_str_it == prev_strs.begin()) // going around
+			{
+				set_viewn_str(typed_str);
+				prev_str_it = prev_strs.end();
+			}
 			else
 			{
-				prev_str_it = prev_strs.end();
-				set_typed_str("");
+				while(prev_str_it != prev_strs.begin())
+				{
+					if((*(--prev_str_it)).find(typed_str) == 0)
+					{
+						set_viewn_str(*prev_str_it);
+						break;
+					}
+				}
 			}
 			break;
 		case KEY_DOWN:
-			if(prev_str_it != prev_strs.end())
-			{
+			if(prev_str_it == prev_strs.end()) // going around
+				prev_str_it = prev_strs.begin();
+			else
 				++prev_str_it;
-				if(prev_str_it != prev_strs.end())
-					set_typed_str(*prev_str_it);
-				else
-					set_typed_str("");
+			while(prev_str_it != prev_strs.end())
+			{
+				if((*prev_str_it).find(typed_str) == 0)
+				{
+					set_viewn_str(*prev_str_it);
+					break;
+				}
+				++prev_str_it;
 			}
-			else if(!prev_strs.empty())
-				set_typed_str(*(prev_str_it = prev_strs.begin()));
 			break;
 		case KEY_NPAGE: // pageDown
 			prev_str_it = prev_strs.end();
-			set_typed_str("");
+			if(viewn_str != typed_str)
+				set_viewn_str(typed_str);
+			else
+			{
+				set_viewn_str("");
+				typed_str.clear();
+			}	
 			break;
 		default: // unknown control key
 			return false;
@@ -166,14 +189,16 @@ bool check_typing()
 			return true;
 		}
 		// else
-		if(key == '\t' || key == KEYCODE_INT) // tab: exit
+		if(key == 27 || key == '\t' || key == KEYCODE_INT) // escape, tab, interrupt
 		{
-			typed_str.clear();
+			viewn_str.clear();
 			typing_done();
 			return true;
 		}
 		// else
-		ins(typed_str, key, type_pos);
+		ins(viewn_str, key, type_pos);
+		typed_str = viewn_str;
+		prev_str_it = prev_strs.end();
 		++str_syms; // string got longer
 		++type_pos;
 		if(type_pos == str_syms && type_pos >= MSG_WIN_X)
@@ -182,7 +207,7 @@ bool check_typing()
 	else // no key at all
 		return false;
 
-	Base::print_str(mb_substr(typed_str, printb_pos,
+	Base::print_str(mb_substr(viewn_str, printb_pos,
 		min(str_syms - printb_pos, int(MSG_WIN_X))),
 		7, 0, MSG_WIN_Y-1, MSG_WIN, true);
 	Base::type_cursor(type_pos - printb_pos);
@@ -196,7 +221,6 @@ bool Input::inputhandle()
 {
 	if(clientstate == CS_TYPE_CHAT || clientstate == CS_TYPE_SHOUT)
 	{
-		// check_typing will accept wide characters
 		if(check_typing()) // returns true if done typing
 		{
 			clientstate = CS_NORMAL;

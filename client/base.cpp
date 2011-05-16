@@ -18,6 +18,8 @@ using namespace std;
 const char MIN_SCREEN_X = 80;
 const char MIN_SCREEN_Y = 24;
 
+const char OUR_ESC_DELAY = 20; //ms
+
 const char walk_syms[2] = { ' ', 'W' };
 
 // These match to e_Dir values:
@@ -117,6 +119,7 @@ bool Base::init_ncurses()
 	keypad(stdscr, TRUE);
 	noecho();
 	timeout(GETCH_TIMEOUT);
+	set_escdelay(OUR_ESC_DELAY);
 	nonl();
 
 	// init base colours first: (with black background)

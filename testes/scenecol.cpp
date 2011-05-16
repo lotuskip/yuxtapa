@@ -49,6 +49,11 @@ const char ctestsym[] = "abcdefghijklmnop" // 16 base colours
 "T@+#~^/T@+#~^/T@+#~^/T@+#~^/T@+#~^/T@+#~^/" // backgroundeds
 "?"; // unknown
 
+const char *colmode_str[] = {
+	"perfect colour mode\n",
+	"multiple-colour mode\n",
+	"16-colour mode\n" };
+
 int main()
 {
 	initscr();
@@ -108,6 +113,10 @@ int main()
 		init_pair(BASE_COLOURS+6*7, BASE_LIGHT_GRAY, BASE_LIGHT_GRAY);
 	}
 	refresh();
+
+	// Inform of colour mode:
+	change_colour(C_NEUT_FLAG_LIT);
+	addstr(colmode_str[colmode]);
 
 	// Outside view.
 	change_colour(C_UNKNOWN);

@@ -26,19 +26,21 @@ Terminals that have been tested to work with full colours 'out-of-the-box':
 </ul></p>
 
 <o>Terminals that similarly should work with full colours <em>once you reset the TERM environment variable</em>
-into something else than the default 'xterm':
-<ul>
-<li>roxterm</li>
-<li>sakura</li>
-<li>Konsole</li>
-<li>evilvte</li>
-</ul>
+into something else than the default 'xterm': <em>roxterm</em>, <em>sakura</em>, <em>Konsole</em>, <em>evilvte</em>,
 and many others, surely.
 For instance Konsole allows changing the terminal identification in the
 settings dialog, but you can also 'export TERM=[something]'. What exactly you
 should place instead of '[something]', depends on your system.</p>
 
 <p>Please tell about your experiences on other terminal emulators so they can be added.</p>
+
+
+<h3>Cursor</h3>
+<p>The cursor is usually placed in the middle of the view, meaning that it is where you see your own PC when playing, or the
+followed PC when following. A typical &quot;block&quot; cursor can be problematic here, as it can hide background colour
+indicators from you. Thus you might want to change the cursor into an underline instead. Ways to do this vary depending on
+your terminal; at least both xterm and urxvt accept the argument '-uc' to enable an underline cursor, and to make it
+permanently so you can add &quot;[xterm/urxvt]*cursorUnderLine: true&quot; to your .Xdefaults.</p>
 
 
 <h3>Size and font</h3>
