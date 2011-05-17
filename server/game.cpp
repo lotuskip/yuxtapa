@@ -51,7 +51,7 @@ const char game_mode_mins[] = {
 };
 
 const string team_name[2] = { "green", "purple" };
-const string team_name_long[3] = { "spectators!", "green team!", "purple team!" };
+const string team_name_long[3] = { "green team!", "purple team!", "spectators!" };
 const string classnames[NO_CLASS] = { "archer", "assassin", "combat mage",
 	"mindcrafter", "scout", "fighter", "miner", "healer", "wizard", "trapper",
 	"planewalker" };
@@ -105,7 +105,7 @@ void active_teambal_check()
 {
 	if(Config::int_settings[IS_TEAMBALANCE] == TB_ACTIVE)
 	{
-		if(abs(num_players[0] - num_players[1]) >= 2)
+		if(abs(num_players[T_GREEN] - num_players[T_PURPLE]) >= 2)
 		{
 			// teams are unbalanced; were they already?
 			if(!team_unbalance)
@@ -165,16 +165,16 @@ void validate_and_process(const Axn &axn, const list<Player>::iterator pit)
 void post_join_msg(const list<Player>::const_iterator pit)
 {
 	Network::to_chat(pit->nick + " has joined the "
-		+ team_name_long[pit->team-1]);
+		+ team_name_long[pit->team]);
 }
 
 void post_spawn_msg(const list<Player>::const_iterator pit)
 {
-	string s = "You will spawn as a " + team_name[int(pit->team == T_PURPLE)];
+	string s = "You will spawn as a " + team_name[pit->team];
 	s += ' ';
 	s += classnames[pit->next_cl];
 	s += '.';
-	Network::construct_msg(s, team_colour[pit->team-1]);
+	Network::construct_msg(s, team_colour[pit->team]);
 	Network::send_to_player(*pit);
 }
 
@@ -202,7 +202,7 @@ void follow_change(const list<Player>::iterator pit,
 	if(pit->viewn_vp != pit->own_vp)
 	{
 		string s = "Now following " + fit->nick + ", a "
-			+ team_name[int(fit->team == T_PURPLE)]
+			+ team_name[fit->team]
 			+ ' ' + classnames[fit->cl] + '.';
 		Network::construct_msg(s, C_ZAP);
 		Network::send_to_player(*pit);
@@ -227,7 +227,7 @@ void upd_num_boulders()
 bool spawn_team(const e_Team t)
 {
 	// If there are no flags, this means the other team has won!
-	if(team_flags[short(t == T_PURPLE)].empty())
+	if(team_flags[t].empty())
 		return true;
 
 	// Do the check for boulder destruction:
@@ -237,7 +237,7 @@ bool spawn_team(const e_Team t)
 		upd_num_boulders();
 		if(!boulders_left)
 		{
-			team_flags[1].clear();
+			team_flags[T_PURPLE].clear();
 			return true; // Green has won!
 		}
 		if(obl != boulders_left) // amount changed!
@@ -245,7 +245,7 @@ bool spawn_team(const e_Team t)
 	}
 
 	list<list<NOccEnt>::iterator>::const_iterator fit
-		= --(team_flags[short(t == T_PURPLE)].end());
+		= --(team_flags[t].end());
 	char spawned = 0;
 
 	nearby_set_dim(Game::curmap->get_size());
@@ -280,8 +280,8 @@ bool spawn_team(const e_Team t)
 			// place, if any:
 			if(++spawned == 9)
 			{
-				if(fit == team_flags[short(t == T_PURPLE)].begin())
-					fit = --(team_flags[short(t == T_PURPLE)].end());
+				if(fit == team_flags[t].begin())
+					fit = --(team_flags[t].end());
 				else
 					--fit;
 				c = (*fit)->getpos();
@@ -370,7 +370,7 @@ void Game::init_game()
 		else if(gamemode == GM_TDM) // Team death match has a VERY short spawn cycle:
 		{
 			spawn_cycle = MIN_SPAWN_CYCLE;
-			tdm_kills[0] = tdm_kills[1] = 0;
+			tdm_kills[T_GREEN] = tdm_kills[T_PURPLE] = 0;
 		}
 		// Do these regardless of whether mode is steal or not:
 		item_moved = false;
@@ -820,10 +820,10 @@ void Game::player_action(const list<Player>::iterator pit, const Axn action)
 
 void Game::construct_team_msgs(const list<Player>::const_iterator to)
 {
-	string teamstrs[3] = { "Spectators:", "Greens:", "Purples:" };
+	string teamstrs[3] = { "Greens:", "Purples:", "Spectators:" };
 	for(list<Player>::const_iterator it = cur_players.begin();
 		it != cur_players.end(); ++it)
-		teamstrs[it->team - 1] += ' ' + it->nick
+		teamstrs[it->team] += ' ' + it->nick
 			+ admin_lvl_str[it->stats_i->ad_lvl];
 	
 	for(char c = 0; c < 3; ++c)
@@ -840,8 +840,8 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 {
 	Network::send_buffer.clear();
 	Network::send_buffer.add((unsigned char)MID_GAME_UPD);
-	Network::send_buffer.add(num_players[0]);
-	Network::send_buffer.add(num_players[1]);
+	Network::send_buffer.add(num_players[T_GREEN]);
+	Network::send_buffer.add(num_players[T_PURPLE]);
 	Network::send_buffer.add(objective_str);
 
 	string obj_status_str;
@@ -850,22 +850,24 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		// Check what happened; by default we assume a tie:
 		obj_status_str = "neither team";
 		// Conditions under which purple wins:
-		if(team_flags[0].empty()
+		if(team_flags[T_GREEN].empty()
 			|| (curturn == map_over_turn && gamemode != GM_DOM && gamemode != GM_TDM)
-			|| (gamemode == GM_TDM && tdm_kills[1] > tdm_kills[0]))
-			obj_status_str = str_team[1];
+			|| (gamemode == GM_TDM && tdm_kills[T_PURPLE] > tdm_kills[T_GREEN]))
+			obj_status_str = str_team[T_PURPLE];
 		// Conditions under which green wins:
-		else if(team_flags[1].empty()
-			|| (gamemode == GM_TDM && tdm_kills[0] > tdm_kills[1]))
-			obj_status_str = str_team[0];
+		else if(team_flags[T_PURPLE].empty()
+			|| (gamemode == GM_TDM && tdm_kills[T_GREEN] > tdm_kills[T_PURPLE]))
+			obj_status_str = str_team[T_GREEN];
 		obj_status_str += " won";
 		if(gamemode == GM_TDM)
 		{
-			if(tdm_kills[0] == tdm_kills[1])
-				obj_status_str += "; score " + boost::lexical_cast<string>(tdm_kills[0]) + " even";
+			if(tdm_kills[T_GREEN] == tdm_kills[T_PURPLE])
+				obj_status_str += "; score "
+					+ boost::lexical_cast<string>(tdm_kills[T_GREEN]) + " even";
 			else
-				obj_status_str += " by " + boost::lexical_cast<string>(max(tdm_kills[1],tdm_kills[0]))
-					+ " to " + boost::lexical_cast<string>(min(tdm_kills[1],tdm_kills[0]));
+				obj_status_str += " by "
+					+ boost::lexical_cast<string>(max(tdm_kills[T_PURPLE],tdm_kills[T_GREEN]))
+					+ " to " + boost::lexical_cast<string>(min(tdm_kills[T_PURPLE],tdm_kills[T_GREEN]));
 		}
 		obj_status_str += '!';
 	}
@@ -875,12 +877,12 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		{
 		case GM_DOM: 
 		case GM_CONQ:
-			if(team_flags[1].size() > team_flags[0].size())
+			if(team_flags[T_PURPLE].size() > team_flags[T_GREEN].size())
 				obj_status_str = "Purple has "
-					+ boost::lexical_cast<string>(team_flags[1].size());
+					+ boost::lexical_cast<string>(team_flags[T_PURPLE].size());
 			else
 				obj_status_str = "Green has "
-					+ boost::lexical_cast<string>(team_flags[0].size());
+					+ boost::lexical_cast<string>(team_flags[T_GREEN].size());
 			obj_status_str += '/';
 			obj_status_str += boost::lexical_cast<string>(noccents[NOE_FLAG].size()); 
 			break;
@@ -898,10 +900,10 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 				+ " left";
 			break;
 		case GM_TDM:
-			if(tdm_kills[0] == tdm_kills[1])
+			if(tdm_kills[T_GREEN] == tdm_kills[T_PURPLE])
 				obj_status_str = "tie!";
 			else
-				obj_status_str = str_team[(tdm_kills[1] > tdm_kills[0])] + " is in the lead";
+				obj_status_str = str_team[(tdm_kills[T_PURPLE] > tdm_kills[T_GREEN])] + " is in the lead";
 			break;
 		default: obj_status_str = ""; break;
 		}
@@ -929,7 +931,7 @@ void Game::send_flag_upds(const list<Player>::const_iterator to)
 			flagbuf[ch] = C_NEUT_FLAG;
 		else
 		{
-			bp = (it->get_m() == T_PURPLE);
+			bp = it->get_m();
 			flagbuf[ch] = C_GREEN_PC
 				+ bp // +1 if purple
 				+ NUM_NORM_COLS*(it == *(--(team_flags[bp].end()))); // make lit if spawn flag
@@ -960,12 +962,13 @@ void Game::send_times(const list<Player>::const_iterator to)
 	Network::send_buffer.add((unsigned short)(
 		(map_over_turn - curturn)*int_settings[IS_TURNMS]/1000));
 	// but the spawn time is team-specific!
-	unsigned char sts[3] = { 0, // specs don't spawn
+	unsigned char sts[3] = {
 		// green spawn time:
 		(spawn_cycle - ((curturn + spawn_cycle/2) % spawn_cycle))
 			*int_settings[IS_TURNMS]/1000,
 		// purple spawn time:
-		(spawn_cycle - (curturn % spawn_cycle))*int_settings[IS_TURNMS]/1000 };
+		(spawn_cycle - (curturn % spawn_cycle))*int_settings[IS_TURNMS]/1000,
+		0 }; // specs don't spawn
 
 	if(to == cur_players.end()) // need to send to all
 	{
@@ -973,13 +976,13 @@ void Game::send_times(const list<Player>::const_iterator to)
 			i != cur_players.end(); ++i)
 		{
 			Network::send_buffer.set_amount(3); // reset to overwrite
-			Network::send_buffer.add(sts[i->team - 1]);
+			Network::send_buffer.add(sts[i->team]);
 			Network::send_to_player(*i);
 		}
 	}
 	else
 	{
-		Network::send_buffer.add(sts[to->team - 1]);
+		Network::send_buffer.add(sts[to->team]);
 		Network::send_to_player(*to);
 	}
 }
@@ -1004,7 +1007,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			if(pit->is_alive())
 				kill_player(pit); /* see player_left_team; it won't call this
 				after we've set the team to spec! */
-			--num_players[pit->team - T_GREEN];
+			--num_players[pit->team];
 			pit->team = T_SPEC;
 			player_left_team(pit);
 			pit->cl = pit->next_cl = NO_CLASS;
@@ -1026,7 +1029,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			e_Team t;
 			if(pit->team != T_SPEC)
 				t = pit->team;
-			else if(num_players[1] < num_players[0])
+			else if(num_players[T_PURPLE] < num_players[T_GREEN])
 				t = T_PURPLE;
 			else
 				t = T_GREEN;
@@ -1043,16 +1046,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 		if(pit->team == T_SPEC)
 		{
 			// Currently a spectator: join the weaker team (or green)
-			if(num_players[1] < num_players[0])
-			{
-				pit->team = T_PURPLE;
-				++num_players[1];
-			}
-			else
-			{
-				pit->team = T_GREEN;
-				++num_players[0];
-			}
+			++num_players[(pit->team = e_Team(num_players[T_PURPLE] < num_players[T_GREEN]))];
 			post_join_msg(pit);
 			if(!intermission)
 			{
@@ -1080,27 +1074,17 @@ void Game::team_switch(const list<Player>::iterator pit)
 	if(pit->team != T_SPEC)
 	{
 		if(int_settings[IS_TEAMBALANCE] != TB_OFF
-			&& num_players[pit->team - T_GREEN] <= num_players[(pit->team+1)%2])
+			&& num_players[pit->team] <= num_players[opp_team[pit->team]])
 		{
 			string s = "You cannot switch team at this time.";
-		 	Network::construct_msg(s, team_colour[pit->team - 1]);
+		 	Network::construct_msg(s, team_colour[pit->team]);
 		 	Network::send_to_player(*pit);
 		}
 		else // ok w.r.t. team balance
 		{
 			// do the change:
-			if(pit->team == T_GREEN)
-			{
-				pit->team = T_PURPLE;
-				++num_players[1];
-				--num_players[0];
-			}
-			else
-			{
-				pit->team = T_GREEN;
-				--num_players[1];
-				++num_players[0];
-			}
+			--num_players[pit->team];
+			++num_players[(pit->team = opp_team[pit->team])];
 
 			// Switch class until find one not limited by classlimit (ALL of
 			// them cannot be limited due to check in settings.cpp!)

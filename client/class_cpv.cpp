@@ -34,9 +34,6 @@ const string pcview_classname[NO_CLASS] = {
 	"Trapper    ",
 	"Planewalker" };
 
-const unsigned char team_col[] = {
-	C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
-
 // variable pc properties:
 char hp = 0, tohit, dam_die, dam_add, dv, pv;
 bool poisoned;
@@ -55,17 +52,17 @@ void reprint_pcinfo()
 	string tmpstr = "(";
 	tmpstr += sector_name[sector];
 	tmpstr += ") ";
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], 52, 3, STAT_WIN, false);
+	Base::print_str(tmpstr.c_str(), team_colour[myteam], 52, 3, STAT_WIN, false);
 
 	tmpstr = "HP: " + boost::lexical_cast<string>(short(hp))
 		+ '/' + boost::lexical_cast<string>(short(classes[myclass].hp));
 	fill_to_ten(tmpstr);
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 4, STAT_WIN, false);
+	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 4, STAT_WIN, false);
 
 	tmpstr = "DV/PV " + boost::lexical_cast<string>(short(dv))
 		+ '/' + boost::lexical_cast<string>(short(pv));
 	fill_to_ten(tmpstr);
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 5, STAT_WIN, false);
+	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 5, STAT_WIN, false);
 
 	tmpstr.clear();
 	if(tohit > 0)
@@ -77,13 +74,13 @@ void reprint_pcinfo()
 	if(dam_add)
 		tmpstr += boost::lexical_cast<string>(short(dam_add));
 	fill_to_ten(tmpstr);
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 6, STAT_WIN, false);
+	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 6, STAT_WIN, false);
 
 	if(poisoned)
 		tmpstr = "[poisoned]";
 	else
 		tmpstr = "          ";
-	Base::print_str(tmpstr.c_str(), team_col[myteam-1], PC_INFO_X, 7, STAT_WIN, false);
+	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 7, STAT_WIN, false);
 
 	Base::print_str(torch_sym, C_TORCH, 51, 4, STAT_WIN, false);
 }
@@ -213,10 +210,10 @@ void ClassCPV::state_change(const unsigned char cl, const unsigned char t)
 
 	// print PC info:
 	if((myclass = e_Class(cl)) == NO_CLASS) // spectator
-		Base::print_str("Spectator  ", team_col[0], PC_INFO_X, 3, STAT_WIN, false);
+		Base::print_str("Spectator  ", team_colour[T_SPEC], PC_INFO_X, 3, STAT_WIN, false);
 	else // actual class 
 	{
-		Base::print_str(pcview_classname[myclass].c_str(), team_col[myteam-1],
+		Base::print_str(pcview_classname[myclass].c_str(), team_colour[myteam],
 			PC_INFO_X, 3, STAT_WIN, false);
 		dam_die = classes[myclass].dam_die;
 		dv = classes[myclass].dv;
@@ -224,8 +221,8 @@ void ClassCPV::state_change(const unsigned char cl, const unsigned char t)
 	}
 	// Clear the rest:
 	for(char y = 4; y < 7; ++y)
-		Base::print_str("          ", team_col[0], PC_INFO_X, y, STAT_WIN, false);
-	Base::print_str("    ", team_col[0], 52, 3, STAT_WIN, false); // map area
+		Base::print_str("          ", team_colour[T_SPEC], PC_INFO_X, y, STAT_WIN, false);
+	Base::print_str("    ", team_colour[T_SPEC], 52, 3, STAT_WIN, false); // map area
 
 	// class/team change requires any class-specific action to end:
 	if(clientstate >= CS_AIMING)

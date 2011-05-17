@@ -67,8 +67,8 @@ void add_noccent(const Coords &c, const e_Noccent type, const short m = 0)
 	// Special things when placing team-owned flags:
 	if(type == NOE_FLAG && m != T_NO_TEAM)
 	{
-		noccents[NOE_FLAG].back().set_col(C_GREEN_PC + short(m == T_PURPLE));
-		team_flags[m == T_PURPLE].push_back(--(noccents[NOE_FLAG].end()));
+		noccents[NOE_FLAG].back().set_col(team_colour[m]);
+		team_flags[m].push_back(--(noccents[NOE_FLAG].end()));
 		// The surroundings of a team flag should be open enough:
 		e_Dir d = D_N;
 		char obss = 0; // 'obstructions', wall or water or chasm
@@ -152,8 +152,8 @@ void do_placement()
 		noccents[tmp].clear();
 	boulders.clear();
 	PCs.clear();
-	team_flags[0].clear();
-	team_flags[1].clear();
+	team_flags[T_GREEN].clear();
+	team_flags[T_PURPLE].clear();
 
 	// we'll be using the nearby search in placement; see spiral.h
 	short msize = Game::curmap->get_size();

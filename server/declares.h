@@ -21,8 +21,6 @@ enum e_MapType {
 };
 const std::string short_mtype_name[MAX_MAPTYPE] = { "dun", "out", "com" };
 
-const unsigned char team_colour[3] = { C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
-
 const unsigned char DEF_MSG_COL = 7;
 
 #endif

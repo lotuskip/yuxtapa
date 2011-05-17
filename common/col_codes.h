@@ -99,4 +99,7 @@ enum {
 	C_UNKNOWN, // unexplored area or outside of map
 	MAX_PREDEF_CPAIR };
 
+// cf. classes_common.h
+const unsigned char team_colour[] = { C_GREEN_PC, C_PURPLE_PC, C_NEUT_FLAG };
+
 #endif

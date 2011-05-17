@@ -17,7 +17,7 @@ D_E, // D_W
 D_SE // D_NW
 };
 
-}
+} // end local namespace
 
 
 e_Dir& operator++(e_Dir& d) { return d = (D_NW==d) ? D_N : e_Dir(d+1); }

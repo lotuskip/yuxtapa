@@ -399,7 +399,7 @@ void Network::to_chat(const string &s)
 	send_buffer.add((unsigned short)0);
 	send_buffer.add(s);
 	send_buffer.add(string("* "));
-	send_buffer.add((unsigned char)0); // no team, server speaking
+	send_buffer.add((unsigned char)T_NO_TEAM); // no team, server speaking
 	broadcast();
 }
 

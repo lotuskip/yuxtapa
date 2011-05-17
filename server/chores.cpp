@@ -86,13 +86,13 @@ bool can_dig_in(const Coords &c, const e_Dir d)
 
 void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 {
-	fit->set_col(C_GREEN_PC + short(t == T_PURPLE));
+	fit->set_col(team_colour[t]);
 	fit->set_misc(t);
-	team_flags[t == T_PURPLE].push_back(fit);
-	string msg = str_team[t == T_PURPLE] + " team captured "
+	team_flags[t].push_back(fit);
+	string msg = str_team[t] + " team captured "
 		+ sector_name[Game::curmap->coords_in_sector(fit->getpos())]
 		+ " flag!";
-	Network::construct_msg(msg, team_colour[t-1]);
+	Network::construct_msg(msg, team_colour[t]);
 	Network::broadcast();
 	// In dominion&conquest this always changes objective status:
 	if(gamemode == GM_DOM || gamemode == GM_CONQ)
@@ -106,12 +106,12 @@ void record_kill(const list<Player>::iterator pit, const char method)
 	++(pit->stats_i->kills[method]);
 	if(gamemode == GM_TDM)
 	{
-		int cmp = int(tdm_kills[0]) - tdm_kills[1];
-		tdm_kills[pit->team == T_PURPLE]++;
+		int cmp = int(tdm_kills[T_GREEN]) - tdm_kills[T_PURPLE];
+		++tdm_kills[pit->team];
 		// First cmp = A-B, then either A or B is incremented by one, and
 		// we want to know whether their relative order has changed. This
 		// test suffices:
-		if((int(tdm_kills[0]) - tdm_kills[1])*cmp == 0)
+		if((int(tdm_kills[T_GREEN]) - tdm_kills[T_PURPLE])*cmp == 0)
 			Game::send_team_upds(cur_players.end());
 	}
 }
@@ -678,21 +678,20 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				if(gamemode == GM_DOM
 					|| (gamemode == GM_CONQ && pit->team == T_GREEN)
 					|| (gamemode != GM_CONQ &&
-					team_flags[noe_it->get_m() == T_PURPLE].size() >= 2))
+					team_flags[noe_it->get_m()].size() >= 2))
 				{
-					team_flags[noe_it->get_m() == T_PURPLE].erase(
-						find(team_flags[noe_it->get_m() == T_PURPLE].begin(),
-						team_flags[noe_it->get_m() == T_PURPLE].end(), noe_it));
+					team_flags[noe_it->get_m()].erase(find(team_flags[noe_it->get_m()].begin(),
+						team_flags[noe_it->get_m()].end(), noe_it));
 					capt_flag(noe_it, pit->team);
 				}
 			}
 			// else own flag:
 			else if(pit == pl_with_item // is carrying item (implies team is green and gamemode steal)
-				&& noe_it == *(team_flags[0].begin())) // original flag
+				&& noe_it == *(team_flags[T_GREEN].begin())) // original flag
 			{
 				// Green wins. We ensure this by clearing the purple flags list,
 				// so actually the map won't until the next purple spawning:
-				team_flags[1].clear();
+				team_flags[T_PURPLE].clear();
 				string msg = "The green team has secured the treasure!";
 				Network::construct_msg(msg, C_ZAP);
 				Network::broadcast();
@@ -1046,7 +1045,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 			// check that there's an enemy corpse
 			list<NOccEnt>::iterator c_it = any_noccent_at(pos, NOE_CORPSE);
 			if(c_it != noccents[NOE_CORPSE].end()
-				&& c_it->get_colour() != team_colour[pit->team -1])
+				&& c_it->get_colour() != team_colour[pit->team])
 			{
 				pit->doing_a_chore = DISGUISE_TURNS;
 				add_action_ind(pos, A_DISGUISE);
@@ -1123,7 +1122,7 @@ void player_death(const list<Player>::iterator pit, const string &way,
 		list<NOccEnt>::iterator enoe = any_noccent_at(pos, NOE_CORPSE);
 		if(enoe != noccents[NOE_CORPSE].end())
 		{
-			enoe->set_col(team_colour[pit->team -1]);
+			enoe->set_col(team_colour[pit->team]);
 			enoe->set_misc(CORPSE_DECAY_TURNS);
 		}
 		else
@@ -1132,7 +1131,7 @@ void player_death(const list<Player>::iterator pit, const string &way,
 			if(!(tp->flags & TF_NOCCENT))
 			{
 				noccents[NOE_CORPSE].push_back(NOccEnt(pos, '%',
-					team_colour[pit->team -1], CORPSE_DECAY_TURNS)); 
+					team_colour[pit->team], CORPSE_DECAY_TURNS)); 
 				tp->flags |= TF_NOCCENT;
 			}
 		}

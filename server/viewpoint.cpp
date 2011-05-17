@@ -387,7 +387,7 @@ bool ViewPoint::render_pc_at(const Coords &c, char* const target, const bool lit
 				if(it->get_owner()->team == owner->team || owner->team == T_SPEC)
 					*target = C_BROWN_PC;
 				else
-					*target = team_colour[owner->team -1];
+					*target = team_colour[owner->team];
 				if(lit)
 					*target += NUM_NORM_COLS;
 			}

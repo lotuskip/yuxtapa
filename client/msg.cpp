@@ -42,8 +42,7 @@ msTimer last_move, last_add, reference;
 const char CHAT_BUFFER_SIZE = 50;
 
 // cf. e_Team im ../server/players.h
-const char* team_ind[4] = { "", ": ", " @: ", " @: " };
-const unsigned char team_cpair[4] = { 0, C_NEUT_FLAG, C_GREEN_PC, C_PURPLE_PC };
+const char* team_ind[4] = { " @: ", " @: ", ": ", "" };
 
 struct ChatBufferLine
 {
@@ -72,7 +71,7 @@ void redraw_chat()
 		Base::incr_print_start(0, i, CHAT_WIN);
 		Base::incr_print(chatbuffer[chat_top+i].speaker.c_str(), 3, CHAT_WIN);
 		Base::incr_print(team_ind[chatbuffer[chat_top+i].team],
-			team_cpair[chatbuffer[chat_top+i].team], CHAT_WIN);
+			team_colour[chatbuffer[chat_top+i].team], CHAT_WIN);
 		Base::incr_print(chatbuffer[chat_top+i].text.c_str(), 7, CHAT_WIN);
 		Base::incr_print_end(CHAT_WIN, true);
 	}

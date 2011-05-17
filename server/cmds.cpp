@@ -508,9 +508,9 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			}
 			/* Now 'sum' is between 0 (all purples better than all greens) and
 			 * ngreen*npurple (all greens better than all purples). */
-			if(num_players[0]*num_players[1])
+			if(num_players[T_GREEN]*num_players[T_PURPLE])
 			{
-				sum = 100*sum/(num_players[0]*num_players[1]) - 50;
+				sum = 100*sum/(num_players[T_GREEN]*num_players[T_PURPLE]) - 50;
 				keyw = boost::lexical_cast<string>(sum) + " for greens -- the teams are ";
 				if(sum < -35 || sum > 35)
 					keyw += "VERY uneven!";
@@ -578,12 +578,12 @@ void shuffle_teams()
 
 	char ch, num;
 	e_Team t;
-	num_players[0] = num_players[1] = 0;
+	num_players[T_GREEN] = num_players[T_PURPLE] = 0;
 	while(!playing_players.empty())
 	{
 		if(playing_players.size() == 1)
 		{
-			playing_players.front()->team = e_Team(T_GREEN + random()%2);
+			playing_players.front()->team = e_Team(random()%2);
 			break; // done
 		}
 		// else
@@ -591,11 +591,11 @@ void shuffle_teams()
 			num = 1;
 		else
 			num = 1 + random()%2; // 1 or 2
-		t = e_Team(T_GREEN + random()%2);
+		t = e_Team(random()%2);
 		for(ch = 0; ch < num; ++ch)
 		{
 			playing_players.front()->team = t;
-			num_players[(t == T_PURPLE)]++;
+			++num_players[t];
 			playing_players.pop_front();
 		}
 		if(t == T_GREEN)
@@ -605,7 +605,7 @@ void shuffle_teams()
 		for(ch = 0; ch < num; ++ch)
 		{
 			playing_players.front()->team = t;
-			num_players[(t == T_PURPLE)]++;
+			++num_players[t];
 			playing_players.pop_front();
 			// This can happen if there's an odd number of players:
 			if(playing_players.empty())

@@ -6,12 +6,12 @@ enum e_Class { C_ARCHER=0, C_ASSASSIN, C_COMBAT_MAGE, C_MINDCRAFTER, C_SCOUT,
 	C_FIGHTER, C_MINER, C_HEALER, C_WIZARD, C_TRAPPER, C_PLANEWALKER, NO_CLASS };
 // NO_CLASS functions as the number of the classes and denotes being a spectator
 
-enum e_Team { T_NO_TEAM=0, /* no one's team variable ever has this value, but
+enum e_Team { T_GREEN=0, T_PURPLE, T_SPEC, 
+	T_NO_TEAM }; /* no one's team variable ever has this value, but
 it is used to indicate that "no team" sees an entity (as opposed to
 "green/purple team sees") */
-	T_SPEC, T_GREEN, T_PURPLE };
 
-const e_Team opp_team[4] = { T_NO_TEAM, T_SPEC, T_PURPLE, T_GREEN };
+const e_Team opp_team[] = { T_PURPLE, T_GREEN, T_SPEC };
 
 // The server needs all of these, the client just needs some. But it's easier
 // to have them all in the same common structure.
