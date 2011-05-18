@@ -15,6 +15,9 @@ namespace
 {
 using namespace std;
 
+const string sector_name[MAX_D+1] = { "N", "NE", "E", "SE", "S",
+	"SW", "W", "NW", "C" };
+
 const char PC_INFO_X = 37;
 
 e_Class myclass = NO_CLASS;

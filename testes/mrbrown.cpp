@@ -224,11 +224,11 @@ void extract_pcs()
 // Returns direction of first neighbouring teammate if any (MAX_D if not found)
 e_Dir neighb_teammate()
 {
-	if(!pcs[myteam-T_GREEN].empty())
+	if(!pcs[myteam].empty())
 	{
 		for(char d = 0; d < MAX_D; ++d)
 		{
-			if(find(pcs[myteam-T_GREEN].begin(), pcs[myteam-T_GREEN].end(), center.in(e_Dir(d))) != pcs[myteam-T_GREEN].end())
+			if(find(pcs[myteam].begin(), pcs[myteam].end(), center.in(e_Dir(d))) != pcs[myteam].end())
 				return e_Dir(d);
 		}
 	}
@@ -238,11 +238,12 @@ e_Dir neighb_teammate()
 // Returns direction of first neighbouring enemy if any (MAX_D if not found)
 e_Dir neighb_enemy()
 {
-	if(!pcs[(myteam+1)%2].empty())
+	if(!pcs[opp_team[myteam]].empty())
 	{
 		for(char d = 0; d < MAX_D; ++d)
 		{
-			if(find(pcs[(myteam+1)%2].begin(), pcs[(myteam+1)%2].end(), center.in(e_Dir(d))) != pcs[(myteam+1)%2].end())
+			if(find(pcs[opp_team[myteam]].begin(), pcs[opp_team[myteam]].end(),
+				center.in(e_Dir(d))) != pcs[opp_team[myteam]].end())
 				return e_Dir(d);
 		}
 	}
@@ -260,7 +261,7 @@ e_Dir should_dig()
 {
 	// If there are enemies in view, don't dig.
 	// Also, we don't want to just dig all the time; only dig with 1/5 chance:
-	if(random()%5 || !pcs[(myteam+1)%2].empty())
+	if(random()%5 || !pcs[opp_team[myteam]].empty())
 		return MAX_D;
 	// else:
 	Coords c;
@@ -277,7 +278,7 @@ e_Dir should_dig()
 
 inline bool mmsafe()
 {
-	return pcs[myteam-T_GREEN].empty() && !pcs[(myteam+1)%2].empty();
+	return pcs[myteam].empty() && !pcs[opp_team[myteam]].empty();
 }
 
 // Returns true if a shootable target is found and puts the coordinates in 'target'
@@ -286,7 +287,7 @@ bool could_shoot(Coords &target)
 	// Go through enemies in sight:
 	vector<Coords>::const_iterator oti, eti;
 	char r, line, ind;
-	for(eti = pcs[(myteam+1)%2].begin(); eti != pcs[(myteam+1)%2].end(); ++eti)
+	for(eti = pcs[opp_team[myteam]].begin(); eti != pcs[opp_team[myteam]].end(); ++eti)
 	{
 		if((r = center.dist_walk(*eti)) == 1) // enemy right next to us!
 		{
@@ -300,9 +301,9 @@ bool could_shoot(Coords &target)
 		else /* eti->x == -r */ line = 7*r - eti->y;
 		for(ind = 0; ind < 2*r; ind += 2)
 		{
-			if(find(pcs[myteam-T_GREEN].begin(), pcs[myteam-T_GREEN].end(),
+			if(find(pcs[myteam].begin(), pcs[myteam].end(),
 				Coords(loslookup[r-2][line*2*r+ind], loslookup[r-2][line*2*r+ind+1]))
-				!= pcs[myteam-T_GREEN].end())
+				!= pcs[myteam].end())
 				break;
 		}
 		if(ind == 2*r) // no teammates broke the loop:
@@ -569,7 +570,7 @@ connected:
 						send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2); // fire arrow
 						limiter = 2; // just to cut some slack...
 					}
-					else if(myclass == C_TRAPPER && !limiter && pcs[(myteam+1)%2].empty())
+					else if(myclass == C_TRAPPER && !limiter && pcs[opp_team[myteam]].empty())
 					{
 						send_action(XN_SET_TRAP);
 						wait_turns = 8;
@@ -578,7 +579,7 @@ connected:
 					else // try to walk
 					{
 						// If no enemies in sight, either move randomly or follow sounds:
-						if(pcs[(myteam+1)%2].empty())
+						if(pcs[opp_team[myteam]].empty())
 						{
 							if(get_sound_to_follow(shoot_targ)) // have sound to follow
 								try_walk_towards(shoot_targ, true); // don't walk on PCs
@@ -588,7 +589,7 @@ connected:
 						else // there are enemies in sight
 						{
 							rv = VIEWSIZE; // find the closest one
-							for(picked = ci = pcs[(myteam+1)%2].begin(); ci != pcs[(myteam+1)%2].end(); ++ci)
+							for(picked = ci = pcs[opp_team[myteam]].begin(); ci != pcs[opp_team[myteam]].end(); ++ci)
 							{
 								if(ci->dist_walk(center) < rv)
 								{

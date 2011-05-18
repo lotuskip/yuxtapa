@@ -21,6 +21,10 @@ enum e_MapType {
 };
 const std::string short_mtype_name[MAX_MAPTYPE] = { "dun", "out", "com" };
 
+const std::string long_sector_name[] = {
+	"north", "north-east", "east", "south-east", "south", "south-west",
+	"west", "north-west", "central" };
+
 const unsigned char DEF_MSG_COL = 7;
 
 #endif

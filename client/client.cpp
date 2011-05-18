@@ -23,7 +23,7 @@ void fix_str_to_fit(string &s)
 	}
 }
 
-}
+} // end local namespace
 
 
 int main(int argc, char *argv[])

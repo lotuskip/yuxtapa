@@ -415,10 +415,10 @@ void Game::init_game()
 			objective_str = "Conquest";
 			break;
 		case GM_STEAL:
-			objective_str = "Steal (" + sector_name[obj_sector] + ')';
+			objective_str = "Steal (" + long_sector_name[obj_sector] + ')';
 			break;
 		case GM_DESTR:
-			objective_str = "Destroy " + sector_name[obj_sector] + " boulders";
+			objective_str = "Destroy " + long_sector_name[obj_sector] + " boulders";
 			break;
 		case GM_TDM:
 			objective_str = "Team deathmatch";

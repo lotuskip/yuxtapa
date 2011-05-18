@@ -18,7 +18,8 @@
 
 namespace Game { extern Map *curmap; }
 extern e_GameMode gamemode;
-extern unsigned short tdm_kills[2]; // defined in game.cpp
+extern unsigned short tdm_kills[2];
+extern e_Dir obj_sector; // defined in game.cpp
 
 namespace
 {
@@ -90,7 +91,7 @@ void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 	fit->set_misc(t);
 	team_flags[t].push_back(fit);
 	string msg = str_team[t] + " team captured "
-		+ sector_name[Game::curmap->coords_in_sector(fit->getpos())]
+		+ long_sector_name[Game::curmap->coords_in_sector(fit->getpos())]
 		+ " flag!";
 	Network::construct_msg(msg, team_colour[t]);
 	Network::broadcast();
@@ -476,15 +477,13 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 	}
 
 	// Whenever a PC moves, we check if they spot some hiding enemies.
-	// The requirement for this is that the tile this PC is facing to is at
-	// a distance <= 1 from a hiding enemy.
-	opos = c.in(p->facing); // reusing opos
-	for(list<PCEnt>::iterator pc_it = PCs.begin(); pc_it != PCs.end(); ++pc_it)
-	{
-		if(!pc_it->isvoid() && !pc_it->visible_to_team(p->team)
-			&& opos.dist_walk(pc_it->getpos()) <= 1)
-			pc_it->set_invis_to_team(T_NO_TEAM); // seen!
-	}
+	// The requirement for this is that this PC is facing directly at a hiding
+	// enemy, whose position is lit, at a distance of 2.
+	opos = c.in(p->facing).in(p->facing); // reusing opos
+	list<PCEnt>::iterator pc_it = any_pc_at(opos);
+	if(pc_it != PCs.end() && !pc_it->isvoid() && !pc_it->visible_to_team(p->team)
+		&& ((Game::curmap->get_tile(opos).flags & TF_LIT) || is_dynlit(opos)))
+		pc_it->set_invis_to_team(T_NO_TEAM); // seen!
 
 	// Also, whenever a PC moves, we check if they are seen by enemy scouts:
 	if(p->own_pc->visible_to_team(opp_team[p->team]))
@@ -575,7 +574,8 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 			{
 				// if a hiding assassin, damage is different:
 				char multip = 1 + char(pit->cl == C_ASSASSIN
-					&& !pit->own_pc->visible_to_team(opp_team[pit->team]));
+					&& (!pit->own_pc->visible_to_team(opp_team[pit->team])
+					|| them->own_vp->is_blind()));
 				if(test_hit(them, pit->cl_props.tohit, multip, pit->cl_props.dam_die,
 					multip*(pit->cl_props.dam_add)) // was hit...
 					&& them->cl_props.hp <= 0) // ...and died
@@ -1151,6 +1151,7 @@ void kill_player(const list<Player>::iterator pit)
 	{
 		pl_with_item = cur_players.end();
 		the_item.setpos(pit->own_pc->getpos());
+		obj_sector = Game::curmap->coords_in_sector(pit->own_pc->getpos());
 		tp->flags |= TF_NOCCENT;
 		Game::send_team_upds(cur_players.end());
 		string msg = "Treasure dropped!";

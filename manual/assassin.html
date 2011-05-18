@@ -18,8 +18,16 @@ that is next to a wall tile and no enemy within a 3 tiles distance sees you ther
 all enemies.</p>
 
 <p>You become visible again if you either move so that one of the above
-conditions is not satisfied, or if an enemy walks 'right at you', which technically means:
-is facing at a square that is at most 1 square away from the square you're at.</p>
+conditions is not satisfied, or if your position is lit and an enemy walks 'right at you', which technically means:
+is facing right at you at a distance of at most two:
+<pre>
+x.x.x
+.....
+x.@.x     an enemy standing at an 'x' and facing at the assassin '@' will spot the assassin,
+.....     if the tile is lit
+x.x.x
+</pre>
+</p>
 
 <p><em>To reiterate:</em> as long as you stay still, the area becoming lit or even the neighbouring wall
 getting dug away by a friendly <a href="miner.html">miner</a> does not make you visible: only your moving
@@ -30,7 +38,7 @@ leaves a visible trail that remains for a number of turns, thus making it extrem
 difficult to remain hidden. (The enemies might not see <em>you</em>, i.e. your '@', but they very likely see the
 background colour that indicates the treasure item's movement.)</p>
 
-<p>If you attack an enemy in melee while hiding, your attack is more deadly (see <a href="rulemech.html">Rule mechanics</a> for details).
+<p>If you attack an enemy in melee while hiding, or if the target is blinded, your attack is more deadly (see <a href="rulemech.html">Rule mechanics</a> for details).
 This is sometimes referred to as <em>backstabbing</em>.</p>
 
 <p>The other ability of Assassins is to activate 'light bombs'. These act as if a

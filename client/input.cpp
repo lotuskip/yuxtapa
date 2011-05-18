@@ -78,6 +78,49 @@ void set_viewn_str(const string &s)
 	printb_pos = max(0, str_syms - MSG_WIN_X + 1);
 }
 
+void loop_up()
+{
+	if(prev_str_it == prev_strs.begin())
+	{
+		set_viewn_str(typed_str);
+		prev_str_it = prev_strs.end();
+	}
+	else
+	{
+		while(prev_str_it != prev_strs.begin())
+		{
+			if((*(--prev_str_it)).find(typed_str) == 0)
+			{
+				set_viewn_str(*prev_str_it);
+				return;
+			}
+		}
+		// if here, no matches found; recursive call to reset:
+		loop_up();
+	}
+}
+
+void loop_down()
+{
+	if(prev_strs.empty())
+		return;
+	if(prev_str_it == prev_strs.end())
+		prev_str_it = prev_strs.begin();
+	else
+		++prev_str_it;
+	while(prev_str_it != prev_strs.end())
+	{
+		if((*prev_str_it).find(typed_str) == 0)
+		{
+			set_viewn_str(*prev_str_it);
+			return;
+		}
+		++prev_str_it;
+	}
+	// if here, no matches found:
+	set_viewn_str(typed_str);	
+}
+
 bool check_typing()
 {
 	int k;
@@ -135,37 +178,10 @@ bool check_typing()
 			printb_pos = max(0, str_syms - MSG_WIN_X + 1);
 			break;
 		case KEY_UP:
-			if(prev_str_it == prev_strs.begin()) // going around
-			{
-				set_viewn_str(typed_str);
-				prev_str_it = prev_strs.end();
-			}
-			else
-			{
-				while(prev_str_it != prev_strs.begin())
-				{
-					if((*(--prev_str_it)).find(typed_str) == 0)
-					{
-						set_viewn_str(*prev_str_it);
-						break;
-					}
-				}
-			}
+			loop_up();
 			break;
 		case KEY_DOWN:
-			if(prev_str_it == prev_strs.end()) // going around
-				prev_str_it = prev_strs.begin();
-			else
-				++prev_str_it;
-			while(prev_str_it != prev_strs.end())
-			{
-				if((*prev_str_it).find(typed_str) == 0)
-				{
-					set_viewn_str(*prev_str_it);
-					break;
-				}
-				++prev_str_it;
-			}
+			loop_down();
 			break;
 		case KEY_NPAGE: // pageDown
 			prev_str_it = prev_strs.end();

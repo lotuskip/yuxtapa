@@ -16,7 +16,7 @@
 #endif
 
 extern e_GameMode gamemode;
-extern e_Dir obj_sector;
+extern e_Dir obj_sector; // defined in game.cpp
 
 namespace
 {
