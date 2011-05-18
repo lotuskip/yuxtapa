@@ -116,13 +116,13 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 			return WALK_GREAT;
 	}
 	// Give lower score for rough and marsh (except with scouts and trappers),
-	// as well as for pushing boulders (myclass is one that can push, by the above),
 	// as well as for traps that might be accidentally triggered
-	if(sym == 'O'
-		|| ((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
+	if(((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
 		|| (sym == '^' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_NEUT_FLAG))
-
 		return WALK_OKAY;
+	// We cannot know if a boulder is pushable or not, so don't always try
+	if(sym == 'O')
+		return random()%2 ? WALK_OKAY : WALK_DONT;
 	return WALK_GOOD; // just a walkable tile (this includes doors)
 }
 

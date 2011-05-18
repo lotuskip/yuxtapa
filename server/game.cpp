@@ -473,6 +473,10 @@ void Game::start()
 		map_over_turn = 15*curmap->get_size() + 2900;
 	// (And here roughly 14--44 minutes)
 	
+	if(gamemode == GM_STEAL)
+		objective_str.erase(5); /* leaving just "Steal"; from now on the
+		sector is given in the status string */
+
 	send_times(cur_players.end());
 	send_team_upds(cur_players.end());
 	send_flag_upds(cur_players.end());
@@ -848,16 +852,18 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 	if(intermission)
 	{
 		// Check what happened; by default we assume a tie:
-		obj_status_str = "neither team";
+		obj_status_str = ", ";
 		// Conditions under which purple wins:
 		if(team_flags[T_GREEN].empty()
 			|| (curturn == map_over_turn && gamemode != GM_DOM && gamemode != GM_TDM)
 			|| (gamemode == GM_TDM && tdm_kills[T_PURPLE] > tdm_kills[T_GREEN]))
-			obj_status_str = str_team[T_PURPLE];
+			obj_status_str += str_team[T_PURPLE];
 		// Conditions under which green wins:
 		else if(team_flags[T_PURPLE].empty()
 			|| (gamemode == GM_TDM && tdm_kills[T_GREEN] > tdm_kills[T_PURPLE]))
-			obj_status_str = str_team[T_GREEN];
+			obj_status_str += str_team[T_GREEN];
+		else
+			obj_status_str += "neither team";
 		obj_status_str += " won";
 		if(gamemode == GM_TDM)
 		{
@@ -878,16 +884,16 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		case GM_DOM: 
 		case GM_CONQ:
 			if(team_flags[T_PURPLE].size() > team_flags[T_GREEN].size())
-				obj_status_str = "Purple has "
+				obj_status_str = ", Purple has "
 					+ boost::lexical_cast<string>(team_flags[T_PURPLE].size());
 			else
-				obj_status_str = "Green has "
+				obj_status_str = ", Green has "
 					+ boost::lexical_cast<string>(team_flags[T_GREEN].size());
 			obj_status_str += '/';
 			obj_status_str += boost::lexical_cast<string>(noccents[NOE_FLAG].size()); 
 			break;
 		case GM_STEAL:
-			obj_status_str = "item ";
+			obj_status_str = " (" + long_sector_name[obj_sector] + ") item ";
 			if(pl_with_item != cur_players.end())
 				obj_status_str += "stolen";
 			else if(item_moved)
@@ -896,14 +902,15 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 				obj_status_str += "secure";
 			break;
 		case GM_DESTR:
-			obj_status_str = boost::lexical_cast<string>(boulders_left)
+			obj_status_str = ", " + boost::lexical_cast<string>(boulders_left)
 				+ " left";
 			break;
 		case GM_TDM:
+			obj_status_str = ", ";
 			if(tdm_kills[T_GREEN] == tdm_kills[T_PURPLE])
-				obj_status_str = "tie!";
+				obj_status_str += "tie!";
 			else
-				obj_status_str = str_team[(tdm_kills[T_PURPLE] > tdm_kills[T_GREEN])] + " is in the lead";
+				obj_status_str += str_team[(tdm_kills[T_PURPLE] > tdm_kills[T_GREEN])] + " is in the lead";
 			break;
 		default: obj_status_str = ""; break;
 		}

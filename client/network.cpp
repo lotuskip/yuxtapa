@@ -323,9 +323,7 @@ bool Network::receive_n_handle()
 			string st_str1, st_str2;
 			recv_buffer.read_str(st_str1);
 			recv_buffer.read_str(st_str2);
-			if(!st_str2.empty())
-				st_str1 += ", " + st_str2;
-			Base::print_teams_upd(mid, ch, st_str1);	
+			Base::print_teams_upd(mid, ch, st_str1 += st_str2);	
 			break;
 		}
 		case MID_FLAG_UPD:
