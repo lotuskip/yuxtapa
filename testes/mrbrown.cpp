@@ -24,8 +24,37 @@
 
 using namespace std;
 
+// CONSTANTS
+/////////////
+// a CHANCE is a chance of something happening. Usually these are
+// "ONE_IN" chances, meaning that there is a "1 in x" chance of
+// something happening.
+const char TURN_CHANCE_ONE_IN = 22; // turning randomly without reason
+const char STAND_CHANCE_ONE_IN = 8; // doing nothing when otherwise would walk
+const char NO_DIG_CHANCE_ONE_IN = 5; // to not mine (no matter what)
+// LIMITs mean how many turns a bot has to spend doing *something else* after
+// using their special ability (so a higher number limits the usage of the ability more)
+const char HEAL_POISON_LIMIT = 5; // after heal/poison others
+const char HEAL_SELF_LIMIT = 3; // after heal self
+const char TRAP_LIMIT = 40; // after setting/disarming a trap
+// WAITs tell how many turns a bot has to spend *doing nothing at all* after
+// using a special ability. These are often connected to limiting in the server
+// end or to prevent the bot from interrupting a chore it itself started.
+const char CAST_MM_WAIT = 2; // magic missile (wizards)
+const char BLINK_WAIT = 1; // blink (mindcrafters)
+const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
+const char DIG_WAIT = 7; // mining (miners)
+const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
+// Other stuff:
+const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
+const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
+
+
+// VARIABLES
+//////////////
 SerialBuffer recv_buffer, send_buffer;
 int s_me; // socket
+int rv;
 struct addrinfo *servinfo, *the_serv;
 unsigned short cur_id;
 unsigned short curturn = 0;
@@ -35,6 +64,7 @@ char myhp = 0;
 e_Team myteam;
 e_Class myclass = NO_CLASS;
 char viewbuffer[BUFFER_SIZE];
+unsigned short turn_ms;
 
 /// Networking related:
 ////////////////////////
@@ -96,29 +126,29 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 		|| (avoid_pcs && sym == '@')) // and PCs if requested
 		return WALK_DONT;
 	
+	char col = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
+	// Capture a neutral flag if passing by it (TODO: remove this once there is a smarter method
+	// of actually going for the flags from further away than just 1 step...)
+	if(sym == '&' && (col == C_NEUT_FLAG || col == C_NEUT_FLAG_LIT))
+		return WALK_GREAT;
+
 	// Assassins prefer nonlit tiles by walls; trappers prefer nonlit tree squares:
-	if(myclass == C_ASSASSIN)
+	if(myclass == C_ASSASSIN && sym != '+' && col < C_TREE_LIT) // no door, not lit
 	{
-		if(sym != '+' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_TREE_LIT) // no door, not lit
+		Coords cn;
+		for(char ch = 0; ch < MAX_D; ++ch)
 		{
-			Coords cn;
-			for(char ch = 0; ch < MAX_D; ++ch)
-			{
-				cn = c.in(e_Dir(ch));
-				if(viewbuffer[(cn.y*VIEWSIZE+cn.x)*2+1] == '#')
-					return WALK_GREAT; // by a wall
-			}
+			cn = c.in(e_Dir(ch));
+			if(viewbuffer[(cn.y*VIEWSIZE+cn.x)*2+1] == '#')
+				return WALK_GREAT; // by a wall
 		}
 	}
-	else if(myclass == C_TRAPPER)
-	{
-		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2] == C_TREE)
-			return WALK_GREAT;
-	}
+	else if(myclass == C_TRAPPER && col == C_TREE)
+		return WALK_GREAT;
 	// Give lower score for rough and marsh (except with scouts and trappers),
 	// as well as for traps that might be accidentally triggered
 	if(((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
-		|| (sym == '^' && viewbuffer[(c.y*VIEWSIZE+c.x)*2] < C_NEUT_FLAG))
+		|| (sym == '^' && col < C_NEUT_FLAG))
 		return WALK_OKAY;
 	// We cannot know if a boulder is pushable or not, so don't always try
 	if(sym == 'O')
@@ -126,7 +156,7 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	return WALK_GOOD; // just a walkable tile (this includes doors)
 }
 
-e_Dir prev_committed_walk = MAX_D; // direction of last step taken
+e_Dir prev_committed_walk; // direction of last step taken
 
 // Walk to direction d if can. If cannot, try ++d and --d in random order.
 // Returns whether did move.
@@ -153,12 +183,18 @@ bool random_turn_from_dir(e_Dir d, const bool avoid_pcs)
 
 void random_walk()
 {
-	// if can, continue in previous direction
+	// a small chance of turning without a reason:
+	if(!(random()%TURN_CHANCE_ONE_IN))
+	{
+		if(random()%2) ++prev_committed_walk;
+		else --prev_committed_walk;
+	}
+	// if can, continue in previous direction (which the above might have just turned)
 	if(!random_turn_from_dir(prev_committed_walk, true))
 	{
 		// walk entirely randomly, then.
 		// A small chance to just stand still: (1 in 9)
-		if(random()%9)
+		if(random()%STAND_CHANCE_ONE_IN)
 		{
 			// Figure out a random dir to walk
 			e_Dir walkdir = e_Dir(random()%MAX_D);
@@ -260,8 +296,8 @@ e_Dir should_cs()
 e_Dir should_dig()
 {
 	// If there are enemies in view, don't dig.
-	// Also, we don't want to just dig all the time; only dig with 1/5 chance:
-	if(random()%5 || !pcs[opp_team[myteam]].empty())
+	// Also, we don't want to just dig all the time; only dig sometimes:
+	if(random()%NO_DIG_CHANCE_ONE_IN || !pcs[opp_team[myteam]].empty())
 		return MAX_D;
 	// else:
 	Coords c;
@@ -329,6 +365,92 @@ bool get_sound_to_follow(Coords &t)
 	return false;
 }
 
+char limiter = 0; // used to prevent bots from repeating the same action too often
+char abil_counter = 0;
+Coords shoot_targ;
+
+bool class_specific()
+{
+	switch(myclass)
+	{
+	case C_HEALER:
+		if(!limiter)
+		{
+			if((rv = neighb_enemy()) != MAX_D || (rv = neighb_teammate()) != MAX_D)
+			{
+				send_action(XN_HEAL, rv); // poison enemy or heal temmate
+				limiter = HEAL_POISON_LIMIT; // don't heal again for this many turns
+				return true;
+			}
+			if(myhp <= 2*classes[C_HEALER].hp/3)
+			{
+				send_action(XN_HEAL, MAX_D); // heal self
+				limiter = HEAL_SELF_LIMIT;
+				return true;
+			}
+		}
+		break;
+	case C_WIZARD:
+		if(mmsafe())
+		{
+			send_action(XN_MM); // cast magic missile
+			wait_turns = CAST_MM_WAIT;
+			return true;
+		}
+		break;
+	case C_MINDCRAFTER:
+		if(myhp <= classes[C_MINDCRAFTER].hp/2
+			&& random()%3 && neighb_enemy() != MAX_D)
+		{
+			send_action(XN_BLINK); // jump away from combat
+			wait_turns = BLINK_WAIT;
+			return true;
+		}
+		break;
+	case C_FIGHTER:
+		if((rv = should_cs()) != MAX_D)
+		{
+			send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
+			wait_turns = CIRCLE_ATTACK_WAIT;
+			return true;
+		}
+		break;
+	case C_MINER:
+		if((rv = should_dig()) != MAX_D)
+		{
+			send_action(XN_MINE, rv);
+			wait_turns = DIG_WAIT;
+			return true;
+		}
+		break;
+	case C_ARCHER:
+		if(could_shoot(shoot_targ))
+		{
+			/* Shoot if had a clear shot for some turns, otherwise keep "aiming" (do nothing).
+			 * Note that having a clear shot to different targets at different
+			 * turns counts... */
+			if(++abil_counter == AIM_TURNS)
+			{
+				send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2);
+				abil_counter = 0;
+			} // else still taking the aim
+			return true; // even if didn't do anything
+		}
+		else abil_counter = 0;
+		break;
+	case C_TRAPPER:
+		if(!limiter && pcs[opp_team[myteam]].empty())
+		{
+			send_action(XN_SET_TRAP);
+			wait_turns = TRAP_WAIT;
+			limiter = TRAP_LIMIT; // wait a good while before setting another one
+			return true;
+		}
+		break;
+	default: break;
+	}
+	return false;
+}
 
 // MAIN:
 // ///////////////////////////////
@@ -359,7 +481,6 @@ int main(int argc, char *argv[])
 
 	// create the socket
 	struct addrinfo hints;
-	int rv;
 	bzero(&hints, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_DGRAM;
@@ -423,11 +544,12 @@ int main(int argc, char *argv[])
 				return -1;
 			case MID_HELLO_NEWID:
 				cur_id = recv_buffer.read_sh();
+				turn_ms = recv_buffer.read_sh();
 				goto connected;
 			default: break;
 			}
 		} // received something
-		usleep(10000); // 10ms
+		usleep(MSG_DELAY_MS);
 	} while(time(NULL) - sendtime < 2);
 #ifdef BOTMSG
 	cerr << "Did not get a reply from the server." << endl;
@@ -460,11 +582,15 @@ connected:
 	send_buffer.clear();
 	send_buffer.add((unsigned char)MID_SPAWN_AXN);
 	send_buffer.add(cur_id);
-	send_buffer.add((unsigned char)(random()%NO_CLASS));
+	/* Don't intentionally become scout/planewalker/c-mage, since we don't have
+	 * any real AI rules for their special abilities. Note that bots might still,
+	 * by classlimiting, be spawned as these classes (myclass will ultimately
+	 * be what the server replies). */
+	do myclass = e_Class(random()%NO_CLASS);
+	while(myclass == C_SCOUT || myclass == C_PLANEWALKER || myclass == C_COMBAT_MAGE);
+	send_buffer.add((unsigned char)myclass);
 	do_send();
 
-	Coords shoot_targ;
-	char limiter = 0; // used to prevent bots from repeating the same action too often
 	vector<Coords>::const_iterator picked, ci;
 	for(;;)
 	{
@@ -519,18 +645,21 @@ connected:
 			{
 				if((myclass = e_Class(recv_buffer.read_ch())) == NO_CLASS)
 					myhp = 0; // was forced into a spectator
+				else if(myclass == C_ARCHER)
+					abil_counter = 0;
 				myteam = e_Team(recv_buffer.read_ch());
 				limiter = 0;
+				prev_committed_walk = e_Dir(random()%MAX_D);
 			}
 			//TODO: FANCY AI SHIT!!
 			else if(mid == MID_GAME_UPD) { }
 			else if(mid == MID_TIME_UPD) { }
 		} // received a msg
-		else usleep(10000);
+		else usleep(MSG_DELAY_MS);
 		
 		if(myhp > 0) // When alive, do sum'n
 		{
-			if(reftimer.update() - last_sent_axn > 250)
+			if(reftimer.update() - last_sent_axn > turn_ms)
 			{
 				if(wait_turns)
 					--wait_turns;
@@ -538,46 +667,9 @@ connected:
 				{
 					if(limiter)
 						--limiter;
-					// First check if we could do something special:
-					if(myclass == C_HEALER && !limiter &&
-						((rv = neighb_enemy()) != MAX_D || (rv = neighb_teammate()) != MAX_D))
+					if(!class_specific()) // First check if we could do something special
 					{
-						send_action(XN_HEAL, rv); // poison enemy or heal temmate
-						limiter = 5; // don't heal again for this many turns
-					}
-					else if(myclass == C_HEALER && !limiter && myhp <= 2*classes[C_HEALER].hp/3)
-					{
-						send_action(XN_HEAL, MAX_D); // heal self
-						limiter = 3;
-					}
-					else if(myclass == C_WIZARD && mmsafe())
-					{
-						send_action(XN_MM); // cast magic missile
-						wait_turns = 2;
-					}
-					else if(myclass == C_FIGHTER && (rv = should_cs()) != MAX_D)
-					{
-						send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
-						wait_turns = 3;
-					}
-					else if(myclass == C_MINER && (rv = should_dig()) != MAX_D)
-					{
-						send_action(XN_MINE, rv);
-						wait_turns = 7;
-					}
-					else if(myclass == C_ARCHER && !limiter && could_shoot(shoot_targ))
-					{
-						send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2); // fire arrow
-						limiter = 2; // just to cut some slack...
-					}
-					else if(myclass == C_TRAPPER && !limiter && pcs[opp_team[myteam]].empty())
-					{
-						send_action(XN_SET_TRAP);
-						wait_turns = 8;
-						limiter = 40; // wait a good while before setting another one
-					}
-					else // try to walk
-					{
+						// Try walking.
 						// If no enemies in sight, either move randomly or follow sounds:
 						if(pcs[opp_team[myteam]].empty())
 						{

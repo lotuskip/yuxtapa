@@ -221,7 +221,7 @@ bool Network::receive_n_handle()
 			{
 				send_buffer.add((unsigned char)MID_HELLO_VERSION);
 				do_send_to(&them, addr_len);
-				to_log("Incompatible child connection.");
+				to_log("Incompatible bot connection.");
 				break;
 			}
 			unsigned short botpid = recv_buffer.read_sh();
@@ -229,6 +229,7 @@ bool Network::receive_n_handle()
 			{
 				send_buffer.add((unsigned char)MID_HELLO_NEWID);
 				send_buffer.add(botpid);
+				send_buffer.add((unsigned short)Config::int_settings[Config::IS_TURNMS]);
 				do_send_to(&them, addr_len);
 			}
 			break;
