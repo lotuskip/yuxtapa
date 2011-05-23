@@ -290,9 +290,15 @@ char* Config::key_map_value(const e_Key_binding kb)
 
 void Config::do_aliasing(string &s)
 {
-	map<string,string>::iterator it = aliases.find(s);
-	if(it != aliases.end())
-		s = it->second;
+	size_t i;
+	for(map<string,string>::iterator it = aliases.begin(); it != aliases.end(); ++it)
+	{
+		if((i = s.find(it->first)) != string::npos)
+		{
+			s.replace(i, it->first.size(), it->second);
+			break;
+		}
+	}
 }
 
 
