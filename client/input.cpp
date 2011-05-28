@@ -15,6 +15,7 @@
 
 e_ClientState clientstate = CS_NORMAL;
 bool walkmode = false;
+std::vector<std::string> prev_strs;
 
 namespace
 {
@@ -28,7 +29,6 @@ const char KEYCODE_ENTER = 13; // != '\n'
 
 const char* offon[2] = { "off.", "on." };
 
-vector<string> prev_strs;
 vector<string>::const_iterator prev_str_it;
 string typed_str, viewn_str;
 short type_pos; // in *UTF-8 symbols*, not chars
@@ -57,6 +57,7 @@ void init_type()
 	viewn_str.clear();
 	Base::type_cursor((type_pos = str_syms = 0));
 	printb_pos = 0;
+	prev_str_it = prev_strs.end();
 }
 
 void typing_done()
@@ -64,7 +65,11 @@ void typing_done()
 	if(!viewn_str.empty())
 	{
 		if(prev_strs.empty() || viewn_str != prev_strs.back())
+		{
 			prev_strs.push_back(viewn_str);
+			if(prev_strs.size() > 1000)
+				prev_strs.erase(prev_strs.begin());
+		}
 		Config::do_aliasing(viewn_str);
 		Network::send_line(viewn_str, clientstate == CS_TYPE_CHAT);
 	}
@@ -241,7 +246,6 @@ bool Input::inputhandle()
 		{
 			clientstate = CS_NORMAL;
 			Base::def_cursor();
-			prev_str_it = prev_strs.end();
 		}
 		return false;
 	}

@@ -434,6 +434,12 @@ bool class_specific()
 				send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2);
 				abil_counter = 0;
 			} // else still taking the aim
+			else if(center.dist_walk(shoot_targ) == 1)
+			{
+				// stop aiming if enemy is right there; hit instead!
+				abil_counter = 0;
+				return false; // may take other action this turn
+			}
 			return true; // even if didn't do anything
 		}
 		else abil_counter = 0;

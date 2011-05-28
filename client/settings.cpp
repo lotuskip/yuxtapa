@@ -6,6 +6,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <vector>
 #include <sstream>
 #include <cstdlib>
 #include <algorithm>
@@ -20,6 +21,7 @@ const char MIN_ANIM_LEN = 2;
 const char MAX_ANIM_LEN = 15;
 
 const char CTRL_ADD = 64; // 'A'-1
+const short DEFAULT_STORED_MSGS = 100;
 
 const string default_key_bds = "896321475 p\tscTXuwt+-lQo"; // cf. enum e_Key_binding
 const string default_nick = "player";
@@ -34,6 +36,7 @@ string serverip = "";
 string qshout[MAX_QUICK_SHOUTS] = { "", "", "", "", "", "", "", "", "", "", "", "" };
 string ouch_str = "";
 bool ouching = false;
+short stored_msgs = DEFAULT_STORED_MSGS;
 
 string confdir_str = "";
 
@@ -56,6 +59,9 @@ void fill_kph(const char k)
 }
 
 } // end local namespace
+
+extern vector<string> prev_strs; // in input.cpp
+
 
 void Config::read_config(const string &servername)
 {
@@ -228,10 +234,21 @@ void Config::read_config(const string &servername)
 			ss >> ouching;
 			continue;
 		}
+		else if(keyw == "stored_chat_msgs")
+		{
+			ss >> stored_msgs;
+			if(stored_msgs < 0 || stored_msgs > 1000)
+			{
+				cerr << "Warning: invalid stored_chat_msgs setting." << endl;
+				stored_msgs = DEFAULT_STORED_MSGS;
+			}
+			continue;
+		}
 		// if here, not all is okay:
 		cerr << "Warning, could not parse the following line in config file:"
 			<< endl << "\"" << s << "\"" << endl;
 	}
+	file.close();
 
 	// everything extracted (or failed altogether), check:
 	if(serverip.empty()) // no match for desired server
@@ -261,8 +278,35 @@ void Config::read_config(const string &servername)
 		ouching = false;
 		cerr << "Config error: the ouch feature requires you to define a non-empty message!" << endl;
 	}
+	// Read stored messages to prev_strs if file exists
+	ifstream cmfile((confdir_str + "chatmemory").c_str());
+	if(cmfile)
+	{
+		while(getline(cmfile, s) && !s.empty())
+			prev_strs.push_back(s);
+	}
 }
 
+
+void Config::save_msg_memory()
+{
+	if(stored_msgs)
+	{
+		while(prev_strs.size() > (unsigned int)stored_msgs)
+			prev_strs.erase(prev_strs.begin());
+		ofstream cmfile((confdir_str + "chatmemory").c_str());
+		if(!cmfile)
+			cerr << "Warning: failed to save chat memory." << endl;
+		else
+		{
+			while(!prev_strs.empty())
+			{
+				cmfile << prev_strs.front() << endl;
+				prev_strs.erase(prev_strs.begin());
+			}
+		}
+	}
+}
 
 string &Config::get_server_ip() { return serverip; }
 string &Config::get_nick() { return nick; }

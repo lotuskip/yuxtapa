@@ -83,6 +83,7 @@ int main(int argc, char *argv[])
 
 	Network::disconnect();
 	Base::deinit_ncurses();
+	Config::save_msg_memory();
 	if(server_disconnect)
 		cout << "Server disconnected." << endl;
 	return 0;
