@@ -465,7 +465,13 @@ int main(int argc, char *argv[])
 {
 	string sip;
 	if(argc > 1)
-		sip = argv[1];
+	{
+		if((sip = argv[1]) == "-v")
+		{
+			cout << "mrbrown (" PACKAGE " bot) v. " VERSION << endl;
+			return 0;
+		}
+	}
 	else
 		sip = "127.0.0.1:12360";
 	string port = "", ip = "";

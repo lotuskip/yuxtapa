@@ -565,25 +565,25 @@ void output_stats()
 		{
 			if(it->kills[sh])
 			{
-				cout << it->kills[sh]  << " (" << kill_way_name[sh] << "), ";
+				cout << it->kills[sh]  << ' ' << kill_way_name[sh] << ", ";
 				l += it->kills[sh];
 			}
 		}
 		cout << "TOTAL: " << l << endl;
-		cout << "team kills: " << it->tks << endl;
+		cout << "t-kills: " << it->tks << endl;
 		cout << "deaths: " << it->deaths << endl;
 		cout << "healing: " << it->healing_recvd << endl;
 		cout << "arch: ";
 		if(it->arch_shots)
-			cout  << 100*it->arch_hits/(it->arch_shots);
+			cout  << 100*it->arch_hits/(it->arch_shots) << '%';
 		else
-			cout << '0';
-		cout << '%' << endl << "zaps: ";
+			cout << '-';
+		cout << endl << "zaps: ";
 		if(it->cm_shots)
-			cout << 100*it->cm_hits/(it->cm_shots);
+			cout << 100*it->cm_hits/(it->cm_shots) << '%';
 		else
-			cout << '0';
-		cout << '%' << endl << endl;
+			cout << '-';
+		cout << endl << endl;
 	}
 }
 
