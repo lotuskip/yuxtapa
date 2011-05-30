@@ -325,6 +325,7 @@ void Game::next_map(const string &loadmap)
 			it->stats_i->time_specced += time(NULL) - it->last_switched_cl;
 		time(&(it->last_switched_cl));
 	}
+	axn_indicators.clear();
 
 	construct_team_msgs(cur_players.end());
 	send_team_upds(cur_players.end());
