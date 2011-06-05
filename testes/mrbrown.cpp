@@ -29,9 +29,10 @@ using namespace std;
 // a CHANCE is a chance of something happening. Usually these are
 // "ONE_IN" chances, meaning that there is a "1 in x" chance of
 // something happening.
-const char TURN_CHANCE_ONE_IN = 22; // turning randomly without reason
-const char STAND_CHANCE_ONE_IN = 8; // doing nothing when otherwise would walk
-const char NO_DIG_CHANCE_ONE_IN = 5; // to not mine (no matter what)
+const char TURN_CHANCE_1IN = 22; // turning randomly without reason
+const char STAND_CHANCE_1IN = 8; // doing nothing when otherwise would walk
+const char NO_DIG_CHANCE_1IN = 5; // to not mine (no matter what)
+const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
 const char HEAL_POISON_LIMIT = 5; // after heal/poison others
@@ -119,9 +120,17 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	// colour is at (y*SIZE+x)*2, symbol at that+1
 	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
 
+	if(sym == '?') // this means we are blind, walk seldom
+	{
+		if(random()%WALK_BLIND_CHANCE_1IN)
+			return WALK_DONT;
+		return WALK_GREAT; /* this optimises a bit; if we are blind,
+			all the view is going to be full of '?'s anyway */
+	}
+	// Not blind:
 	// Check for things we absolutely don't want to walk into:
-	if(sym == '?' // don't walk when blind
-		|| sym == '~' || sym == '#' // always to be avoided
+	if(sym == '~' || sym == '#' // always to be avoided
+		|| sym == '|' || sym == '-' // windows are like walls
 		|| (sym == 'O' && !classes[myclass].can_push) // a boulder you can't push is like a wall
 		|| (avoid_pcs && sym == '@')) // and PCs if requested
 		return WALK_DONT;
@@ -184,7 +193,7 @@ bool random_turn_from_dir(e_Dir d, const bool avoid_pcs)
 void random_walk()
 {
 	// a small chance of turning without a reason:
-	if(!(random()%TURN_CHANCE_ONE_IN))
+	if(!(random()%TURN_CHANCE_1IN))
 	{
 		if(random()%2) ++prev_committed_walk;
 		else --prev_committed_walk;
@@ -194,7 +203,7 @@ void random_walk()
 	{
 		// walk entirely randomly, then.
 		// A small chance to just stand still: (1 in 9)
-		if(random()%STAND_CHANCE_ONE_IN)
+		if(random()%STAND_CHANCE_1IN)
 		{
 			// Figure out a random dir to walk
 			e_Dir walkdir = e_Dir(random()%MAX_D);
@@ -297,7 +306,7 @@ e_Dir should_dig()
 {
 	// If there are enemies in view, don't dig.
 	// Also, we don't want to just dig all the time; only dig sometimes:
-	if(random()%NO_DIG_CHANCE_ONE_IN || !pcs[opp_team[myteam]].empty())
+	if(random()%NO_DIG_CHANCE_1IN || !pcs[opp_team[myteam]].empty())
 		return MAX_D;
 	// else:
 	Coords c;
