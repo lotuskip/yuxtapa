@@ -26,6 +26,7 @@ using namespace std;
 
 // CONSTANTS
 /////////////
+const Coords center(VIEWSIZE/2, VIEWSIZE/2);
 // a CHANCE is a chance of something happening. Usually these are
 // "ONE_IN" chances, meaning that there is a "1 in x" chance of
 // something happening.
@@ -53,11 +54,17 @@ const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server mes
 
 // VARIABLES
 //////////////
+// Networking related:
 SerialBuffer recv_buffer, send_buffer;
 int s_me; // socket
-int rv;
 struct addrinfo *servinfo, *the_serv;
+sockaddr them;
+socklen_t addr_len;
+msTimer last_sent_axn, reftimer;
 unsigned short cur_id;
+unsigned short turn_ms;
+unsigned char mid;
+// Directly game related:
 unsigned short curturn = 0;
 unsigned char axn_counter = 0;
 char wait_turns = 0;
@@ -65,12 +72,17 @@ char myhp = 0;
 e_Team myteam;
 e_Class myclass = NO_CLASS;
 char viewbuffer[BUFFER_SIZE];
-unsigned short turn_ms;
+// AI related:
+e_Dir prev_committed_walk; // direction of last step taken
+vector<Coords> pcs[2]; // PCs of each team currently in view
+char limiter = 0; // used to prevent bots from repeating the same action too often
+char abil_counter = 0;
+Coords shoot_targ;
+// Generic:
+int rv;
 
 /// Networking related:
 ////////////////////////
-
-msTimer last_sent_axn, reftimer;
 
 bool do_send()
 {
@@ -97,18 +109,112 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 	++axn_counter;
 }
 
-sockaddr them;
-socklen_t addr_len;
 short do_receive()
 {
 	addr_len = sizeof(them);
 	return recvfrom(s_me, recv_buffer.getw(), BUFFER_SIZE, 0, &them, &addr_len);
 }
 
+// returns true if something wrong
+bool do_connect(const string &sip)
+{
+	string port = "", ip = "";
+	size_t i;
+	if((i = sip.rfind(':')) != string::npos && i > 1 && i != sip.size()-1)
+	{
+		port = sip.substr(i+1);
+		if(sip.rfind(':', i-1) != string::npos) // two ':'s imply IPv6 (or garbage...)
+			--i; // there is "::", not just ":" before the port
+		ip = sip.substr(0, i);
+	}
+	else
+	{
+#ifdef BOTMSG
+		cerr << "Not a valid address: " << sip << endl;
+#endif
+		return true;
+	}
+	// create the socket
+	struct addrinfo hints;
+	bzero(&hints, sizeof(hints));
+	hints.ai_family = AF_UNSPEC;
+	hints.ai_socktype = SOCK_DGRAM;
+	// get server info:
+	if((rv = getaddrinfo(ip.c_str(), port.c_str(), &hints, &servinfo)))
+	{
+#ifdef BOTMSG
+		cerr << "Error in getaddrinfo: " << gai_strerror(rv) << endl;
+#endif
+		return true;
+	}
+	// initialize the_serv and make the socket based on its protocol info:
+	for(the_serv = servinfo; the_serv; the_serv = the_serv->ai_next)
+	{
+		if((s_me = socket(the_serv->ai_family, the_serv->ai_socktype, the_serv->ai_protocol)) != -1)
+			break;
+	}
+	if(!the_serv)
+	{
+#ifdef BOTMSG
+		cerr << "Failed to create socket!" << endl;
+#endif
+		freeaddrinfo(servinfo);
+		return true;
+	}
+	// set socket to nonblock mode:
+	fcntl(s_me, F_SETFL, O_NONBLOCK);
+
+	// construct a hello message: (different for bots than people)
+	send_buffer.add((unsigned char)MID_BOTHELLO);
+	send_buffer.add(INTR_VERSION);
+	pid_t mypid = getpid();
+	send_buffer.add((unsigned short)mypid);
+	
+	last_sent_axn.update();
+
+	if(do_send())
+	{
+#ifdef BOTMSG
+		cerr << "Problem connecting to \'" << sip << "\'." << endl;
+#endif
+		close(s_me);
+		return true;
+	}
+	time_t sendtime;
+	time(&sendtime);
+	do
+	{
+		if(do_receive() != -1)
+		{
+			mid = recv_buffer.read_ch();
+			switch(mid)
+			{
+			case MID_HELLO_VERSION:
+#ifdef BOTMSG
+				cerr << "Server is running an incompatible version!" << endl;
+#endif
+				close(s_me);
+				freeaddrinfo(servinfo);
+				return true;
+			case MID_HELLO_NEWID:
+				cur_id = recv_buffer.read_sh();
+				turn_ms = recv_buffer.read_sh();
+				return false; // Connected!
+			default: break;
+			}
+		} // received something
+		usleep(MSG_DELAY_MS);
+	} while(time(NULL) - sendtime < 2);
+#ifdef BOTMSG
+	cerr << "Did not get a reply from the server." << endl;
+#endif
+	close(s_me);
+	freeaddrinfo(servinfo);
+	return true;
+}
+
 /// AI related:
 ////////////////////////////////////////////
-
-const Coords center(VIEWSIZE/2, VIEWSIZE/2);
 
 enum { WALK_DONT=0, WALK_OKAY, WALK_GOOD, WALK_GREAT };
 
@@ -164,8 +270,6 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 		return random()%2 ? WALK_OKAY : WALK_DONT;
 	return WALK_GOOD; // just a walkable tile (this includes doors)
 }
-
-e_Dir prev_committed_walk; // direction of last step taken
 
 // Walk to direction d if can. If cannot, try ++d and --d in random order.
 // Returns whether did move.
@@ -238,7 +342,6 @@ void try_walk_towards(const Coords &c, const bool avoid_pcs)
 		random_walk();
 }
 
-vector<Coords> pcs[2];
 void extract_pcs()
 {
 	pcs[0].clear();
@@ -266,29 +369,14 @@ void extract_pcs()
 	}
 }
 
-// Returns direction of first neighbouring teammate if any (MAX_D if not found)
-e_Dir neighb_teammate()
+// For searching teammates/enemies who are in a neighbouring square:
+e_Dir neighb_pc(const char t)
 {
-	if(!pcs[myteam].empty())
+	if(!pcs[t].empty())
 	{
 		for(char d = 0; d < MAX_D; ++d)
 		{
-			if(find(pcs[myteam].begin(), pcs[myteam].end(), center.in(e_Dir(d))) != pcs[myteam].end())
-				return e_Dir(d);
-		}
-	}
-	return MAX_D;
-}
-
-// Returns direction of first neighbouring enemy if any (MAX_D if not found)
-e_Dir neighb_enemy()
-{
-	if(!pcs[opp_team[myteam]].empty())
-	{
-		for(char d = 0; d < MAX_D; ++d)
-		{
-			if(find(pcs[opp_team[myteam]].begin(), pcs[opp_team[myteam]].end(),
-				center.in(e_Dir(d))) != pcs[opp_team[myteam]].end())
+			if(find(pcs[t].begin(), pcs[t].end(), center.in(e_Dir(d))) != pcs[t].end())
 				return e_Dir(d);
 		}
 	}
@@ -297,9 +385,9 @@ e_Dir neighb_enemy()
 
 e_Dir should_cs()
 {
-	if(neighb_teammate() != MAX_D)
+	if(neighb_pc(myteam) != MAX_D)
 		return MAX_D;
-	return neighb_enemy();
+	return neighb_pc(opp_team[myteam]);
 }
 
 e_Dir should_dig()
@@ -374,10 +462,7 @@ bool get_sound_to_follow(Coords &t)
 	return false;
 }
 
-char limiter = 0; // used to prevent bots from repeating the same action too often
-char abil_counter = 0;
-Coords shoot_targ;
-
+// See if decides to commit a class-specific action:
 bool class_specific()
 {
 	switch(myclass)
@@ -385,7 +470,7 @@ bool class_specific()
 	case C_HEALER:
 		if(!limiter)
 		{
-			if((rv = neighb_enemy()) != MAX_D || (rv = neighb_teammate()) != MAX_D)
+			if((rv = neighb_pc(opp_team[myteam])) != MAX_D || (rv = neighb_pc(myteam)) != MAX_D)
 			{
 				send_action(XN_HEAL, rv); // poison enemy or heal temmate
 				limiter = HEAL_POISON_LIMIT; // don't heal again for this many turns
@@ -409,7 +494,7 @@ bool class_specific()
 		break;
 	case C_MINDCRAFTER:
 		if(myhp <= classes[C_MINDCRAFTER].hp/2
-			&& random()%3 && neighb_enemy() != MAX_D)
+			&& random()%3 && neighb_pc(opp_team[myteam]) != MAX_D)
 		{
 			send_action(XN_BLINK); // jump away from combat
 			wait_turns = BLINK_WAIT;
@@ -450,8 +535,8 @@ bool class_specific()
 				return false; // may take other action this turn
 			}
 			return true; // even if didn't do anything
-		}
-		else abil_counter = 0;
+		}// else:
+		abil_counter = 0;
 		break;
 	case C_TRAPPER:
 		if(!limiter && pcs[opp_team[myteam]].empty())
@@ -462,10 +547,33 @@ bool class_specific()
 			return true;
 		}
 		break;
-	default: break;
+	default: return false;
 	}
-	return false;
 }
+
+// Misc:
+// /////////////////////
+
+void init_rng()
+{
+	/* Doing the usual "srandom(time(NULL));" has a nasty side effect: bots
+	 * spawned at the same time usually spawn at the same second, so they
+	 * have the same random seed. Instead, seed from dev/urandom: */
+	ifstream urf("/dev/urandom", ios_base::binary);
+	if(!urf)
+	{
+#ifdef BOTMSG
+		cerr << "No /dev/urandom access to seed rng!" << endl;
+#endif
+		srandom(time(NULL)); // settle with this
+	}
+	else
+	{
+		urf.read(reinterpret_cast<char*>(&rv), sizeof(int));
+		srandom(rv);
+	}
+}
+
 
 // MAIN:
 // ///////////////////////////////
@@ -483,121 +591,11 @@ int main(int argc, char *argv[])
 	}
 	else
 		sip = "127.0.0.1:12360";
-	string port = "", ip = "";
-	size_t i;
-	if((i = sip.rfind(':')) != string::npos && i > 1 && i != sip.size()-1)
-	{
-		port = sip.substr(i+1);
-		if(sip.rfind(':', i-1) != string::npos) // two ':'s imply IPv6 (or garbage...)
-			--i; // there is "::", not just ":" before the port
-		ip = sip.substr(0, i);
-	}
-	else
-	{
-#ifdef BOTMSG
-		cerr << "Not a valid address: " << sip << endl;
-#endif
-		return 1;
-	}
 
-	// create the socket
-	struct addrinfo hints;
-	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_DGRAM;
-	// get server info:
-	if((rv = getaddrinfo(ip.c_str(), port.c_str(), &hints, &servinfo)))
-	{
-#ifdef BOTMSG
-		cerr << "Error in getaddrinfo: " << gai_strerror(rv) << endl;
-#endif
+	if(do_connect(sip))
 		return 1;
-	}
-	// initialize the_serv and make the socket based on its protocol info:
-	for(the_serv = servinfo; the_serv; the_serv = the_serv->ai_next)
-	{
-		if((s_me = socket(the_serv->ai_family, the_serv->ai_socktype, the_serv->ai_protocol)) != -1)
-			break;
-	}
-	if(!the_serv)
-	{
-#ifdef BOTMSG
-		cerr << "Failed to create socket!" << endl;
-#endif
-		freeaddrinfo(servinfo);
-		return 1;
-	}
-	// set socket to nonblock mode:
-	fcntl(s_me, F_SETFL, O_NONBLOCK);
 
-	// construct a hello message: (different for bots than people)
-	send_buffer.add((unsigned char)MID_BOTHELLO);
-	send_buffer.add(INTR_VERSION);
-	pid_t mypid = getpid();
-	send_buffer.add((unsigned short)mypid);
-	
-	last_sent_axn.update();
-
-	if(do_send())
-	{
-#ifdef BOTMSG
-		cerr << "Problem connecting to \'" << sip << "\'." << endl;
-#endif
-		close(s_me);
-		return 1;
-	}
-	time_t sendtime;
-	time(&sendtime);
-	unsigned char mid;
-	do
-	{
-		if(do_receive() != -1)
-		{
-			mid = recv_buffer.read_ch();
-			switch(mid)
-			{
-			case MID_HELLO_VERSION:
-#ifdef BOTMSG
-				cerr << "Server is running an incompatible version!" << endl;
-#endif
-				close(s_me);
-				freeaddrinfo(servinfo);
-				return -1;
-			case MID_HELLO_NEWID:
-				cur_id = recv_buffer.read_sh();
-				turn_ms = recv_buffer.read_sh();
-				goto connected;
-			default: break;
-			}
-		} // received something
-		usleep(MSG_DELAY_MS);
-	} while(time(NULL) - sendtime < 2);
-#ifdef BOTMSG
-	cerr << "Did not get a reply from the server." << endl;
-#endif
-	close(s_me);
-	freeaddrinfo(servinfo);
-	return 1;
-
-connected:
-	/* Doing the usual "srandom(time(NULL));" has a nasty side effect: bots
-	 * spawned at the same time usually spawn at the same second, so they
-	 * have the same random seed. Instead, seed from dev/urandom: */
-	ifstream urf("/dev/urandom", ios_base::binary);
-	if(!urf)
-	{
-#ifdef BOTMSG
-		cerr << "No /dev/urandom access to seed rng!" << endl;
-#endif
-		srandom(time(NULL)); // settle with this
-	}
-	else
-	{
-		urf.read(reinterpret_cast<char*>(&rv), sizeof(int));
-		srandom(rv);
-		urf.close();
-	}
-	short msglen;
+	init_rng();
 
 	// Send spawn request: (no sense having spectator bots!)
 	send_buffer.clear();
@@ -612,6 +610,7 @@ connected:
 	send_buffer.add((unsigned char)myclass);
 	do_send();
 
+	short msglen;
 	vector<Coords>::const_iterator picked, ci;
 	for(;;)
 	{
