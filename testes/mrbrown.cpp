@@ -47,6 +47,7 @@ const char BLINK_WAIT = 1; // blink (mindcrafters)
 const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
 const char DIG_WAIT = 7; // mining (miners)
 const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
+const char SUICIDE_AFTER = 20; // this many turns immobile result in suicide
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
@@ -77,6 +78,7 @@ e_Dir prev_committed_walk; // direction of last step taken
 vector<Coords> pcs[2]; // PCs of each team currently in view
 char limiter = 0; // used to prevent bots from repeating the same action too often
 char abil_counter = 0;
+char immobility = 0; // turns without being able to move
 Coords shoot_targ;
 // Generic:
 int rv;
@@ -107,6 +109,7 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 	}
 	do_send();
 	++axn_counter;
+	immobility = 0; // at least the bot thinks it's doing something
 }
 
 short do_receive()
@@ -331,6 +334,8 @@ void random_walk()
 			else if(onescorer != MAX_D) // found an acceptable direction
 				send_action(XN_MOVE, (prev_committed_walk = onescorer));
 			// else can't walk anywhere!
+			if(++immobility >= SUICIDE_AFTER)
+				send_action(XN_SUICIDE);
 		}
 	}
 }

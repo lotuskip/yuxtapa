@@ -1,41 +1,27 @@
 // Please see LICENSE file.
 #ifndef MAPTEST
 #include "sighandle.h"
+#include <csignal>
 
-Signal_Handler *Signal_Handler::instance_ = 0;
-Event_Handler *Signal_Handler::signal_handlers_[NSIG];
+sig_atomic_t signs = 0;
 
-Signal_Handler::Signal_Handler() {}
-
-Signal_Handler* Signal_Handler::instance() 
+void handle_signal(const int signum)
 {
-	if(!instance_)
-		instance_ = new Signal_Handler();
-	return instance_;
+	signs |= (1 << signum);
 }
 
 
-Event_Handler *Signal_Handler::register_handler(const int signum,
-	Event_Handler* const eh)
-{
-	// Copy the old_eh from the signum slot in the signal_handlers_ table.
-	Event_Handler *old_eh = signal_handlers_[signum];
-	signal_handlers_[signum] = eh;
+bool any_signs() { return signs; }
 
-	// Register the <dispatcher> to handle this <signum>.
+void reg_sig_handlers()
+{
 	struct sigaction sa;
-	sa.sa_handler = dispatcher;
+	sa.sa_handler = handle_signal;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
-	sigaction(signum, &sa, 0);
-
-	return old_eh;
+	// List here all signals we're interested in:
+	sigaction(SIGINT, &sa, 0);
+	sigaction(SIGQUIT, &sa, 0);
 }
 
-void Signal_Handler::dispatcher(const int signum)
-{
-	if(signal_handlers_[signum] != 0) // Dispatch the handler's hook method.
-		signal_handlers_[signum]->handle_signal(signum);
-}
- 
 #endif // not maptest build

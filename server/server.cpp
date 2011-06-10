@@ -113,12 +113,9 @@ int main(int argc, char *argv[])
 	std::cout << " ._)" << std::endl << std::endl;
 	if(!str.empty())
 		std::cout << "Uknown argument \"" << str << '\"' << std::endl;
+	reg_sig_handlers();
 	read_config();
 	init_known_players(false);
-	SIGINT_Handler sigint_handler;
-	SIGQUIT_Handler sigquit_handler;
-	Signal_Handler::instance()->register_handler(SIGINT, &sigint_handler);
-	Signal_Handler::instance()->register_handler(SIGQUIT, &sigquit_handler);
 
 	if(!Network::startup())
 		return 1;
@@ -131,7 +128,7 @@ int main(int argc, char *argv[])
 	interm_over = last_time + int_settings[IS_INTERM_SECS];
 	tm *loctime;
 	bool no_traffic;
-	while(!sigint_handler.graceful_quit() && !sigquit_handler.abortive_quit())
+	while(!any_signs())
 	{
 		no_traffic = Network::receive_n_handle();
 

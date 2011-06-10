@@ -5,7 +5,7 @@
 std::string get_conf_dir()
 {
 	std::string s;
-	char *tmp = getenv("XGD_CONFIG_HOME"); // not all users have set this
+	char *tmp = getenv("XDG_CONFIG_HOME"); // not all users have set this
 	if(!tmp)
 	{
 		s = getenv("HOME"); // this should be set, though
