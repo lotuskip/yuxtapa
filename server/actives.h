@@ -34,8 +34,7 @@ extern std::list<Coords> fball_centers; // for fireball-lighting
 void add_action_ind(const Coords &c, const e_Action a);
 void clear_action_inds();
 
-// Collection of sounds:
-enum e_Sound { S_SPLASH=0, S_CREAK, S_BOOM, S_ZAP, S_WHOOSH, S_RUMBLE };
+// Sound-related (e_Sound is defined in common/col_codes.h)
 extern std::map<Coords, e_Sound> reg_sounds; // regular sounds
 extern std::map<Coords, std::string> voices; // voices have "text content"
 void add_sound(const Coords &c, const e_Sound s);

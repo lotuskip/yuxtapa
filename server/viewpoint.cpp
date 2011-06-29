@@ -70,16 +70,6 @@ const char fg_map[C_BG_HEAL - BASE_COLOURS] = {
 	6 // C_ZAP
 };
 
-const unsigned char VOICE_COLOUR = C_NEUT_FLAG_LIT;
-const unsigned char sound_col[] = {
-	C_WATER_LIT, // splash
-	C_DOOR_LIT, // creak
-	C_FIREB_TRAP_LIT, // boom
-	C_ZAP, // zap
-	C_TELE_TRAP_LIT, // whoosh
-	C_WALL_LIT // rumble
-};
-
 } // end local namesapce
 
 namespace Game { extern Map *curmap; }

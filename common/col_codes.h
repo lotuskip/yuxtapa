@@ -102,4 +102,16 @@ enum {
 // cf. classes_common.h
 const unsigned char team_colour[] = { C_GREEN_PC, C_PURPLE_PC, C_NEUT_FLAG };
 
+// Sound colours
+const unsigned char VOICE_COLOUR = C_NEUT_FLAG_LIT;
+enum e_Sound { S_SPLASH=0, S_CREAK, S_BOOM, S_ZAP, S_WHOOSH, S_RUMBLE };
+const unsigned char sound_col[] = {
+	C_WATER_LIT, // splash
+	C_DOOR_LIT, // creak
+	C_FIREB_TRAP_LIT, // boom
+	C_ZAP, // zap
+	C_TELE_TRAP_LIT, // whoosh
+	C_WALL_LIT // rumble
+};
+
 #endif

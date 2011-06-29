@@ -238,7 +238,7 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	}
 	// Not blind:
 	// Check for things we absolutely don't want to walk into:
-	if(sym == '~' || sym == '#' // always to be avoided
+	if(sym == ' ' || sym == '~' || sym == '#' // always to be avoided
 		|| sym == '|' || sym == '-' // windows are like walls
 		|| (sym == 'O' && !classes[myclass].can_push) // a boulder you can't push is like a wall
 		|| (avoid_pcs && sym == '@')) // and PCs if requested
@@ -457,8 +457,10 @@ bool get_sound_to_follow(Coords &t)
 {
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
-		// get first sound effect, not including center of view
-		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1)
+		// get first sound effect, not including center of view and rumbles,
+		// because those are the far-too-common digging sounds
+		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1
+			&& viewbuffer[i-1] != sound_col[S_RUMBLE])
 		{
 			t = Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE);
 			return true;
