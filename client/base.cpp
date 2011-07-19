@@ -93,10 +93,11 @@ void change_colour(WINDOW* const w, unsigned char cpair)
 
 bool Base::init_ncurses()
 {
+	short c;
 	// First init the animation:
 	string full_anim = Config::get_anim();
-	for(int n = 0; n < num_syms(full_anim); ++n)
-		anim_syms.push_back(sym_at(full_anim, n));
+	for(c = 0; c < num_syms(full_anim); ++c)
+		anim_syms.push_back(sym_at(full_anim, c));
 
 	// Then the actual NCurses stuff
 	if(!initscr())
@@ -123,7 +124,7 @@ bool Base::init_ncurses()
 	nonl();
 
 	// init base colours first: (with black background)
-	short c; char d;
+	char d;
 	char ct[BASE_COLOURS] = { COLOR_BLACK, COLOR_RED, COLOR_GREEN,
 		COLOR_YELLOW, COLOR_BLUE, COLOR_MAGENTA, COLOR_CYAN, COLOR_WHITE,
 		COLOR_BLACK, COLOR_RED, COLOR_GREEN, COLOR_YELLOW, COLOR_BLUE,

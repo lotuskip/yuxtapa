@@ -128,7 +128,6 @@ void init_msgs()
 {
 	last_move.update();
 	last_add.update();
-
 	last_second.update();
 }
 
@@ -262,7 +261,6 @@ void scroll_chat_down()
 		redraw_chat();
 	}
 }
-
 
 
 void clocksync(const unsigned short t, const unsigned char spawn)

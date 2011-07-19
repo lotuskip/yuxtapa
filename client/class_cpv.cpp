@@ -154,14 +154,13 @@ void ClassCPV::space()
 				if(aimer.x || aimer.y) // aiming *somewhere*
 					Network::send_action(XN_SHOOT, aimer.x, aimer.y);
 				clientstate = CS_NORMAL;
-				redraw_view(); // to clear the aimer
 			}
 			else
 			{
-				clientstate = CS_AIMING;
 				aimer.x = aimer.y = 0;
-				redraw_view();
+				clientstate = CS_AIMING;
 			}
+			redraw_view();
 			break;
 		case C_ASSASSIN:
 			Network::send_action(XN_FLASH);
@@ -197,8 +196,7 @@ void ClassCPV::follow_prev()
 
 void ClassCPV::suicide()
 {
-	// ignore if dead
-	if(im_alive())
+	if(im_alive()) // ignore if dead
 	{
 		Network::send_action(XN_SUICIDE);
 		clientstate = CS_NORMAL;

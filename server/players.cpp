@@ -50,6 +50,7 @@ const string digitstr = "0123456789";
 
 const char NUM_FLASHBOMBS = 3;
 const short TORCH_DURATION = 500; // torches last 500--999 turns
+const char torch_sym[4] = { ';', 'i', 'j', 'J' };
 
 vector<short> usage_per_30min;
 
@@ -231,10 +232,7 @@ bool Player::is_alive() const
 void Player::set_class()
 {
 	cl_props = classes[(cl = next_cl)];
-	if(cl == C_ASSASSIN)
-		limiter = NUM_FLASHBOMBS;
-	else
-		limiter = 0;
+	limiter = (cl == C_ASSASSIN) ? NUM_FLASHBOMBS : 0;
 	time(&last_switched_cl);
 }
 
@@ -262,15 +260,9 @@ unsigned char Player::torch_symbol(const bool lit) const
 	{
 		if(lit)
 		{
-			if(torch_left > 3*TORCH_DURATION/2)
-				return 'J';
 			if(!torch_left)
 				return ',';
-			if(torch_left <= TORCH_DURATION/2)
-				return ';';
-			if(torch_left > TORCH_DURATION)
-				return 'j';
-			return 'i';
+			return torch_sym[2*torch_left/TORCH_DURATION];
 		}
 		return ' '; // torch not lit
 	}

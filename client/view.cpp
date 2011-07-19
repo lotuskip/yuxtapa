@@ -21,20 +21,19 @@ namespace
 {
 using namespace std;
 
-const char* aimerpath = "*";
-const char* aimerend = "X";
+const char aimerpath[] = "*";
+const char aimerend[] = "X";
 
 const unsigned char TITLE_CPAIR = C_BLUE_ON_MISS;
 
 bool showtitles = false;
-
 bool helpshown = false;
 
 void draw_titles()
 {
 	char len;
 	char *pos = &(viewbuffer[VIEWSIZE*VIEWSIZE*2+1]);
-	char x,y;
+	char x, y;
 	char syms;
 	for(char num = viewbuffer[VIEWSIZE*VIEWSIZE*2]; num > 0; --num)
 	{
@@ -61,7 +60,6 @@ void draw_aimer()
 	if(aimer.x || aimer.y)
 	{
 		char rad = std::max(std::abs(aimer.x), std::abs(aimer.y));
-
 		if(rad > 1) // rad == 1 does not require LOS-lookup, either
 		{
 			char line;

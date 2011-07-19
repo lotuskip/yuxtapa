@@ -6,8 +6,8 @@
 #include <string>
 
 enum e_Dir { D_N = 0, D_NE, D_E, D_SE, D_S, D_SW, D_W, D_NW, MAX_D };
-e_Dir& operator++(e_Dir& d); // "turns direction 45deg clockwise"
-e_Dir& operator--(e_Dir& d); // "turns direction 45deg anticlockwise"
+e_Dir& operator++(e_Dir& d); // "turn direction 45deg clockwise"
+e_Dir& operator--(e_Dir& d); // "turn direction 45deg anticlockwise"
 e_Dir operator!(const e_Dir d); // gives opposite direction
 
 class Coords

@@ -7,16 +7,16 @@
 #include "../common/col_codes.h"
 #include "../common/los_lookup.h"
 #include <cstdlib>
-#ifdef DEBUG
+# ifdef DEBUG
 #include <iostream>
-#endif
+# endif
 
 namespace
 {
 using namespace std;
 
-const char* arrowpath_sym = "|/-\\|/-\\";
-const char* zappath_sym = "^^>>vv<<";
+const char arrowpath_sym[] = "|/-\\|/-\\";
+const char zappath_sym[] = "^^>>vv<<";
 /* \|/   <^^
  * - -   < >
  * /|\   vv>
@@ -76,6 +76,7 @@ Arrow::Arrow(Coords t, const list<Player>::iterator o)
 	else
 	{
 		char line, ind;
+		// see common/los_lookup.h
 		if(t.y == -r) line = t.x + r;
 		else if(t.x == r) line = 3*r + t.y;
 		else if(t.y == r) line = 5*r - t.x;
@@ -116,6 +117,7 @@ void Arrow::update()
 }
 
 
+
 MM::MM(const std::list<Player>::iterator o, const e_Dir dir)
 	: OwnedEnt(o->own_pc->getpos(), '*', C_MM1, o), lmd(dir), turns_moved(0)
 {
@@ -128,7 +130,7 @@ void MM::update()
 {
 	if(madevoid)
 		return;
-	// Don't move the first turn (that's practically always the same turn we're created)
+	// Don't move on first turn (that's practically always the same turn we're created)
 	if(!turns_moved)
 	{
 		++turns_moved;
@@ -184,10 +186,9 @@ void MM::update()
 	event_set.insert((pos = newpos));
 	Game::curmap->mod_tile(pos)->flags |= TF_OCCUPIED;
 
-	if(cpair == C_MM1)
-		cpair = C_MM2;
-	else cpair = C_MM1;
+	cpair = (cpair == C_MM1) ? C_MM2 : C_MM1;
 }
+
 
 
 Zap::Zap(const std::list<Player>::iterator o, const e_Dir d)
