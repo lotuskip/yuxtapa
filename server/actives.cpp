@@ -7,7 +7,6 @@
 #include "players.h"
 #include "declares.h"
 #include "../common/los_lookup.h"
-#include "../common/col_codes.h"
 #include "../common/util.h"
 #include <algorithm>
 #include <vector>

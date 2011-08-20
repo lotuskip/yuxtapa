@@ -1,9 +1,10 @@
 # yuxtapa Makefile
+VERSION = 6
 #
 #This option for a pedantic, warnful debug build:
-CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG
+CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG -DVERSION=$(VERSION)
 #This one for optimised version:
-#CPPFLAGS=-O2 -g0 -fsigned-char
+#CPPFLAGS=-O2 -g0 -fsigned-char -DVERSION=$(VERSION)
 # Add -DMAPTEST to either one to build a "server" for testing & creating maps
 #
 # Add -DBOTMSG to make the bot client print messages.
@@ -34,7 +35,10 @@ SRCS_SV = server/server.cpp server/network.cpp server/settings.cpp \
 	server/cmds.cpp
 OBJS_SV=$(subst .cpp,.o,$(SRCS_SV))
 
-all: client server
+all: options client server
+
+options:
+	@echo "used CPPFLAGS = ${CPPFLAGS}"
 
 client: $(OBJS_CL) $(OBJS_CO)
 	$(CXX) -o yuxtapa_cl $(OBJS_CL) $(OBJS_CO) $(LDLIBS_CL)
@@ -47,6 +51,14 @@ mrbrown: $(OBJS_MB)
 
 clean:
 	$(RM) $(OBJS_CL) $(OBJS_SV) $(OBJS_CO) $(OBJS_MB)
+
+dist: clean
+	@echo creating dist tarball
+	@mkdir -p yuxtapa-${VERSION}
+	@cp -R LICENSE Makefile README common client server manual testes \
+	tmplates yuxtapa-${VERSION}
+	@tar -czf yuxtapa-${VERSION}.tar.gz yuxtapa-${VERSION}
+	@rm -rf yuxtapa-${VERSION}
 
 common/timer.o: common/timer.cpp
 common/netutils.o: common/netutils.cpp

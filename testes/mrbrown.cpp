@@ -592,7 +592,7 @@ int main(int argc, char *argv[])
 	{
 		if((sip = argv[1]) == "-v")
 		{
-			cout << "mrbrown (" PACKAGE " bot) v. " VERSION << endl;
+			cout << "mrbrown (" PACKAGE " bot) v. " << VERSION << endl;
 			return 0;
 		}
 	}

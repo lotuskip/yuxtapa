@@ -4,6 +4,7 @@
 
 #include "noccent.h"
 #include "occent.h"
+#include "../common/col_codes.h"
 #include <list>
 #include <map>
 #include <set>
