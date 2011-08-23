@@ -35,9 +35,9 @@ int main(int argc, char *argv[])
 	{
 		if((server = argv[1]) == "--help" || server == "-h")
 		{
-			cout << "Flag \'-v\' prints the version. Other than that, any command "
-				"line argument should be either a server address or a server name "
-				"defined in the configuration." << endl;
+			cout << "Flag \'-v\' prints the version. Other than that, any command line"
+				<< endl << "argument should be either a server address or a server name"
+				<< endl << "defined in the configuration." << endl;
 			return 0;
 		}
 		if(server == "-v" || server == "--version")
