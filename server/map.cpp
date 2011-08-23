@@ -921,8 +921,8 @@ void Map::upd_by_wall_flag(const Coords &c)
 	e_Dir d = D_N;
 	for(;;)
 	{
-		cn = c.in(d);
-		if(data[cn.y][cn.x] == T_WALL)
+		if(!point_out_of_map((cn = c.in(d)))
+			&& data[cn.y][cn.x] == T_WALL)
 		{
 			data[c.y][c.x].flags |= TF_BYWALL;
 			return;
