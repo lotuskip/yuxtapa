@@ -639,6 +639,7 @@ int main(int argc, char *argv[])
 				if(msglen > 5) // msg is not very small => view has changed
 				{
 					recv_buffer.read_compressed(viewbuffer);
+					// NOTE: not checking for errors -- might get a faulty view.
 					extract_pcs();
 				}
 			}

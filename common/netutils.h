@@ -94,7 +94,7 @@ public:
 	unsigned char read_ch();
 	void read_str(std::string &target);
 
-	void read_compressed(char *buffer);
+	bool read_compressed(char *buffer);
 	char *getw(); // this time for writing; this calls clear()
 
 	// this is used when we forward (a part of) the same message

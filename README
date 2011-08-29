@@ -16,6 +16,7 @@ The structure of this package:
 README      this file
 LICENSE     license information
 Makefile    for building
+vhist.html  version history & changelog
 manual/     the manual, HTML format
 client/     client source code
 server/     server source code

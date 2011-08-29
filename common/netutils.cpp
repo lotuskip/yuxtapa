@@ -106,13 +106,17 @@ void SerialBuffer::read_str(string &target)
 	}
 }
 
-void SerialBuffer::read_compressed(char *buffer)
+bool SerialBuffer::read_compressed(char *buffer)
 {
 	// read the size of the block:
 	unsigned short sh = read_sh();
 	uLongf res_size = BUFFER_SIZE;
-	uncompress((Bytef*)buffer, &res_size, (Bytef*)pos, sh); //TODO: error handling (malignant client...)
+	sh = uncompress((Bytef*)buffer, &res_size, (Bytef*)pos, sh);
+	if(sh == Z_BUF_ERROR || sh == Z_DATA_ERROR)
+		return true;
+	// Z_MEM_ERROR (insufficient memory) is highly unlikely.
 	pos += res_size;
+	return false;
 }
 
 char* SerialBuffer::getw()

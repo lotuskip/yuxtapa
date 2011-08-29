@@ -281,7 +281,8 @@ bool Network::receive_n_handle()
 
 			if(msglen > 5) // msg is not very small => view has changed
 			{
-				recv_buffer.read_compressed(viewbuffer);
+				if(recv_buffer.read_compressed(viewbuffer))
+					break; // could not read package, ignore it...
 				if(clientstate != CS_LIMBO && clientstate != CS_HELP)
 					redraw_view();
 			}

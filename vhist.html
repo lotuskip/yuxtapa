@@ -1,0 +1,380 @@
+<html>
+<body>
+<h2>yuxtapa version history &amp; changelogs</h2>
+
+<p>Versions are listed in chronological order by release date, newest first.</p>
+<p>If the version string in the title is underlined, it begins a new development
+branch (versions in different branches are never compatible).</p>
+<p>If a version number is followed by a letter, eg. &quot;version 4a&quot;, this
+is a fix/update in an old development branch (that of version 4 in the
+example). Any modifications and additions in version <em>n</em>[a-z] are always
+implicitly present also in the version listed right before that version
+(in the example's case, anything mentioned in version 4a is also present in
+version 5), but changes that are explicitly listed for a version of a new
+branch are never present in updates of any old branches (eg. things mentioned for
+version 5 do not appear in version 4b, even though 4b is released later
+than 5).</p>
+<p>A change or a new feature should always imply the respective update in the
+manual. Please report any out-of-date information you find there. BUT note that
+the manual of the old branch (version 4x) is not being updated anymore.</p>
+<p>A <font color="red">known issue</font> is something that was noticed just
+prior to release; the aim is to fix them by the next release.</p>
+
+<hr>
+
+<p><strong>version 6</strong> released ??? ??, 2011</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>previously typed message scrolling now works like in vim: only strings
+matching what you've already typed are suggested</li>
+<li>default key for 'C'hat/'C'ommand changed into <em>tab</em></li>
+<li>typing mode can now be exited with escape, too, and the escape delay is set
+so low that this isn't annoyingly slow</li>
+<li>message aliasing now replaces substrings, too!</li>
+<li>client can be made to remember messages typed in previous sessions; new
+config variable <em>stored_chat_msgs</em> for this purpose</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>miners can destroy doors</li>
+<li>made backstabbing requirements easier (a fix of a design flaw): remaining
+hiding is easier, and you can backstab blinded enemies</li>
+<li>if you suicide while poisoned and have only one hp, the poisoner earns a
+kill (&quot;scared to death&quot; supersedes this, though)</li>
+<li>messages now use long names for sectors, e.g. &quot;south-east&quot; instead
+of &quot;SE&quot;</li>
+<li>in steal mode the location of the item is now updated if the item is
+dropped</li>
+<li>bots are now informed of the turn duration setting (they used to just assume
+it's 250ms)</li>
+<li>new game mode, <em>team deathmatch</em></li>
+<li>server stat printing modified a bit; in particular, accuracy is no longer 0%
+if the player never fired a single shot</li>
+<li>new chat commands: <em>!howfair</em>, <em>!lscmd</em></li>
+<li>possibility of disabling specific commands in server config</li>
+</ul></p>
+
+<p><strong>Bot improvements:</strong>
+<ul>
+<li>many improvements on how bots move around
+<ul>
+<li>generally, bots will move towards enemies in sight</li>
+<li>if there are no enemies, they will move towards any sounds they hear (which
+can be used to pull teammate bots to follow you; but note that there is no real
+pathfinding)</li>
+<li>assassin and trapper bots will favour tiles which allow them to hide</li>
+<li>if unable to move for long enough, bots commit suicide</li>
+<li>in lack of other controlling conditions, instead of moving entirely
+randomly, bots &quot;remain on course&quot; for the most part</li>
+</ul></li>
+<li>special ability usage:
+<ul>
+<li>healer bots can heal themselves and bypassing teammates, and poison
+bypassing enemies</li>
+<li>wizard bots cast mm when they deem it safe and useful</li>
+<li>fighter bots use circle strikes in melee when no teammates are close</li>
+<li>archer bots shoot arrows at enemies if they have a clear shot (can get
+hazardous)</li>
+<li>miner bots can on occasion mine walls</li>
+<li>trapper bots set traps every once in a while (and might sometimes
+accidentally disarm them, too)</li>
+<li>mindcrafter bots might blink away from melee if they are low on hps</li>
+</ul></li>
+<li>bots won't intentionally spawn as any of the &quot;unruled&quot; classes:
+scout, planewalker, combat mage (they can still spawn as these due to
+classlimiting)</li>
+<li>you can check the bot executable version with &quot;mrbrown -v&quot;</li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>server and client are compatible with v.5 clients and servers, but bot
+compatability is broken!</li>
+<li>new .conf templates with info on new features</li>
+</ul></p>
+
+<hr>
+
+<p><strong>version 4b</strong> released ??? ??, 2011</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>fixed (a very old) bug that printed titles close to the edge of the view
+wrong</li>
+<li>fixed (another very old) bug that allowed clients to send too long
+strings</li>
+<li>curious namespace issue prevented the client from compiling on GCC 4.6.0;
+fixed this (nothing changed)</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>fixed a segfault that has escaped notice for many a release (related to
+action indicators not being properly cleared before starting a new map)</li>
+<li>fixed how you were able to detect traps while blinded</li>
+<li>fixed a small memory leak (related to loading maps)</li>
+<li>fixed a segfault caused by digging a wall right next to the map's outer
+edge</li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>compatible with v.4a but <em>NOT</em> with any version &gt;=5</li>
+</ul></p>
+
+<hr>
+
+<p><strong><u>version 5</u></strong> released Mar 24, 2011</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>changed the layout of the client screen; message area made wider, PC info
+now horizontal, and no more completely unused space</li>
+<li>client screen now has &quot;flag map&quot; and server information</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>archers can trigger traps with arrows</li>
+<li>miners can dig through windows</li>
+<li>acid traps</li>
+<li>new map type: complex</li>
+<li>new map file format that is editable with a text editor</li>
+<li>new chat commands: <em>!putteam</em>, <em>!setclass</em></li>
+<li>new statistics (kills recorded separately for each 'method', and team kills
+recorded)</li>
+</ul></p>
+
+<p><strong>changes affecting both C&amp;S:</strong>
+<ul>
+<li>new class: planewalker</li>
+<li>following previous player (instead of just next); keybinding 'p'</li>
+</ul></p>
+
+<p><strong>other:</strong>
+<ul>
+<li>bots now also avoid known traps</li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>interaction version 2</li>
+<li>statistics version 2 (old stats will be discarded!)</li>
+<li>new map saving system; old saved maps won't work!</li>
+<li><em>NOT</em> compatible with any version below or any future &quot;4x&quot;
+version!</li>
+</ul></p>
+
+<hr>
+
+<p><strong>version 4a</strong> released Mar 24, 2011</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>added a period to the end of the message about damage reaction toggle</li>
+<li>fixed the fixed 256 colour mode colours; some looked wrong</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>fixed a problem that prevented the &quot;maptest server&quot; from
+compiling</li>
+<li>bot name lengths in config were not checked; fixed this</li>
+</ul></p>
+
+<p><strong>other:</strong>
+<ul>
+<li>quite the minor thing: the name of the game is now on occasion spelled
+'<font style="font-family:Monospace">yux+apa</font>' in monospace</li>
+<li>references to &quot;future releases&quot; removed from the manual, which
+probably won't be updated any more in the 4x branch</li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>compatible with v.4 but <em>NOT</em> with any version &gt;=5</li>
+</ul></p>
+
+<hr>
+
+<p><strong>version 4</strong> released Nov 11, 2010</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>long chat messages are now split on several lines</li>
+<li>chat typing revamped/fixed; you can now type long passages and actually see
+what you're typing</li>
+<li>a &quot;third colour mode&quot; for terminals that have at least 88 colours
+but don't allow redefining their RGB values</li>
+<li><font color="red">known issue:</font> unknown territory does not show
+correctly in <em>st</em> (simple terminal), but this strikes me as a bizarre bug
+in <em>st</em> (try playing around with 'testes/scenecol.cpp', using <em>st</em>
+and/or another terminal with 'export TERM=st-256color' and see for
+yourself)</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>output of !serverinfo now can't exceed the message length limit (map types
+and game modes lists are truncated if too long)</li>
+<li>can define bot names to use in config</li>
+<li>new server commands: <em>!log</em>, <em>!plinfo</em></li>
+</ul></p>
+
+<p><strong>other:</strong>
+<ul>
+<li>there is now a Makefile rule for building Mr. Brown instead of a separate
+Makefile</li>
+<li>first steps of AI(?): the bots now avoid chasms and water (not infallibly,
+though)</li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>fully compatible with v.3 in all respects</li>
+<li>new server.conf template for 'botnames'</li>
+</ul></p>
+
+<hr>
+
+<p><strong>version 3</strong> released Nov 3, 2010</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>the &quot;ouch feature&quot; which allows automatic shout generation (with
+custom message) when the PC is damaged</li>
+<li>in the same vein, &quot;quick shouts&quot;: predefined messages that are
+sent upon hitting the keys F1&mdash;F12</li>
+<li>players can now review their key mappings with the fixed key '?'.
+Consequently, no key can be remapped to '?'</li>
+<li>repeated chat messages are now stored only once in the history</li>
+<li>invalid original ctrl keybindings (^X) are now printed correctly in the
+error message</li>
+<li><font color="red">known issue:</font> too long chat messages are not printed
+correctly</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>fixed the crash caused by a player joining a team and going back into
+spectating before spawning (have a feeling I've fixed this same issue at least
+three times...)</li>
+<li>maps can now be stored&amp;reloaded, and stored maps can be listed; new
+&quot;mapdir&quot; entry in server.conf</li>
+<li>improvements to the &quot;map generation testing&quot; build: it is now
+minimal (without all the other server functionality even present in the binary)
+and can also store a map into a file</li>
+<li>fixed a very stupid mistake due to which traps left by trappers were not
+linked to their planter</li>
+<li>trappers can disarm traps</li>
+<li>zaps now die off if they travel for too long without bouncing (no more lucky
+sniping from the other side of the map)</li>
+<li>introduced undiggable walls</li>
+<li>revamped house generation &mdash; from 550+ lines of code to 227 lines, yet
+the houses are now more varied!</li>
+<li>when a player switches team or joins a team after being a spectator, their
+memory of the current map is cleared. Every non-spectator's map memory is
+cleared when the teams are shuffled</li>
+<li>can determine map type (dungeon/outdoor) in config similarly as game mode;
+the value of this option also added to output of &quot;!serverinfo&quot;</li>
+<li>a big revamp of the whole bot handling; end-user functionality is
+essentially the same but many delicate problems were fixed</li>
+<li>fixed a stupid mistake that allowed giving too high player-IDs (ultimately
+making it impossible to connect to the server)</li>
+<li>changed some wordings in some log messages about the config being
+wrong</li>
+<li><font color="red">known issue:</font> in principle the <em>!serverinfo</em>
+replies can exceed the message length limit; this is not checked</li>
+</ul></p>
+
+<p><strong>other:</strong>
+<ul>
+<li>Mr. Brown updated (still doesn't <em>do</em> much of anything)</li>
+<li><em>Katharsis!</em> Got rid of <em>auto*hell</em></li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>interaction version 1</li>
+<li>first release to introduce map storing: map storage version 1</li>
+<li>old Mr. Brown should not be used, replace with new one</li>
+<li>all datafiles from v.2 are compatible</li>
+<li>old configs work, but new templates for both client&amp;server describe new
+features</li>
+</ul></p>
+
+<hr>
+
+<p><strong>version 2</strong> released Oct 28, 2010</p>
+
+<p><strong>Client:</strong>
+<ul>
+<li>fixed the problem that the client, when awaiting connection, hogged 100%
+CPU</li>
+<li>fixed parsing of IPv6 addresses (never tested!)</li>
+<li>can now hit ^C to cancel connecting (if e.g. accidentally connecting to
+wrong server)</li>
+<li>can now give server address directly as a command line argument</li>
+<li>any message sent by the server as a response to a connection attempt was
+shown too briefly to be read; fixed this</li>
+<li>fixed a display bug that made full-colour lit portals brown instead of
+blue</li>
+<li>allowed remapping keybindings to ctrl+[key]</li>
+<li>tweak of the getch() timeout value</li>
+<li>dying now turns off walkmode</li>
+<li>message typing recognises pageDown (empty line)</li>
+<li>'-h' (and '--help') print some redundant info now</li>
+<li>changed version compatability check (introducing &quot;interaction
+version&quot;)</li>
+</ul></p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>system to automatically compile a &quot;server&quot; to test map generation
+only</li>
+<li>fixed a very stupid mistake that made all the maps seem stretched in the
+NW&ndash;SE direction</li>
+<li>adjustment of the 'h' parameter and the thresholds in outdoor map generation
+(actual effects are many and difficult to explain)</li>
+<li>an extensive revamp of the dungeon map generation</li>
+<li>new multialgorithm for placement of houses</li>
+<li>fixed the crashing caused by commands such as &quot;!teambal &quot; (with
+one space and nothing else after the command)</li>
+<li>the command functionality to store/reload the current map (&quot;!storemap
+X&quot;, &quot;!nextmap X&quot;); just the actual saving and loading is yet to
+be done...</li>
+<li>Players who are kicked or banned now receive a message stating this</li>
+<li>fireballs light carried torches (of any survivors who have a torch)</li>
+<li>made swimming way more difficult (the way it was <em>supposed</em> to be, so
+actually this was a bug fix)</li>
+<li>print an ASCII &quot;logo&quot; at startup, and a message about graceful
+shutdown (in stdout, not just in log)</li>
+<li>don't print non-error log messages when running with
+&quot;--pstats&quot;</li>
+<li>removed unnecessary '-lrt' from LDFLAGS (remnant from some past
+experimentation)</li>
+<li>'-h' (and '--help') print some redundant info now</li>
+<li>changed version compatability check (introducing &quot;interaction
+version&quot;)</li>
+</ul></p>
+
+<p><strong>compatability:</strong>
+<ul>
+<li>interaction version 1</li>
+<li>all data files from v.1 are compatible</li>
+<li>v.1 configs work, but new client.conf template has added information on new
+features</li>
+</ul></p>
+
+<hr>
+
+<p><strong><u>version 1</u></strong> released Oct 21, 2010</p>
+<p><strong>compatability:</strong>
+<ul>
+<li>interaction version 1</li>
+</ul></p>
+
+</body>
+</html>
