@@ -66,20 +66,10 @@ int main(int argc, char *argv[])
 	fix_str_to_fit((server = Config::get_server_ip()));
 	Base::print_str(server.c_str(), 7, 0, 4, STAT_WIN, false);
 	
-	//Config::get_server_ip() jaettuna kahdella riville tarvittaessa
-
 	bool server_disconnect = false;
-	for(;;)
-	{
-		if(Network::receive_n_handle())
-		{
-			server_disconnect = true;
-			break;
-		}
-		if(Input::inputhandle())
-			break;
+	while(!(server_disconnect = Network::receive_n_handle())
+		&& !Input::inputhandle())
 		upd_msgs();
-	}
 
 	Network::disconnect();
 	Base::deinit_ncurses();

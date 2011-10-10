@@ -9,7 +9,6 @@ class Map;
 
 const std::string str_team[2] = { "Green", "Purple" };
 
-// describes "one game", playing of a single map
 namespace Game
 {
 	void next_map(const std::string &loadmap); // called when starting intermission

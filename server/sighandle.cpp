@@ -3,6 +3,8 @@
 #include "sighandle.h"
 #include <csignal>
 
+namespace
+{
 sig_atomic_t signs = 0;
 
 void handle_signal(const int signum)
@@ -10,6 +12,7 @@ void handle_signal(const int signum)
 	signs |= (1 << signum);
 }
 
+}
 
 bool any_signs() { return signs; }
 

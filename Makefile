@@ -5,8 +5,7 @@ VERSION = 6
 CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG -DVERSION=$(VERSION)
 #This one for optimised version:
 #CPPFLAGS=-O2 -g0 -fsigned-char -DVERSION=$(VERSION)
-# Add -DMAPTEST to either one to build a "server" for testing & creating maps
-#
+# Add -DMAPTEST to build a "server" for testing & creating maps.
 # Add -DBOTMSG to make the bot client print messages.
 
 #The rest probably needs not be touched.
