@@ -47,7 +47,6 @@ const char BLINK_WAIT = 1; // blink (mindcrafters)
 const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
 const char DIG_WAIT = 7; // mining (miners)
 const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
-const char SUICIDE_AFTER = 20; // this many turns immobile result in suicide
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
@@ -78,7 +77,6 @@ e_Dir prev_committed_walk; // direction of last step taken
 vector<Coords> pcs[2]; // PCs of each team currently in view
 char limiter = 0; // used to prevent bots from repeating the same action too often
 char abil_counter = 0;
-char immobility = 0; // turns without being able to move
 Coords shoot_targ;
 // Generic:
 int rv;
@@ -109,7 +107,6 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 	}
 	do_send();
 	++axn_counter;
-	immobility = 0; // at least the bot thinks it's doing something
 }
 
 short do_receive()
@@ -334,8 +331,6 @@ void random_walk()
 			else if(onescorer != MAX_D) // found an acceptable direction
 				send_action(XN_MOVE, (prev_committed_walk = onescorer));
 			// else can't walk anywhere!
-			if(++immobility >= SUICIDE_AFTER)
-				send_action(XN_SUICIDE);
 		}
 	}
 }
@@ -347,10 +342,11 @@ void try_walk_towards(const Coords &c, const bool avoid_pcs)
 		random_walk();
 }
 
-void extract_pcs()
+bool scan_view() // extract PCs in view and check if in closed area
 {
 	pcs[0].clear();
 	pcs[1].clear();
+	int num_oos = 0; // number of tiles out of sight
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
 		// get all PCs, not including self (center of view)
@@ -371,7 +367,12 @@ void extract_pcs()
 			}
 			// TODO: brown PCs?
 		}
+		else if(viewbuffer[i-1] <= C_WATER_DIM || viewbuffer[i-1] == C_UNKNOWN)
+			++num_oos;
 	}
+	/* We are stuck if we can see no more than 12 tiles. The second condition
+	 * here rules out being blind: */
+	return num_oos >= VIEWSIZE*VIEWSIZE-12 && num_oos != VIEWSIZE*VIEWSIZE;
 }
 
 // For searching teammates/enemies who are in a neighbouring square:
@@ -554,8 +555,9 @@ bool class_specific()
 			return true;
 		}
 		break;
-	default: return false;
+	default:;
 	}
+	return false;
 }
 
 // Misc:
@@ -640,7 +642,8 @@ int main(int argc, char *argv[])
 				{
 					recv_buffer.read_compressed(viewbuffer);
 					// NOTE: not checking for errors -- might get a faulty view.
-					extract_pcs();
+					if(scan_view())
+						send_action(XN_SUICIDE);
 				}
 			}
 #ifdef BOTMSG
