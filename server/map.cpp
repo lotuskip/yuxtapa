@@ -33,6 +33,7 @@ const char EVERY_N_WALL_UNDIG[MAX_MAPTYPE] = { // every Nth wall is made undigga
 const Tile T_TREE = { TF_WALKTHRU|TF_SEETHRU, 'T', C_TREE };
 const Tile T_GROUND = { TF_WALKTHRU|TF_SEETHRU, '.', C_GRASS };
 const Tile T_WALL = { 0, '#', C_WALL };
+const Tile T_ILLUSION_WALL = { TF_WALKTHRU, '#', C_WALL };
 const Tile T_CHASM = { TF_WALKTHRU|TF_SEETHRU|TF_KILLS, ' ', C_FLOOR };
 const Tile T_SWAMP = { TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU, '\"', C_TREE };
 const Tile T_ROUGH = { TF_WALKTHRU|TF_SLOWWALK|TF_SEETHRU, ';', C_WALL };
@@ -60,9 +61,11 @@ char char_from_tile(const Tile& t)
 			return ',';
 		// must be floor
 		return '_';
-	case '#': // wall, diggable or not
-		if(t.flags & TF_NODIG)
+	case '#': // walls
+		if(t.flags & TF_NODIG) // undiggable
 			return 'H';
+		if(t.flags & TF_WALKTHRU) // illusion wall
+			return 'I';
 		// fall down:
 	default:
 	/*case 'T': // tree
@@ -87,6 +90,7 @@ bool tile_from_char(const char ch, Tile& t)
 	case '#': t = T_WALL; break;
 	case 'H': t = T_WALL; t.flags |= TF_NODIG; break;
 	case 'T': t = T_TREE; break;
+	case 'I': t = T_ILLUSION_WALL; break;
 	case ' ': t = T_CHASM; break;
 	case '\"': t = T_SWAMP; break;
 	case '~': t = T_WATER; break;
@@ -171,7 +175,7 @@ void fill2DFractArray(float* const fa, const int size, const float h)
     int stride = subSize/2;
 
 	// Initialize the corner values. This greatly affects the final outcome,
-	// so we don't just randomize them (that can lead to maps that all almost
+	// so we don't just randomize them (that can lead to maps that are almost
 	// completely flooded or contain almost solely rock (which, admittedly,
 	// still happens now but less often! I have not been able to find fixed
 	// seeds that would (a) yield interesting maps, and (b) never result in
@@ -237,7 +241,7 @@ void fill2DFractArray(float* const fa, const int size, const float h)
 
 /* Once the random absract fractal (a table of floats!) is created using the
  * above code, we paint it with map tiles, using the following threshold
- * values (outdoor and dungeon separately): */
+ * values (each map type separately): */
 
 const char NUM_OD_TILES = 13;
 const Tile outdoor_tiles[NUM_OD_TILES] = { T_WALL, T_WATER, T_GROUND, T_WATER,
@@ -480,6 +484,8 @@ void gen_house(const bool outdoor)
 		}
 	}
 
+	// TODO: illusory walls ('I')?
+
 	// The windows we placed above were only "preliminary plans". At least one
 	// of them must be replaced by our front door, and if we are not outside,
 	// there can be no windows!
@@ -522,7 +528,7 @@ void gen_house(const bool outdoor)
 /* We'll typically generate a number of houses, and place them using
  * one of the following algorithms. */
 
-// 'circular' places the house in a circle
+// 'circular' places the houses in a circle
 void fill_hc_circular(vector<Coords> &hc, const char num, const short size)
 {
 	// putting just one point onto a circle is silly:
@@ -719,7 +725,7 @@ Map::Map(const short size, const short variation, const short players)
 		tiles = underground_tiles;
 		num_tile_types = NUM_UG_TILES;
 	}
-	else // comples
+	else // complex
 	{
 		h = 0.6f;
 		thresholds = co_thresholds;
@@ -749,7 +755,7 @@ Map::Map(const short size, const short variation, const short players)
 	}
 	delete[] mesh;
 
-	// If we are creating an underground map, we add corridors and randomly
+	// If we are creating a dungeon map, we add corridors and randomly
 	// change the floor tiles to rough tiles:
 	if(maptype == MT_DUNGEON)
 	{
@@ -881,7 +887,7 @@ Map::Map(const short size, const short variation, const short players)
 	fix_boundary();
 
 	// Finally, initialize the BY_WALL flags (this might be doable faster, too)
-	// and make some walls undiggable. Note that no need to init for the edge
+	// and make some walls undiggable. Note: no need to init for the edge
 	// since it's always undiggable.
 	Coords c;
 	c.y = 1;
@@ -898,8 +904,8 @@ Map::Map(const short size, const short variation, const short players)
 		c.y++;
 	}
 
-	// print out the map (or at least a part of it) to stderr.
 #ifdef MAPTEST
+	// print out the map (or at least a part of it) to stderr.
 	for(rowit it = data.begin(); it != data.end(); ++it)
 	{
 		for(vector<Tile>::iterator i = it->begin(); i != it->end(); ++i)
@@ -1067,13 +1073,15 @@ Tile Map::subsample_tile(const Tile &t) const
 		return T_FLOOR;
 	if(t.symbol == '\\' || t.symbol == '+') // doors
 		return T_FLOOR;
+	if(t.symbol == '#') // includes illusory walls
+		return T_WALL;
 	return t;
 }
 
 
 void Map::gen_miniview(char *target) const
 {
-	short F = mapsize/VIEWSIZE;
+	float F = float(mapsize)/VIEWSIZE;
 	short x, y, ax, ay;
 	map<Tile, short> amounts;
 	map<Tile, short>::iterator it;
@@ -1084,7 +1092,7 @@ void Map::gen_miniview(char *target) const
 		for(x = 0; x < VIEWSIZE; ++x)
 		{
 			// collect tile amounts in this area:
-			for(ay = y*F+1; ay < (y+1)*F-1; ++ay)
+			for(ay = y*F; ay < (y+1)*F; ++ay)
 			{
 				for(ax = x*F; ax < (x+1)*F; ++ax)
 					amounts[data[ay][ax]]++;
@@ -1094,7 +1102,7 @@ void Map::gen_miniview(char *target) const
 			{
 				// The reference value here is the fact that there are a total
 				// of F*F tiles!
-				if(it->second < 7*F*F/24
+				if(it->second < F*F/4
 					&& (t = subsample_tile(it->first)) != it->first)
 				{
 					amounts[t] += it->second;
@@ -1102,14 +1110,6 @@ void Map::gen_miniview(char *target) const
 					it = amounts.begin(); // start over!
 				}
 			}
-#if 0
-			// To make the minimap look nicer and be more informative, we
-			// "highlight" trees, swamp and lakes:
-			if(amounts[T_TREE] >= amounts[T_GROUND]/4
-				|| amounts[T_SWAMP] >= amounts[T_GROUND]/4
-				|| amounts[T_WATER] >= amounts[T_GROUND]/4)
-				amounts.erase(T_GROUND);
-#endif
 			// now just represent this area by the most common tile:
 			t = max_element(amounts.begin(), amounts.end(), pred)->first;
 			*(target++) = t.cpair;

@@ -66,6 +66,9 @@ bool can_dig_in(const Coords &c, const e_Dir d)
 {
 	// Mining requires one of: (A) there is a wall/window/door, (B) there is a blocked
 	// boulder, (C) there is a boulder source.
+	// TODO: check for illusory walls (symbol '#' and flags & TF_WALKTHRU)
+	// [maybe switch return value to char and return 0 for can_dig, 1 for cannot
+	// dig and -1 for illusory => special message]
 	Tile* tp = Game::curmap->mod_tile(c);
 	if(tp->symbol == '#' || tp->symbol == '|' || tp->symbol == '-' || tp->symbol == '+'
 		|| (tp->flags & TF_NOCCENT && any_noccent_at(c, NOE_BLOCK_SOURCE)

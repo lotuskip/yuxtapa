@@ -39,6 +39,8 @@ const Tile T_FLOOR = { TF_WALKTHRU|TF_SEETHRU,
 #endif
 , C_FLOOR };
 
+/* These need to match the bounds obtained from what settings accepts
+ * as base map size and map size variation! */
 const short MIN_MAP_SIZE = 42;
 const short MAX_MAP_SIZE = 511;
 
