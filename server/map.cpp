@@ -978,7 +978,7 @@ Tile Map::subsample_tile(const Tile &t) const
 
 void Map::gen_miniview(char *target) const
 {
-	short F = mapsize/VIEWSIZE;
+	float F = float(mapsize)/VIEWSIZE;
 	short x, y, ax, ay;
 	map<Tile, short> amounts;
 	map<Tile, short>::iterator it;
@@ -989,7 +989,7 @@ void Map::gen_miniview(char *target) const
 		for(x = 0; x < VIEWSIZE; ++x)
 		{
 			// collect tile amounts in this area:
-			for(ay = y*F+1; ay < (y+1)*F-1; ++ay)
+			for(ay = y*F; ay < (y+1)*F; ++ay)
 			{
 				for(ax = x*F; ax < (x+1)*F; ++ax)
 					amounts[data[ay][ax]]++;
@@ -999,7 +999,7 @@ void Map::gen_miniview(char *target) const
 			{
 				// The reference value here is the fact that there are a total
 				// of F*F tiles!
-				if(it->second < 7*F*F/24
+				if(it->second < F*F/4
 					&& (t = subsample_tile(it->first)) != it->first)
 				{
 					amounts[t] += it->second;
