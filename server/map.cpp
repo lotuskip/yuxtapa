@@ -484,8 +484,6 @@ void gen_house(const bool outdoor)
 		}
 	}
 
-	// TODO: illusory walls ('I')?
-
 	// The windows we placed above were only "preliminary plans". At least one
 	// of them must be replaced by our front door, and if we are not outside,
 	// there can be no windows!
@@ -518,6 +516,9 @@ void gen_house(const bool outdoor)
 			else if(!outdoor || random()%4)
 				house[sh] = '#';
 		}
+		// possibly turn some walls into illusions: 
+		else if(!outdoor && house[sh] == '#' && !(random()%15))
+			house[sh] = 'I';
 	}
 
 } // gen_house
@@ -1000,6 +1001,8 @@ void Map::apply_house(const Coords &c)
 				*tp = T_FLOOR; break;
 			case '#':
 				*tp = T_WALL; break;
+			case 'I':
+				*tp = T_ILLUSION_WALL; break;
 			case '+':
 				*tp = T_DOOR;
 				if(random()%2) // open instead of closed
@@ -1081,11 +1084,15 @@ Tile Map::subsample_tile(const Tile &t) const
 
 void Map::gen_miniview(char *target) const
 {
-	float F = float(mapsize)/VIEWSIZE;
-	short x, y, ax, ay;
+	short x, y, ax, ay, F;
 	map<Tile, short> amounts;
 	map<Tile, short>::iterator it;
 	Tile t;
+	
+	// sample F*F map tiles for each miniview tile
+	F = mapsize/VIEWSIZE + 1;
+	while(VIEWSIZE*F >= mapsize)
+		--F;
 
 	for(y = 0; y < VIEWSIZE; ++y)
 	{
@@ -1102,7 +1109,7 @@ void Map::gen_miniview(char *target) const
 			{
 				// The reference value here is the fact that there are a total
 				// of F*F tiles!
-				if(it->second < F*F/4
+				if(it->second < 5*F*F/24
 					&& (t = subsample_tile(it->first)) != it->first)
 				{
 					amounts[t] += it->second;

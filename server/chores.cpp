@@ -62,18 +62,18 @@ void update_lights_around(const Coords &c)
 	}
 }
 
-bool can_dig_in(const Coords &c, const e_Dir d)
+// returns 0: can dig, 1: can't dig, -1: illusory wall!
+char cant_dig_in(const Coords &c, const e_Dir d)
 {
 	// Mining requires one of: (A) there is a wall/window/door, (B) there is a blocked
 	// boulder, (C) there is a boulder source.
-	// TODO: check for illusory walls (symbol '#' and flags & TF_WALKTHRU)
-	// [maybe switch return value to char and return 0 for can_dig, 1 for cannot
-	// dig and -1 for illusory => special message]
 	Tile* tp = Game::curmap->mod_tile(c);
+	if(tp->symbol == '#' && tp->flags & TF_WALKTHRU)
+		return -1;
 	if(tp->symbol == '#' || tp->symbol == '|' || tp->symbol == '-' || tp->symbol == '+'
 		|| (tp->flags & TF_NOCCENT && any_noccent_at(c, NOE_BLOCK_SOURCE)
 			!= noccents[NOE_BLOCK_SOURCE].end()))
-		return true;
+		return 0;
 	// that was (A) and (C); (B) is more complicated:
 	if(tp->flags & TF_OCCUPIED && any_boulder_at(c) != boulders.end())
 	{
@@ -83,9 +83,9 @@ bool can_dig_in(const Coords &c, const e_Dir d)
 			|| !(pushtar->flags & TF_WALKTHRU) || pushtar->symbol == '\\'
 			|| ((pushtar->flags & TF_NOCCENT)
 			&& any_noccent_at(pushtarpos, NOE_FLAG) != noccents[NOE_FLAG].end()))
-			return true; // cannot push; hence can dig
+			return 0; // cannot push; hence can dig
 	}
-	return false;
+	return 1;
 }
 
 void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
@@ -1032,10 +1032,17 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	{
 		pit->facing = e_Dir(axn.var1);
 		Coords c = pit->own_pc->getpos().in(e_Dir(axn.var1));
-		if(can_dig_in(c, e_Dir(axn.var1)))
+		char rv;
+		if(!(rv = cant_dig_in(c, e_Dir(axn.var1))))
 		{
 			pit->doing_a_chore = DIG_TURNS;
 			add_sound(c, S_RUMBLE);
+		}
+		else if(rv == -1) // illusory wall
+		{
+			string msg = "That is no real wall!";
+			Network::construct_msg(msg, C_WALL_LIT);
+			Network::send_to_player(*pit);
 		}
 		// else there is nothing to dig
 		break;
@@ -1336,7 +1343,7 @@ void progress_chore(const list<Player>::iterator pit)
 			}
 			// else it is not possible to finish for some reason
 		}
-		else if(!can_dig_in(c, pit->facing))
+		else if(cant_dig_in(c, pit->facing))
 			pit->doing_a_chore = 0; // must abort
 		else
 			add_sound(c, S_RUMBLE);

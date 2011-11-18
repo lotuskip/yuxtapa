@@ -2,9 +2,9 @@
 VERSION = 6
 #
 #This option for a pedantic, warnful debug build:
-#CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG -DVERSION=$(VERSION)
+CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG -DVERSION=$(VERSION)
 #This one for optimised version:
-CPPFLAGS=-O2 -g0 -fsigned-char -DVERSION=$(VERSION)
+#CPPFLAGS=-O2 -g0 -fsigned-char -DVERSION=$(VERSION)
 # Add -DMAPTEST to build a "server" for testing & creating maps.
 # Add -DBOTMSG to make the bot client print messages.
 
