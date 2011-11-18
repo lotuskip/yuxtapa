@@ -1483,7 +1483,7 @@ void trap_detection(const list<Player>::iterator pit)
 	{
 		pit->turns_without_axn = 0; // detection counts as an action!
 		// Go through traps in a radius of 3 squares:
-		Coords pos = pit->own_vp->get_pos(); /* Note: using viewpoints pos
+		Coords pos = pit->own_vp->get_pos(); /* Note: using viewpoint's pos
 			instead of PC's assures that planewalkers can detect traps with mind's eye. */
 		Coords c;
 		short f;
@@ -1494,18 +1494,16 @@ void trap_detection(const list<Player>::iterator pit)
 			{
 				c.x = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind] + pos.x;
 				c.y = loslookup[DETECT_TRAPS_RAD-2][line*2*DETECT_TRAPS_RAD+ind+1] + pos.y;
-				if((f = Game::curmap->get_tile(c).flags) & TF_TRAP)
-				{
-					if(req_turns < BASE_TURNS_TO_DETECT_TRAPS
-						|| ((f & TF_LIT) && random()%100 < 75)
-						|| (!(f & TF_LIT) && random()%100 < 60))
-					{
-						any_trap_at(c)->set_seen_by(pit->team);
-						event_set.insert(c);
-					}
-				}
-				else if(!(f & TF_SEETHRU))
+				if(Game::curmap->point_out_of_map(c)
+					|| !((f = Game::curmap->get_tile(c).flags) & TF_SEETHRU))
 					break;
+				else if(f & TF_TRAP && (req_turns < BASE_TURNS_TO_DETECT_TRAPS
+					|| ((f & TF_LIT) && random()%100 < 75)
+					|| (!(f & TF_LIT) && random()%100 < 60)))
+				{
+					any_trap_at(c)->set_seen_by(pit->team);
+					event_set.insert(c);
+				}
 			}
 		}
 	} // if should detect traps
