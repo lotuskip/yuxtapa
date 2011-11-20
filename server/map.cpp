@@ -851,14 +851,9 @@ Map::Map(const short size, const short variation, const short players)
 				{
 					for(j = 0; j < MAX_HS; ++j)
 					{
-						k = house[j*MAX_HS+i];
-						if(k == '+')
-						{
-							if(maptype == MT_OUTDOOR)
-								add_patch(Coords(ci->x+i, ci->y+j), T_ROAD);
-							else
-								add_patch(Coords(ci->x+i, ci->y+j), T_FLOOR);
-						}
+						if((k = house[j*MAX_HS+i]) == '+')
+							add_patch(Coords(ci->x+i, ci->y+j),
+								(maptype == MT_OUTDOOR) ? T_ROAD : T_FLOOR);
 						else if(k == '|' || k == '-')
 							add_patch(Coords(ci->x+i, ci->y+j), T_GROUND);
 					}
