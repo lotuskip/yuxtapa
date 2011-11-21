@@ -281,27 +281,24 @@ bool Input::inputhandle()
 
 		if(clientstate == CS_LIMBO)
 		{
-			if(isalpha(key))
+			key = tolower(key);
+			if(key <= 'k' && key >= 'a') // switch class
 			{
-				key = tolower(key);
-				if(key <= 'k' && key >= 'a') // switch class
-				{
-					Network::send_spawn((unsigned char)(key - 'a'));
-					leave_limbo();
-				}
-				else if(key == 't')
-				{
-					Network::send_switch();
-					leave_limbo();
-				}
-				else if(key == 's')
-				{
-					Network::send_spawn(NO_CLASS);
-					leave_limbo();
-				}
-				else if(key == 'l')
-					leave_limbo();
+				Network::send_spawn((unsigned char)(key - 'a'));
+				leave_limbo();
 			}
+			else if(key == 't')
+			{
+				Network::send_switch();
+				leave_limbo();
+			}
+			else if(key == 's')
+			{
+				Network::send_spawn(NO_CLASS);
+				leave_limbo();
+			}
+			else if(key == 'l' || key == 27) // 27: escape
+				leave_limbo();
 		}
 		else
 		{
