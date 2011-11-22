@@ -47,6 +47,7 @@ const char BLINK_WAIT = 1; // blink (mindcrafters)
 const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
 const char DIG_WAIT = 7; // mining (miners)
 const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
+const char FLASH_WAIT = 8; // using flash bombs (assassins)
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
@@ -375,6 +376,26 @@ bool scan_view() // extract PCs in view and check if in closed area
 	return num_oos >= VIEWSIZE*VIEWSIZE-12 && num_oos != VIEWSIZE*VIEWSIZE;
 }
 
+// Check if PC at given coords has class 'name' (abbreviation)
+bool is_class_of(const Coords& c, const char* name)
+{
+	// Titles are in the form [num of titles (char)][so many titles: [x][y][C-string]]
+	char *p = viewbuffer+(VIEWSIZE*VIEWSIZE*2);
+	for(char i = *(p++); i > 0; --i)
+	{
+		if(*p == c.x && *(p+1) == c.y)
+		{
+			// friendly PC is "nick|Cl", hostile "Cl"; this will
+			// get the Cl-part only:
+			p += strlen(p+2); // -2 for "Cl", but +2 to skip coords
+			return !strcmp(p, name);
+		}
+		p += 2;
+		p += strlen(p);
+	}
+	return false; // no suck coords titled
+}
+
 // For searching teammates/enemies who are in a neighbouring square:
 e_Dir neighb_pc(const char t)
 {
@@ -452,6 +473,24 @@ bool could_shoot(Coords &target)
 		}
 	}
 	return false; // no targets found
+}
+
+bool should_flash()
+{
+	// must be at least one non-assassin enemy and no non-assassin friends
+	// within range (3 tiles; cf. server/chores.cpp:flash_at())
+	vector<Coords>::const_iterator ti;
+	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
+	{
+		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
+			return false;
+	}
+	for(ti = pcs[opp_team[myteam]].begin(); ti != pcs[opp_team[myteam]].end(); ++ti)
+	{
+		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
+			return true;
+	}
+	return false;
 }
 
 bool get_sound_to_follow(Coords &t)
@@ -552,6 +591,15 @@ bool class_specific()
 			send_action(XN_SET_TRAP);
 			wait_turns = TRAP_WAIT;
 			limiter = TRAP_LIMIT; // wait a good while before setting another one
+			return true;
+		}
+		break;
+	case C_ASSASSIN:
+		if(abil_counter && !limiter && should_flash())
+		{
+			send_action(XN_FLASH);
+			--abil_counter;
+			limiter = FLASH_WAIT;
 			return true;
 		}
 		break;
@@ -678,6 +726,8 @@ int main(int argc, char *argv[])
 					myhp = 0; // was forced into a spectator
 				else if(myclass == C_ARCHER)
 					abil_counter = 0;
+				else if(myclass == C_ASSASSIN)
+					abil_counter = 3; // flash bombs
 				myteam = e_Team(recv_buffer.read_ch());
 				limiter = 0;
 				prev_committed_walk = e_Dir(random()%MAX_D);

@@ -5,6 +5,7 @@
 #include "../common/constants.h"
 #include "../common/timer.h"
 #include "../common/col_codes.h"
+#include "../common/classes_common.h"
 #include <boost/lexical_cast.hpp>
 #include <deque>
 #include <cstring>
@@ -41,7 +42,7 @@ msTimer last_move, last_add, reference;
  */
 const char CHAT_BUFFER_SIZE = 50;
 
-// cf. e_Team im ../server/players.h
+// cf. e_Team im ../common/classes_common.h
 const char* team_ind[4] = { " @: ", " @: ", ": ", "" };
 
 struct ChatBufferLine
@@ -52,8 +53,8 @@ struct ChatBufferLine
 		const unsigned char t = 0) : text(m), speaker(s), team(t) {}
 };
 deque<ChatBufferLine> chatbuffer;
-char chat_top = 0;
-char num_chat_lines = 0;
+short chat_top = 0;
+short num_chat_lines = 0;
 
 /*
  * For clocks:
@@ -197,44 +198,46 @@ void add_to_chat(string &s, const string &talker, const unsigned char t)
 {
 	// Chop into pieces if line is too long:
 	short len = talker.size() + strlen(team_ind[t]);
+	short new_lines = 1;
 	if(len + s.size() > Base::chat_width())
 	{
 		unsigned int i;
 		if((i = s.rfind(' ', Base::chat_width() - len)) == string::npos)
 			i = Base::chat_width() - len;
 		chatbuffer.push_back(ChatBufferLine(s.substr(0, i), talker, t));
-		++num_chat_lines;
+		++new_lines;
 		s.erase(0, i);
 		while(s.size() > Base::chat_width())
 		{
 			if((i = s.rfind(' ', Base::chat_width())) == string::npos)
 				i = Base::chat_width();
-			chatbuffer.push_back(ChatBufferLine(s.substr(0, i), "", 0));
-			++num_chat_lines;
+			chatbuffer.push_back(ChatBufferLine(s.substr(0, i), "", T_NO_TEAM));
+			++new_lines;
 			s.erase(0, i);
 		}
-		chatbuffer.push_back(ChatBufferLine(s, "", 0));
+		chatbuffer.push_back(ChatBufferLine(s, "", T_NO_TEAM));
 	}
 	else
 		chatbuffer.push_back(ChatBufferLine(s, talker, t));
-	++num_chat_lines; // at least one line added
+	num_chat_lines += new_lines;
 	
 	bool forceredraw = false;
 	while(num_chat_lines >= CHAT_BUFFER_SIZE)
 	{
 		chatbuffer.pop_front();
+		--num_chat_lines;
 		--chat_top;
 	}
 	if(chat_top <= 0)
 	{
-		forceredraw = true;
 		chat_top = 0;
+		forceredraw = true;
 	}
 
 	// auto-scrolling:
-	if(chat_top + Base::num_chat_lines_to_show() + 1 == num_chat_lines)
+	if(chat_top + Base::num_chat_lines_to_show() + new_lines == num_chat_lines)
 	{
-		++chat_top;
+		chat_top += new_lines;
 		forceredraw = true;
 	}
 
