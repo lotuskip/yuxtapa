@@ -1,5 +1,5 @@
 # yuxtapa Makefile
-VERSION = 6
+VERSION = 7
 #
 #This option for a pedantic, warnful debug build:
 CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG -DVERSION=$(VERSION)
