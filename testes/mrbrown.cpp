@@ -438,7 +438,9 @@ e_Dir should_dig()
 
 inline bool mmsafe()
 {
-	return pcs[myteam].empty() && !pcs[opp_team[myteam]].empty();
+	// at least one enemy, no friendlies, no adjacent enemies (melee is better)
+	return pcs[myteam].empty() && !pcs[opp_team[myteam]].empty()
+		&& neighb_pc(opp_team[myteam]) == MAX_D;
 }
 
 // Returns true if a shootable target is found and puts the coordinates in 'target'
@@ -717,8 +719,15 @@ int main(int argc, char *argv[])
 #endif
 			else if(mid == MID_STATE_UPD)
 			{
-				// new hp:
+				rv = myhp; // store old hp
 				myhp = static_cast<char>(recv_buffer.read_ch());
+				if(rv <= 0 && myhp > 0 // spawned!
+					&& myclass == C_WIZARD)
+				{
+					// wizards can immediately light their torch:
+					send_action(XN_TORCH_HANDLE);	
+					wait_turns = 1;
+				}
 			}
 			else if(mid == MID_STATE_CHANGE)
 			{
