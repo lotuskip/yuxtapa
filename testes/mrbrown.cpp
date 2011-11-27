@@ -28,7 +28,7 @@ using namespace std;
 /////////////
 const Coords center(VIEWSIZE/2, VIEWSIZE/2);
 // a CHANCE is a chance of something happening. Usually these are
-// "ONE_IN" chances, meaning that there is a "1 in x" chance of
+// "1IN" chances, meaning that there is a "1 in x" chance of
 // something happening.
 const char TURN_CHANCE_1IN = 22; // turning randomly without reason
 const char STAND_CHANCE_1IN = 8; // doing nothing when otherwise would walk
@@ -39,6 +39,7 @@ const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 const char HEAL_POISON_LIMIT = 5; // after heal/poison others
 const char HEAL_SELF_LIMIT = 3; // after heal self
 const char TRAP_LIMIT = 40; // after setting/disarming a trap
+const char FLASH_LIMIT = 8; // using flash bombs (assassins)
 // WAITs tell how many turns a bot has to spend *doing nothing at all* after
 // using a special ability. These are often connected to limiting in the server
 // end or to prevent the bot from interrupting a chore it itself started.
@@ -47,7 +48,6 @@ const char BLINK_WAIT = 1; // blink (mindcrafters)
 const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
 const char DIG_WAIT = 7; // mining (miners)
 const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
-const char FLASH_WAIT = 8; // using flash bombs (assassins)
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
@@ -55,7 +55,7 @@ const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server mes
 
 // VARIABLES
 //////////////
-// Networking related:
+// Networking and/or "yuxtapa protocol" related:
 SerialBuffer recv_buffer, send_buffer;
 int s_me; // socket
 struct addrinfo *servinfo, *the_serv;
@@ -77,13 +77,13 @@ char viewbuffer[BUFFER_SIZE];
 e_Dir prev_committed_walk; // direction of last step taken
 vector<Coords> pcs[2]; // PCs of each team currently in view
 char limiter = 0; // used to prevent bots from repeating the same action too often
-char abil_counter = 0;
-Coords shoot_targ;
+char abil_counter = 0; // used for various ability-related counting needs
 // Generic:
-int rv;
+Coords tmp_coords;
+int rv; // "return value"; although used for other things, too
 
-/// Networking related:
-////////////////////////
+/// Networking related functions:
+//////////////////////////////////
 
 bool do_send()
 {
@@ -219,10 +219,10 @@ bool do_connect(const string &sip)
 
 enum { WALK_DONT=0, WALK_OKAY, WALK_GOOD, WALK_GREAT };
 
-// Estimate how wise it is to take a step in the current direction.
+// Estimate how wise it is to take a step in the given direction.
 char score_walk(const e_Dir d, const bool avoid_pcs)
 {
-	// Figure out what is where we're thinking of walking:
+	// Figure out what there is where we're thinking of walking:
 	Coords c = center.in(d);
 	// colour is at (y*SIZE+x)*2, symbol at that+1
 	char sym = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
@@ -251,11 +251,10 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	// Assassins prefer nonlit tiles by walls; trappers prefer nonlit tree squares:
 	if(myclass == C_ASSASSIN && sym != '+' && col < C_TREE_LIT) // no door, not lit
 	{
-		Coords cn;
 		for(char ch = 0; ch < MAX_D; ++ch)
 		{
-			cn = c.in(e_Dir(ch));
-			if(viewbuffer[(cn.y*VIEWSIZE+cn.x)*2+1] == '#')
+			tmp_coords = c.in(e_Dir(ch));
+			if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
 				return WALK_GREAT; // by a wall
 		}
 	}
@@ -424,12 +423,11 @@ e_Dir should_dig()
 	if(random()%NO_DIG_CHANCE_1IN || !pcs[opp_team[myteam]].empty())
 		return MAX_D;
 	// else:
-	Coords c;
 	e_Dir d = e_Dir(random()%MAX_D);
 	for(char i = 0; i < MAX_D; ++i)
 	{
-	 	c = center.in(d);
-		if(viewbuffer[(c.y*VIEWSIZE+c.x)*2+1] == '#')
+	 	tmp_coords = center.in(d);
+		if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
 			return d;
 		++d;
 	}
@@ -511,8 +509,8 @@ bool get_sound_to_follow(Coords &t)
 	return false;
 }
 
-// See if decides to commit a class-specific action:
-bool class_specific()
+// See if decides to commit a class-specific action. Returns false if yes.
+bool no_class_specific()
 {
 	switch(myclass)
 	{
@@ -523,13 +521,13 @@ bool class_specific()
 			{
 				send_action(XN_HEAL, rv); // poison enemy or heal temmate
 				limiter = HEAL_POISON_LIMIT; // don't heal again for this many turns
-				return true;
+				return false;
 			}
 			if(myhp <= 2*classes[C_HEALER].hp/3)
 			{
 				send_action(XN_HEAL, MAX_D); // heal self
 				limiter = HEAL_SELF_LIMIT;
-				return true;
+				return false;
 			}
 		}
 		break;
@@ -538,7 +536,7 @@ bool class_specific()
 		{
 			send_action(XN_MM); // cast magic missile
 			wait_turns = CAST_MM_WAIT;
-			return true;
+			return false;
 		}
 		break;
 	case C_MINDCRAFTER:
@@ -547,7 +545,7 @@ bool class_specific()
 		{
 			send_action(XN_BLINK); // jump away from combat
 			wait_turns = BLINK_WAIT;
-			return true;
+			return false;
 		}
 		break;
 	case C_FIGHTER:
@@ -555,7 +553,7 @@ bool class_specific()
 		{
 			send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
 			wait_turns = CIRCLE_ATTACK_WAIT;
-			return true;
+			return false;
 		}
 		break;
 	case C_MINER:
@@ -563,27 +561,27 @@ bool class_specific()
 		{
 			send_action(XN_MINE, rv);
 			wait_turns = DIG_WAIT;
-			return true;
+			return false;
 		}
 		break;
 	case C_ARCHER:
-		if(could_shoot(shoot_targ))
+		if(could_shoot(tmp_coords))
 		{
 			/* Shoot if had a clear shot for some turns, otherwise keep "aiming" (do nothing).
 			 * Note that having a clear shot to different targets at different
 			 * turns counts... */
 			if(++abil_counter == AIM_TURNS)
 			{
-				send_action(XN_SHOOT, shoot_targ.x - VIEWSIZE/2, shoot_targ.y - VIEWSIZE/2);
+				send_action(XN_SHOOT, tmp_coords.x - VIEWSIZE/2, tmp_coords.y - VIEWSIZE/2);
 				abil_counter = 0;
 			} // else still taking the aim
-			else if(center.dist_walk(shoot_targ) == 1)
+			else if(center.dist_walk(tmp_coords) == 1)
 			{
 				// stop aiming if enemy is right there; hit instead!
 				abil_counter = 0;
-				return false; // may take other action this turn
+				return true; // may take other action this turn
 			}
-			return true; // even if didn't do anything
+			return false; // even if didn't do anything
 		}// else:
 		abil_counter = 0;
 		break;
@@ -593,7 +591,7 @@ bool class_specific()
 			send_action(XN_SET_TRAP);
 			wait_turns = TRAP_WAIT;
 			limiter = TRAP_LIMIT; // wait a good while before setting another one
-			return true;
+			return false;
 		}
 		break;
 	case C_ASSASSIN:
@@ -601,13 +599,13 @@ bool class_specific()
 		{
 			send_action(XN_FLASH);
 			--abil_counter;
-			limiter = FLASH_WAIT;
-			return true;
+			limiter = FLASH_LIMIT;
+			return false;
 		}
 		break;
 	default:;
 	}
-	return false;
+	return true;
 }
 
 // Misc:
@@ -757,14 +755,14 @@ int main(int argc, char *argv[])
 				{
 					if(limiter)
 						--limiter;
-					if(!class_specific()) // First check if we could do something special
+					if(no_class_specific()) // First check if we could do something special
 					{
 						// Try walking.
 						// If no enemies in sight, either move randomly or follow sounds:
 						if(pcs[opp_team[myteam]].empty())
 						{
-							if(get_sound_to_follow(shoot_targ)) // have sound to follow
-								try_walk_towards(shoot_targ, true); // don't walk on PCs
+							if(get_sound_to_follow(tmp_coords)) // have sound to follow
+								try_walk_towards(tmp_coords, true); // don't walk on PCs
 							else
 								random_walk();
 						}
@@ -786,9 +784,12 @@ int main(int argc, char *argv[])
 				last_sent_axn.update(); // behave as if acted even if didn't
 			} // enough time passed to take next action
 		} // is alive
-	} // for eva
+	} // for eva (until server sends QUIT)
 
 	// Disconnect
+#ifdef BOTMSG
+	cout << "Server closed." << endl;
+#endif
 	freeaddrinfo(servinfo);
 	close(s_me);
 	return 0;

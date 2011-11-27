@@ -205,10 +205,10 @@ void Config::read_config(const string &servername)
 					continue;
 				}
 				qshout[sh-1].erase(0,1); // remove ' '
-				if(num_syms(qshout[sh-1]) >= MSG_WIN_X)
+				if(num_syms(qshout[sh-1]) >= MSG_WIN_X-4) // -4 is for the "!: " prefix
 				{
 					cerr << "Quick shout " << sh << " is too long!" << endl;
-					del_syms(qshout[sh-1], MSG_WIN_X);
+					del_syms(qshout[sh-1], MSG_WIN_X-4);
 				}
 			}
 			continue;

@@ -68,7 +68,12 @@ char del(string &s, const int n)
 	advance(i, s, n);
 	char l = seq_len(*i);
 	for(char c = 0; c < l; ++c)
-		i = s.erase(i); // NOTE: unsafe if string is improper utf8...
+	{
+		if((i = s.erase(i)) == s.end())
+			break; /* If this happens, string is not proper UTF-8!
+		            * We can't really do anything with such a string;
+					* this is just to avoid nasty segfaults. */
+	}
 	return l;
 }
 
@@ -129,8 +134,7 @@ void del_syms(std::string &s, const short start_at)
 {
 	string::iterator i = s.begin();
 	advance(i, s, start_at);
-	for(char l = seq_len(*i); l > 0; --l)
-		i = s.erase(i); // unsafe if string is improper utf8...
+	s.erase(i, s.end());
 }
 
 

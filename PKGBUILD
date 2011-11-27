@@ -13,15 +13,15 @@ install=yuxtapa.install
 md5sums=('af55f6300d6263848fc387a45bf1e288')
 
 build() {
-  mkdir -p "${pkgdir}/usr/bin" || return 1
-  mkdir -p "${pkgdir}/usr/share/yuxtapa" || return 1
-  mkdir -p "${pkgdir}/usr/share/doc" || return 1
   cd $srcdir/$pkgname
   make || return 1
   make mrbrown
 }
 
 package() {
+  mkdir -p "${pkgdir}/usr/bin" || return 1
+  mkdir -p "${pkgdir}/usr/share/yuxtapa" || return 1
+  mkdir -p "${pkgdir}/usr/share/doc" || return 1
   cd $srcdir/$pkgname
   mv -f yuxtapa_sv yuxtapa_cl ${pkgdir}/usr/bin
   mv -f tmplates/*.conf mrbrown ${pkgdir}/usr/share/yuxtapa

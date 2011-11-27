@@ -93,7 +93,7 @@ void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 	fit->set_col(team_colour[t]);
 	fit->set_misc(t);
 	team_flags[t].push_back(fit);
-	string msg = str_team[t] + " team captured "
+	string msg = str_team[t] + " team captured the "
 		+ long_sector_name[Game::curmap->coords_in_sector(fit->getpos())]
 		+ " flag!";
 	Network::construct_msg(msg, team_colour[t]);
@@ -283,7 +283,7 @@ void fireball_trigger(const list<Trap>::iterator tr, const Coords &pos,
 				&& (pc_it = any_pc_at(c)) != PCs.end())
 			{
 				// damage is (3-radius)d6:
-				for(ch = 0; ch < 3 - pos.dist_walk(c); ++ch)
+				for(ch = 3 - pos.dist_walk(c); ch > 0; --ch)
 					pc_it->get_owner()->cl_props.hp -= 1 + random()%6;
 				if(pc_it->get_owner()->cl_props.hp <= 0) // died
 				{
@@ -344,7 +344,6 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		flash_at(pos);
 		break;
 	case TRAP_TELE:
-	{
 		if(pit->nomagicres())
 		{
 			// Get a random tile that's walkable and not occupied:
@@ -362,7 +361,6 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		else
 			add_action_ind(pos, A_MISS);
 		break;
-	}
 	case TRAP_BOOBY:
 		if(test_hit(pit, 9, 2, 6, 0) // 2d6+0, +9 tohit
 			&& pit->cl_props.hp <= 0)
@@ -774,10 +772,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 		if(them == cur_players.end()) // seen by no-one!
 			hide = true;
 	}
-	if(hide)
-		pit->own_pc->set_invis_to_team(opp_team[pit->team]);
-	else
-		pit->own_pc->set_invis_to_team(T_NO_TEAM);
+	pit->own_pc->set_invis_to_team(hide ? opp_team[pit->team] : T_NO_TEAM);
 
 	// If we ever arrive here, we are to move the PC:
 	move_player_to(pit, tarpos, true);
@@ -806,13 +801,10 @@ void finish_wall_dig(const Coords &c)
 	// Need to update BYWALL for neighbours:
 	e_Dir dir = D_N;
 	Coords cn;
-	for(;;)
-	{
+	do {
 		cn = c.in(dir);
 		Game::curmap->upd_by_wall_flag(cn);
-		if(++dir == D_N)
-			break;
-	}
+	} while(++dir != D_N);
 	event_set.insert(c);
 }
 
@@ -1096,7 +1088,6 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		break;
 	}
 	case XN_MINDS_EYE:
-	{
 		if(!(pit->limiter = !pit->limiter)) // turning mind's eye off
 		{
 			pit->own_vp->set_pos(pit->own_pc->getpos());
@@ -1110,7 +1101,6 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		}
 		pit->needs_state_upd = true;
 		break;
-	}
 	}
 }
 
