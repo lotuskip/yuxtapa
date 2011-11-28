@@ -6,13 +6,13 @@ std::string get_conf_dir()
 {
 	std::string s;
 	char *tmp = getenv("XDG_CONFIG_HOME"); // not all users have set this
-	if(!tmp)
+	if(tmp)
+		s = std::string(tmp);
+	else
 	{
 		s = getenv("HOME"); // this should be set, though
 		s += "/.config";
 	}
-	else
-		s = std::string(tmp);
 	s += "/yuxtapa/";
 	return s;
 }

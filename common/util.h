@@ -2,9 +2,8 @@
 #ifndef UTIL_H
 #define UTIL_H
 
-// When we want a random number between 0 and N-1, we usually do
-// random()%N. But if N is equal to 1 we want to get 0, and for that
-// purpose use this:
+// randor0(N) is the equivalent of random()%N, but works with N==1, too (it just
+// returns 0 in the case N==1).
 short randor0(const short size);
 
 #endif

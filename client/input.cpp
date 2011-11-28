@@ -6,9 +6,7 @@
 #include "network.h"
 #include "msg.h"
 #include "class_cpv.h"
-#include "../common/netutils.h"
 #include "../common/utfstr.h"
-#include "../common/constants.h"
 #include <ncurses.h>
 #include <cctype>
 #include <vector>

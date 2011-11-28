@@ -5,7 +5,7 @@
 #include <sys/time.h>
 
 // This is essentially a wrapper for the gettimeofday()-interface.
-// What we need is microsecond accuracy and an easy way to tell the
+// What we need is millisecond accuracy and an easy way to tell the
 // difference (in ms) between two times.
 class msTimer
 {

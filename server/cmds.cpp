@@ -6,7 +6,6 @@
 #include "game.h"
 #include "map.h"
 #include "network.h"
-#include "players.h"
 #include "settings.h"
 #include "chores.h"
 #include "viewpoint.h"

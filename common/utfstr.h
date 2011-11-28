@@ -8,10 +8,9 @@
 // but we do what we need the way we like to do it.
 
 // del a symbol at index n (index in symbols, not chars!)
-char del(std::string &s, const int n);
+void del(std::string &s, const int n);
 // insert wchar c at index n (again, in symbols, not chars)
-char ins(std::string &s, const unsigned int c, const int n);
-// The above return the number of chars added/removed
+void ins(std::string &s, const unsigned int c, const int n);
 
 // returns the number of symbols
 short num_syms(const std::string &s);

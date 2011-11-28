@@ -62,51 +62,45 @@ void advance(string::iterator &i, string &s, short num)
 } // end local namespace
 
 
-char del(string &s, const int n)
+void del(string &s, const int n)
 {
 	string::iterator i = s.begin();
 	advance(i, s, n);
-	char l = seq_len(*i);
-	for(char c = 0; c < l; ++c)
+	for(char c = seq_len(*i); c > 0; --c)
 	{
 		if((i = s.erase(i)) == s.end())
 			break; /* If this happens, string is not proper UTF-8!
 		            * We can't really do anything with such a string;
 					* this is just to avoid nasty segfaults. */
 	}
-	return l;
 }
 
 
-char ins(string &s, const unsigned int c, const int n)
+void ins(string &s, const unsigned int c, const int n)
 {
 	// First interpret "n symbols" in terms of a string iterator:
 	string::iterator i = s.begin();
 	advance(i, s, n);
 	if(c < 0x80) // single byte
-	{
 		s.insert(i, static_cast<unsigned char>(c));
-		return 1;
-	}
-	if(c < 0x800) // 2 bytes
+	else if(c < 0x800) // 2 bytes
 	{
 		i = s.insert(i, static_cast<unsigned char>((c >> 6) | 0xc0));
 		s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
-		return 2;
 	}
-	if(c < 0x10000) // 3
+	else if(c < 0x10000) // 3
 	{
 		i = s.insert(i, static_cast<unsigned char>((c >> 12) | 0xe0));
 		i = s.insert(++i, static_cast<unsigned char>(((c >> 6) & 0x3f) | 0x80));
 		s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
-		return 3;
 	}
-	// else 4
-	i = s.insert(i, static_cast<unsigned char>((c >> 18) | 0xf0));
-	i = s.insert(++i, static_cast<unsigned char>(((c >> 12) & 0x3f) | 0x80));
-	i = s.insert(++i, static_cast<unsigned char>(((c >> 6) & 0x3f) | 0x80));
-	s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
-	return 4;
+	else // 4
+	{
+		i = s.insert(i, static_cast<unsigned char>((c >> 18) | 0xf0));
+		i = s.insert(++i, static_cast<unsigned char>(((c >> 12) & 0x3f) | 0x80));
+		i = s.insert(++i, static_cast<unsigned char>(((c >> 6) & 0x3f) | 0x80));
+		s.insert(++i, static_cast<unsigned char>((c & 0x3f) | 0x80));
+	}
 }
 
 

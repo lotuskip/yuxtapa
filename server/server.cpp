@@ -7,7 +7,6 @@
 #else
 #include "network.h"
 #include "settings.h"
-#include "players.h"
 #include "sighandle.h"
 #include "log.h"
 #include "game.h"

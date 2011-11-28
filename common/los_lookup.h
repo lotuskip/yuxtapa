@@ -21,8 +21,8 @@
  * have a lookup table for all of these coordinates. Actually a
  * bunch of lookup tables, one for each radius, see below.
  *
- * The possible radii are 2--11. That's over 8kb of lookup data.
- * But it's worth it.
+ * The possible radii are 2--11. That's over 8kb of fairly repetitive
+ * lookup data, but it's worth it.
  *
  * (In conclusion, I feel I must mention that, without even noticing the
  * connection until now, I've been listening to "Circle Takes the Square"

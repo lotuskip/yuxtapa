@@ -1,8 +1,6 @@
 // Please see LICENSE file.
 #include "network.h"
 #include "settings.h"
-#include "../common/netutils.h"
-#include "../common/constants.h"
 #include "../common/timer.h"
 #include "../common/utfstr.h"
 #include "view.h"
