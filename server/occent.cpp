@@ -4,7 +4,6 @@
 #include "chores.h"
 #include "map.h"
 #include "actives.h"
-#include "../common/col_codes.h"
 #include "../common/los_lookup.h"
 #include <cstdlib>
 # ifdef DEBUG

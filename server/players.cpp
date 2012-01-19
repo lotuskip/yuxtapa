@@ -1,6 +1,5 @@
 // Please see LICENSE file.
 #ifndef MAPTEST
-#include "players.h"
 #include "settings.h"
 #include "viewpoint.h"
 #include "log.h"
@@ -9,7 +8,6 @@
 #include <netinet/in.h>
 #include <fstream>
 #include <iostream>
-#include <ctime>
 #include <cctype>
 #include <cstring>
 #include <algorithm>

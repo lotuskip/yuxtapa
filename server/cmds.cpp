@@ -4,7 +4,6 @@
 #include "server.h"
 #include "log.h"
 #include "game.h"
-#include "map.h"
 #include "network.h"
 #include "settings.h"
 #include "chores.h"

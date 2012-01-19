@@ -2,7 +2,6 @@
 #ifndef MAPTEST
 #include "game.h"
 #include "settings.h"
-#include "map.h"
 #include "viewpoint.h"
 #include "actives.h"
 #include "network.h"
@@ -11,7 +10,6 @@
 #include "chores.h"
 #include "cmds.h"
 #include <cstdlib>
-#include <vector>
 #include <cstring>
 #include <ctime>
 #include <sys/wait.h>

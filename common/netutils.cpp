@@ -85,8 +85,8 @@ void SerialBuffer::read_str(string &target)
 	target.assign(pos);
 	pos += target.size()+1;
 #endif
-	/* But alas, there are mean people out there, who would abuse such a hole.
-	 * Hence we enfore a maximum length of a string and read carefully
+	/* But alas, there are mean people out there who would abuse such a hole.
+	 * Hence we enforce a maximum length of a string and read carefully
 	 * one byte at a time (there might not be any '\0' in the buffer to end the
 	 * string!) */
 	target.clear();
@@ -114,7 +114,8 @@ bool SerialBuffer::read_compressed(char *buffer)
 	sh = uncompress((Bytef*)buffer, &res_size, (Bytef*)pos, sh);
 	if(sh == Z_BUF_ERROR || sh == Z_DATA_ERROR)
 		return true;
-	// Z_MEM_ERROR (insufficient memory) is highly unlikely.
+	// Z_MEM_ERROR (insufficient memory) is highly unlikely and would cause more
+	// general problems.
 	pos += res_size;
 	return false;
 }
@@ -144,9 +145,8 @@ void SerialBuffer::set_amount(const short n)
  * We have enforced a maximum length of 250 bytes per string, and in
  * uncompressed packets there are at most a few strings, certainly not
  * too many to fill up the 2048 bytes we have from BUFFER_SIZE. This
- * _seems_ to me like it's sufficient and leaves the client with no
- * conceivable way of causing harm to the server by sending improper
- * packets.
+ * _seems_ to me sufficient and leaves the client with no conceivable way
+ * of causing harm to the server by sending improper packets.
  *
  * The actual data that we read should, when necessary, be checked
  * by the caller, of course. (When talking about numeric values.)

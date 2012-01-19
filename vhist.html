@@ -36,6 +36,8 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 <ul>
 <li>fixed a bug causing a segfault when mind's eye was used to detect traps at
 the edge of the map</li>
+<li>fixed how a (malicious or buggy) client could crash the server by having an
+archer shoot at himself</li>
 <li>illusory walls (PCs can walk and missiles will fly through)</li>
 <li>added definite article to the messages for capturing flags</li>
 </ul></p>
@@ -47,6 +49,7 @@ the edge of the map</li>
 
 <p><strong>Bot improvements:</strong>
 <ul>
+<li>bots will now (intentionally) spawn as combat magi and use zaps</li>
 <li>assassin bots now use flash bombs</li>
 <li>wizard bots will prefer melee over mm if enemies are adjacent</li>
 <li>wizard bots light their torch upon spawning</li>

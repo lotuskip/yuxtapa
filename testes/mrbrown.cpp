@@ -12,7 +12,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include <string>
 #include <ctime>
 #include <cstdlib>
 #include <cstring>
@@ -40,6 +39,7 @@ const char HEAL_POISON_LIMIT = 5; // after heal/poison others
 const char HEAL_SELF_LIMIT = 3; // after heal self
 const char TRAP_LIMIT = 40; // after setting/disarming a trap
 const char FLASH_LIMIT = 8; // using flash bombs (assassins)
+const char ZAP_LIMIT = 4; // zapping (combat magi)
 // WAITs tell how many turns a bot has to spend *doing nothing at all* after
 // using a special ability. These are often connected to limiting in the server
 // end or to prevent the bot from interrupting a chore it itself started.
@@ -48,6 +48,7 @@ const char BLINK_WAIT = 1; // blink (mindcrafters)
 const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
 const char DIG_WAIT = 7; // mining (miners)
 const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
+const char ZAP_WAIT = 2; // zaps (combat magi)
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
@@ -441,11 +442,12 @@ inline bool mmsafe()
 		&& neighb_pc(opp_team[myteam]) == MAX_D;
 }
 
-// Returns true if a shootable target is found and puts the coordinates in 'target'
-bool could_shoot(Coords &target)
+// Returns true if a shootable target is found and puts the coordinates in 'target'.
+// Set 'cardinals' true to check only cardinal directions (for zaps).
+bool could_shoot(Coords &target, const bool cardinals)
 {
 	// Go through enemies in sight:
-	vector<Coords>::const_iterator oti, eti;
+	vector<Coords>::const_iterator eti;
 	char r, line, ind;
 	for(eti = pcs[opp_team[myteam]].begin(); eti != pcs[opp_team[myteam]].end(); ++eti)
 	{
@@ -454,6 +456,9 @@ bool could_shoot(Coords &target)
 			target = *eti;
 			return true;
 		}
+		if(cardinals && !(line = abs(eti->x - center.x))
+			&& !(ind = abs(eti->y - center.y)) && line != ind)
+			continue; // this enemy not in a cardinal direction
 		// Check that there are no teammates on the line of fire:
 		if(eti->y == -r) line = eti->x + r;
 		else if(eti->x == r) line = 3*r + eti->y;
@@ -565,7 +570,7 @@ bool no_class_specific()
 		}
 		break;
 	case C_ARCHER:
-		if(could_shoot(tmp_coords))
+		if(could_shoot(tmp_coords, false))
 		{
 			/* Shoot if had a clear shot for some turns, otherwise keep "aiming" (do nothing).
 			 * Note that having a clear shot to different targets at different
@@ -584,6 +589,15 @@ bool no_class_specific()
 			return false; // even if didn't do anything
 		}// else:
 		abil_counter = 0;
+		break;
+	case C_COMBAT_MAGE:
+		if(!limiter && could_shoot(tmp_coords, true))
+		{
+			send_action(XN_ZAP, center.dir_of(tmp_coords));
+			wait_turns = ZAP_WAIT;
+			limiter = ZAP_LIMIT;
+			return false;
+		}
 		break;
 	case C_TRAPPER:
 		if(!limiter && pcs[opp_team[myteam]].empty())
@@ -663,7 +677,7 @@ int main(int argc, char *argv[])
 	 * by classlimiting, be spawned as these classes (myclass will ultimately
 	 * be what the server replies). */
 	do myclass = e_Class(random()%NO_CLASS);
-	while(myclass == C_SCOUT || myclass == C_PLANEWALKER || myclass == C_COMBAT_MAGE);
+	while(myclass == C_SCOUT || myclass == C_PLANEWALKER);
 	send_buffer.add((unsigned char)myclass);
 	do_send();
 

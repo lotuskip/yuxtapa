@@ -6,7 +6,6 @@
 #include "../common/constants.h"
 #include "../common/col_codes.h"
 #include "../common/los_lookup.h"
-#include "../common/coords.h"
 #include "../common/utfstr.h"
 #include <cstring>
 #include <cstdlib>

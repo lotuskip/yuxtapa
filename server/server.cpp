@@ -13,7 +13,6 @@
 #include "../common/timer.h"
 #include <ctime>
 #include <unistd.h>
-#include <string>
 #include <boost/lexical_cast.hpp>
 
 bool intermission = true;

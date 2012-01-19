@@ -4,12 +4,9 @@
 #include "game.h"
 #include "map.h"
 #include "spiral.h"
-#include "players.h"
-#include "declares.h"
 #include "../common/los_lookup.h"
 #include "../common/util.h"
 #include <algorithm>
-#include <vector>
 #ifdef DEBUG
 #include <iostream>
 #endif
