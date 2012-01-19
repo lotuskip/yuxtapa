@@ -309,7 +309,8 @@ bool Network::receive_n_handle()
 							// If either coordinate is too large by abs-val (out of screen), kick
 							char xcoord = static_cast<char>(recv_buffer.read_ch());
 							char ycoord = static_cast<char>(recv_buffer.read_ch());
-							if(abs(xcoord) > VIEWSIZE/2 || abs(ycoord) > VIEWSIZE/2)
+							if(abs(xcoord) > VIEWSIZE/2 || abs(ycoord) > VIEWSIZE/2
+								|| (!xcoord && !ycoord)) // both zero is bad, too
 							{
 								cheat_attempt(pit);
 								break;
