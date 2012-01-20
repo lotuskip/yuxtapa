@@ -65,7 +65,7 @@ Coords Coords::in(const e_Dir d) const
 		case D_SW: c.x--; c.y++; break;
 		case D_W: c.x--; break;
 		case D_NW: c.x--; c.y--; break;
-		//default: assert(0);
+		default: /*assert(0)*/;
 	}
 	return c;
 }

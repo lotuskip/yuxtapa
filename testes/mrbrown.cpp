@@ -29,9 +29,13 @@ const Coords center(VIEWSIZE/2, VIEWSIZE/2);
 // a CHANCE is a chance of something happening. Usually these are
 // "1IN" chances, meaning that there is a "1 in x" chance of
 // something happening.
+const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
+	// chances, in %, of not even trying to use special ability
+	10 /*Ar*/, 10 /*As*/, 15 /*Cm*/, 33 /*Mc*/, 100 /*Sc*/, 15 /*Fi*/,
+	20 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
+};
 const char TURN_CHANCE_1IN = 22; // turning randomly without reason
 const char STAND_CHANCE_1IN = 8; // doing nothing when otherwise would walk
-const char NO_DIG_CHANCE_1IN = 5; // to not mine (no matter what)
 const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
@@ -71,7 +75,7 @@ unsigned short curturn = 0;
 unsigned char axn_counter = 0;
 char wait_turns = 0;
 char myhp = 0;
-e_Team myteam;
+e_Team myteam = T_GREEN;
 e_Class myclass = NO_CLASS;
 char viewbuffer[BUFFER_SIZE];
 // AI related:
@@ -350,8 +354,9 @@ bool scan_view() // extract PCs in view and check if in closed area
 	int num_oos = 0; // number of tiles out of sight
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
-		// get all PCs, not including self (center of view)
-		if(viewbuffer[i] == '@' && i != VIEWSIZE*(VIEWSIZE+1)+1)
+		// get all PCs, not including self (center of view (note that VIEWSIZE
+		// is odd!))
+		if(viewbuffer[i] == '@' && i != (int(VIEWSIZE/2)*VIEWSIZE+int(VIEWSIZE/2))*2+1)
 		{
 			switch(viewbuffer[i-1])
 			{
@@ -365,8 +370,12 @@ bool scan_view() // extract PCs in view and check if in closed area
 			case C_PURPLE_ON_HIT: case C_PURPLE_ON_MISS:
 				pcs[1].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
 				break;
+			case C_BROWN_PC: case C_BROWN_PC_LIT: case C_BROWN_ON_HEAL:
+			case C_BROWN_ON_TRAP: case C_BROWN_ON_POIS: case C_BROWN_ON_DISG:
+			case C_BROWN_ON_HIT: case C_BROWN_ON_MISS:
+				pcs[myteam].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
+				break;
 			}
-			// TODO: brown PCs?
 		}
 		else if(viewbuffer[i-1] <= C_WATER_DIM || viewbuffer[i-1] == C_UNKNOWN)
 			++num_oos;
@@ -420,8 +429,7 @@ e_Dir should_cs()
 e_Dir should_dig()
 {
 	// If there are enemies in view, don't dig.
-	// Also, we don't want to just dig all the time; only dig sometimes:
-	if(random()%NO_DIG_CHANCE_1IN || !pcs[opp_team[myteam]].empty())
+	if(!pcs[opp_team[myteam]].empty())
 		return MAX_D;
 	// else:
 	e_Dir d = e_Dir(random()%MAX_D);
@@ -460,14 +468,16 @@ bool could_shoot(Coords &target, const bool cardinals)
 			&& !(ind = abs(eti->y - center.y)) && line != ind)
 			continue; // this enemy not in a cardinal direction
 		// Check that there are no teammates on the line of fire:
-		if(eti->y == -r) line = eti->x + r;
-		else if(eti->x == r) line = 3*r + eti->y;
-		else if(eti->y == r) line = 5*r - eti->x;
-		else /* eti->x == -r */ line = 7*r - eti->y;
+		// NOTE: atm not checking for walls etc...
+		if(eti->y - VIEWSIZE/2 == -r) line = eti->x - VIEWSIZE/2 + r;
+		else if(eti->x - VIEWSIZE/2 == r) line = 3*r + eti->y - VIEWSIZE/2;
+		else if(eti->y - VIEWSIZE/2 == r) line = 5*r - eti->x + VIEWSIZE/2;
+		else /* eti->x - VIEWSIZE/2 == -r */ line = 7*r - eti->y + VIEWSIZE/2;
 		for(ind = 0; ind < 2*r; ind += 2)
 		{
 			if(find(pcs[myteam].begin(), pcs[myteam].end(),
-				Coords(loslookup[r-2][line*2*r+ind], loslookup[r-2][line*2*r+ind+1]))
+				Coords(loslookup[r-2][line*2*r+ind] + VIEWSIZE/2,
+				loslookup[r-2][line*2*r+ind+1] + VIEWSIZE/2))
 				!= pcs[myteam].end())
 				break;
 		}
@@ -514,112 +524,157 @@ bool get_sound_to_follow(Coords &t)
 	return false;
 }
 
+
+/* Functions for each class to check for using the class's special ability */
+
+bool no_class_spc_Ar()
+{
+	if(could_shoot(tmp_coords, false))
+	{
+		/* Shoot if had a clear shot for some turns, otherwise keep "aiming"
+		 * (do nothing). Note that having a clear shot to different targets at
+		 * different turns counts... */
+		if(++abil_counter == AIM_TURNS)
+		{
+			send_action(XN_SHOOT, tmp_coords.x - VIEWSIZE/2, tmp_coords.y - VIEWSIZE/2);
+			abil_counter = 0;
+		} // else still taking the aim
+		else if(center.dist_walk(tmp_coords) == 1)
+		{
+			// stop aiming if enemy is right there; hit instead!
+			abil_counter = 0;
+			return true; // may take other action this turn
+		}
+		return false; // even if didn't do anything
+	}// else:
+	if(abil_counter)
+		--abil_counter; // gradually lower aim
+	return true;
+}
+
+
+bool no_class_spc_As()
+{
+	if(abil_counter && !limiter && should_flash())
+	{
+		send_action(XN_FLASH);
+		--abil_counter;
+		limiter = FLASH_LIMIT;
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_Cm()
+{
+	if(!limiter && could_shoot(tmp_coords, true))
+	{
+		send_action(XN_ZAP, center.dir_of(tmp_coords));
+		wait_turns = ZAP_WAIT;
+		limiter = ZAP_LIMIT;
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_Mc()
+{
+	if(myhp <= classes[C_MINDCRAFTER].hp/2
+		&& neighb_pc(opp_team[myteam]) != MAX_D)
+	{
+		send_action(XN_BLINK); // jump away from combat
+		wait_turns = BLINK_WAIT;
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_Sc() { return true; }
+
+bool no_class_spc_Fi()
+{
+	if((rv = should_cs()) != MAX_D)
+	{
+		send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
+		wait_turns = CIRCLE_ATTACK_WAIT;
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_Mi()
+{
+	if((rv = should_dig()) != MAX_D)
+	{
+		send_action(XN_MINE, rv);
+		wait_turns = DIG_WAIT;
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_He()
+{
+	if(!limiter)
+	{
+		if((rv = neighb_pc(opp_team[myteam])) != MAX_D
+			|| (rv = neighb_pc(myteam)) != MAX_D)
+		{
+			send_action(XN_HEAL, rv); // poison enemy or heal teammate
+			limiter = HEAL_POISON_LIMIT; // don't heal again for this many turns
+			return false;
+		}
+		/*else*/ if(myhp <= 2*classes[C_HEALER].hp/3)
+		{
+			send_action(XN_HEAL, MAX_D); // heal self
+			limiter = HEAL_SELF_LIMIT;
+			return false;
+		}
+	}
+	return true;
+}
+
+bool no_class_spc_Wi()
+{
+	if(mmsafe())
+	{
+		send_action(XN_MM); // cast magic missile
+		wait_turns = CAST_MM_WAIT;
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_Tr()
+{
+	if(!limiter && pcs[opp_team[myteam]].empty())
+	{
+		send_action(XN_SET_TRAP);
+		wait_turns = TRAP_WAIT;
+		limiter = TRAP_LIMIT; // wait a good while before setting another one
+		return false;
+	}
+	return true;
+}
+
+bool no_class_spc_Pw() { return true; }
+
+// function pointers to the above functions
+bool (*no_cl_spc[NO_CLASS])() = {
+	no_class_spc_Ar, no_class_spc_As, no_class_spc_Cm, no_class_spc_Mc,
+	no_class_spc_Sc, no_class_spc_Fi, no_class_spc_Mi, no_class_spc_He,
+	no_class_spc_Wi, no_class_spc_Tr, no_class_spc_Pw };
+
 // See if decides to commit a class-specific action. Returns false if yes.
 bool no_class_specific()
 {
-	switch(myclass)
-	{
-	case C_HEALER:
-		if(!limiter)
-		{
-			if((rv = neighb_pc(opp_team[myteam])) != MAX_D || (rv = neighb_pc(myteam)) != MAX_D)
-			{
-				send_action(XN_HEAL, rv); // poison enemy or heal temmate
-				limiter = HEAL_POISON_LIMIT; // don't heal again for this many turns
-				return false;
-			}
-			if(myhp <= 2*classes[C_HEALER].hp/3)
-			{
-				send_action(XN_HEAL, MAX_D); // heal self
-				limiter = HEAL_SELF_LIMIT;
-				return false;
-			}
-		}
-		break;
-	case C_WIZARD:
-		if(mmsafe())
-		{
-			send_action(XN_MM); // cast magic missile
-			wait_turns = CAST_MM_WAIT;
-			return false;
-		}
-		break;
-	case C_MINDCRAFTER:
-		if(myhp <= classes[C_MINDCRAFTER].hp/2
-			&& random()%3 && neighb_pc(opp_team[myteam]) != MAX_D)
-		{
-			send_action(XN_BLINK); // jump away from combat
-			wait_turns = BLINK_WAIT;
-			return false;
-		}
-		break;
-	case C_FIGHTER:
-		if((rv = should_cs()) != MAX_D)
-		{
-			send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
-			wait_turns = CIRCLE_ATTACK_WAIT;
-			return false;
-		}
-		break;
-	case C_MINER:
-		if((rv = should_dig()) != MAX_D)
-		{
-			send_action(XN_MINE, rv);
-			wait_turns = DIG_WAIT;
-			return false;
-		}
-		break;
-	case C_ARCHER:
-		if(could_shoot(tmp_coords, false))
-		{
-			/* Shoot if had a clear shot for some turns, otherwise keep "aiming" (do nothing).
-			 * Note that having a clear shot to different targets at different
-			 * turns counts... */
-			if(++abil_counter == AIM_TURNS)
-			{
-				send_action(XN_SHOOT, tmp_coords.x - VIEWSIZE/2, tmp_coords.y - VIEWSIZE/2);
-				abil_counter = 0;
-			} // else still taking the aim
-			else if(center.dist_walk(tmp_coords) == 1)
-			{
-				// stop aiming if enemy is right there; hit instead!
-				abil_counter = 0;
-				return true; // may take other action this turn
-			}
-			return false; // even if didn't do anything
-		}// else:
-		abil_counter = 0;
-		break;
-	case C_COMBAT_MAGE:
-		if(!limiter && could_shoot(tmp_coords, true))
-		{
-			send_action(XN_ZAP, center.dir_of(tmp_coords));
-			wait_turns = ZAP_WAIT;
-			limiter = ZAP_LIMIT;
-			return false;
-		}
-		break;
-	case C_TRAPPER:
-		if(!limiter && pcs[opp_team[myteam]].empty())
-		{
-			send_action(XN_SET_TRAP);
-			wait_turns = TRAP_WAIT;
-			limiter = TRAP_LIMIT; // wait a good while before setting another one
-			return false;
-		}
-		break;
-	case C_ASSASSIN:
-		if(abil_counter && !limiter && should_flash())
-		{
-			send_action(XN_FLASH);
-			--abil_counter;
-			limiter = FLASH_LIMIT;
-			return false;
-		}
-		break;
-	default:;
-	}
-	return true;
+	// To make bot behaviour a bit less predictable, there is, for each class,
+	// a fixed chance that we simply don't even consider the class specific
+	// action:
+	if(rand()%100 < CHANCE_IGN_CL_SPC[myclass])
+		return true;
+	// Otherwise check for possibility of using special abilities:
+	return no_cl_spc[myclass]();
 }
 
 // Misc:
@@ -672,7 +727,7 @@ int main(int argc, char *argv[])
 	send_buffer.clear();
 	send_buffer.add((unsigned char)MID_SPAWN_AXN);
 	send_buffer.add(cur_id);
-	/* Don't intentionally become scout/planewalker/c-mage, since we don't have
+	/* Don't intentionally become scout/planewalker, since we don't have
 	 * any real AI rules for their special abilities. Note that bots might still,
 	 * by classlimiting, be spawned as these classes (myclass will ultimately
 	 * be what the server replies). */
@@ -704,11 +759,13 @@ int main(int argc, char *argv[])
 				{
 					recv_buffer.read_compressed(viewbuffer);
 					// NOTE: not checking for errors -- might get a faulty view.
-					if(scan_view())
+					if(myhp > 0 && // don't use processor time to scan when dead
+						scan_view())
 						send_action(XN_SUICIDE);
 				}
 			}
 #ifdef BOTMSG
+			// If bot messaging is enables, we print out (chat) messages.
 			else if(mid == MID_ADD_MSG)
 			{
 				recv_buffer.read_ch(); // cpair
@@ -733,7 +790,7 @@ int main(int argc, char *argv[])
 			{
 				rv = myhp; // store old hp
 				myhp = static_cast<char>(recv_buffer.read_ch());
-				if(rv <= 0 && myhp > 0 // spawned!
+				if(rv <= 0 && myhp > 0 // this means we spawned
 					&& myclass == C_WIZARD)
 				{
 					// wizards can immediately light their torch:
@@ -763,18 +820,23 @@ int main(int argc, char *argv[])
 		{
 			if(reftimer.update() - last_sent_axn > turn_ms)
 			{
-				if(wait_turns)
+				if(wait_turns) // something has forced us to wait
 					--wait_turns;
 				else
 				{
 					if(limiter)
 						--limiter;
-					if(no_class_specific()) // First check if we could do something special
+					// Basic decision making:
+					// 1. Check if could/should use class ability
+					// 2. If not, move (which can mean a lot of things,
+					// including melee)
+					if(no_class_specific()) // not doing something special
 					{
 						// Try walking.
-						// If no enemies in sight, either move randomly or follow sounds:
-						if(pcs[opp_team[myteam]].empty())
+						// Check if there are enemies in sight:
+						if(pcs[opp_team[myteam]].empty()) // (no)
 						{
+							// TODO: check for walking towards flags
 							if(get_sound_to_follow(tmp_coords)) // have sound to follow
 								try_walk_towards(tmp_coords, true); // don't walk on PCs
 							else
