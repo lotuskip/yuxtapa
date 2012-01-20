@@ -77,12 +77,16 @@ char wait_turns = 0;
 char myhp = 0;
 e_Team myteam = T_GREEN;
 e_Class myclass = NO_CLASS;
+char gm_dom1_con0 = -1; // to tell if gamemode is dom or con
+char num_enemy_flags = 0;
 char viewbuffer[BUFFER_SIZE];
 // AI related:
 e_Dir prev_committed_walk; // direction of last step taken
 vector<Coords> pcs[2]; // PCs of each team currently in view
 char limiter = 0; // used to prevent bots from repeating the same action too often
 char abil_counter = 0; // used for various ability-related counting needs
+Coords seen_flag_coords; // if a flag has been spotted
+e_Team seen_flag_owner = T_SPEC;
 // Generic:
 Coords tmp_coords;
 int rv; // "return value"; although used for other things, too
@@ -248,10 +252,6 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 		return WALK_DONT;
 	
 	char col = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
-	// Capture a neutral flag if passing by it (TODO: remove this once there is a smarter method
-	// of actually going for the flags from further away than just 1 step...)
-	if(sym == '&' && (col == C_NEUT_FLAG || col == C_NEUT_FLAG_LIT))
-		return WALK_GREAT;
 
 	// Assassins prefer nonlit tiles by walls; trappers prefer nonlit tree squares:
 	if(myclass == C_ASSASSIN && sym != '+' && col < C_TREE_LIT) // no door, not lit
@@ -351,13 +351,16 @@ bool scan_view() // extract PCs in view and check if in closed area
 {
 	pcs[0].clear();
 	pcs[1].clear();
+	seen_flag_owner = T_SPEC;
 	int num_oos = 0; // number of tiles out of sight
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
 		// get all PCs, not including self (center of view (note that VIEWSIZE
 		// is odd!))
-		if(viewbuffer[i] == '@' && i != (int(VIEWSIZE/2)*VIEWSIZE+int(VIEWSIZE/2))*2+1)
+		if(viewbuffer[i] == '@')
 		{
+			if(i != (int(VIEWSIZE/2)*VIEWSIZE+int(VIEWSIZE/2))*2+1)
+			{
 			switch(viewbuffer[i-1])
 			{
 			case C_GREEN_PC: case C_GREEN_PC_LIT: case C_GREEN_ON_HEAL:
@@ -376,6 +379,26 @@ bool scan_view() // extract PCs in view and check if in closed area
 				pcs[myteam].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
 				break;
 			}
+			}
+		}
+		else if(viewbuffer[i] == '&') // flag
+		{
+			/* Note that since '@' etc. overrule '&' in the display, we don't
+			 * have to check all possible colours (as they are, in fact, impossible) */
+			switch(viewbuffer[i-1])
+			{
+			case C_GREEN_PC: case C_GREEN_PC_LIT: case C_GREEN_ON_MISS:
+				seen_flag_owner = T_GREEN;
+				break;
+			case C_PURPLE_PC: case C_PURPLE_PC_LIT: case C_PURPLE_ON_MISS:
+				seen_flag_owner = T_PURPLE;
+				break;
+			case C_NEUT_FLAG: case C_NEUT_FLAG_LIT: case C_GRAY_ON_MISS:
+				seen_flag_owner = T_NO_TEAM;
+				break;
+			}
+			seen_flag_coords.x = ((i-1)/2)%VIEWSIZE;
+			seen_flag_coords.y = ((i-1)/2)/VIEWSIZE;
 		}
 		else if(viewbuffer[i-1] <= C_WATER_DIM || viewbuffer[i-1] == C_UNKNOWN)
 			++num_oos;
@@ -506,6 +529,23 @@ bool should_flash()
 			return true;
 	}
 	return false;
+}
+
+bool could_capture_flag()
+{
+	// Always capture neutral flags, never "capture" own flags:
+	if(seen_flag_owner == T_NO_TEAM)
+		return true;
+	if(seen_flag_owner == myteam || seen_flag_owner == T_SPEC)
+		return false;
+	// Regarding enemy flags, it's more complicated, and depends on game mode.
+	// In Dominion, can (and should) always capture enemy flags. In Conquest
+	// this is true for the green team.
+	if(gm_dom1_con0 == 1 || (gm_dom1_con0 == 0 && myteam == T_GREEN))
+		return true;
+	// In other modes the enemy flag can be captured as long as it isn't their
+	// last flag.
+	return (num_enemy_flags > 1);
 }
 
 bool get_sound_to_follow(Coords &t)
@@ -810,9 +850,41 @@ int main(int argc, char *argv[])
 				limiter = 0;
 				prev_committed_walk = e_Dir(random()%MAX_D);
 			}
-			//TODO: FANCY AI SHIT!!
-			else if(mid == MID_GAME_UPD) { }
+			else if(mid == MID_GAME_UPD)
+			{
+				// Extract game mode.
+				recv_buffer.read_ch(); // number of green players
+				recv_buffer.read_ch(); // number of purple players
+				/* Instead of reading the entire game status string, we can
+				 * deduce the game mode from the first two letters. We are only
+				 * interested in Dominion and Conquest. */
+				if((mid = recv_buffer.read_ch()) == 'C')
+					gm_dom1_con0 = 0;
+				else if(mid == 'D' && recv_buffer.read_ch() == 'o')
+					gm_dom1_con0 = 1;
+				else
+					gm_dom1_con0 = -1; // neither dominion nor conquest
+			}
+			else if(mid == MID_FLAG_UPD)
+			{
+				// We are only interested in the number of enemy flags, and that
+				// only if the game mode is neither dominion or conquest:
+				if(gm_dom1_con0 == -1)
+				{
+					num_enemy_flags = 0;
+					for(rv = 0; rv <= MAX_D; ++rv)
+					{
+						mid = recv_buffer.read_ch();
+						if((myteam == T_GREEN && (mid == C_PURPLE_PC || mid == C_PURPLE_PC_LIT))
+						|| (myteam == T_PURPLE && (mid == C_GREEN_PC || mid == C_GREEN_PC_LIT)))
+							++num_enemy_flags;
+					}
+				}
+			}
+#if 0
+			// Maybe do something with this sometime?
 			else if(mid == MID_TIME_UPD) { }
+#endif
 		} // received a msg
 		else usleep(MSG_DELAY_MS);
 		
@@ -836,9 +908,14 @@ int main(int argc, char *argv[])
 						// Check if there are enemies in sight:
 						if(pcs[opp_team[myteam]].empty()) // (no)
 						{
-							// TODO: check for walking towards flags
-							if(get_sound_to_follow(tmp_coords)) // have sound to follow
-								try_walk_towards(tmp_coords, true); // don't walk on PCs
+							/* Walk primarily towards any seen flags we could
+							 * capture, secondarily towards heard sounds (except
+							 * mining), thirdly randomly. Don't walk on PCs
+							 * in the "try_walk_towards" calls. */
+							if(could_capture_flag())
+								try_walk_towards(seen_flag_coords, true);
+							else if(get_sound_to_follow(tmp_coords)) // have sound to follow
+								try_walk_towards(tmp_coords, true);
 							else
 								random_walk();
 						}

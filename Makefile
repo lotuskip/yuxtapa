@@ -2,14 +2,19 @@
 VERSION = 7
 #
 #This option for a pedantic, warnful debug build:
-CPPFLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -fsigned-char -DDEBUG -DVERSION=$(VERSION)
-#This one for optimised version:
-#CPPFLAGS=-O2 -g0 -fsigned-char -DVERSION=$(VERSION)
+CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
+#
+#This one for the optimised version:
+#CONFIG_FLAGS=-O2 -g0
+
+EXTRA_FLAGS=
 # Add -DMAPTEST to build a "server" for testing & creating maps.
 # Add -DBOTMSG to make the bot client print messages.
+# Add -static to build statically linked binaries.
 
 #The rest probably needs not be touched.
 ###############################################################################
+CPPFLAGS=$(CONFIG_FLAGS) $(EXTRA_FLAGS) -fsigned-char -DVERSION=$(VERSION)
 CXX=g++
 RM=rm -f
 LDLIBS_CL=-lncursesw -lz

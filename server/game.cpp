@@ -945,7 +945,7 @@ void Game::send_flag_upds(const list<Player>::const_iterator to)
 
 	Network::send_buffer.clear();
 	Network::send_buffer.add((unsigned char)MID_FLAG_UPD);
-	for(ch = 0; ch < MAX_D+1; ++ch)
+	for(ch = 0; ch <= MAX_D; ++ch)
 		Network::send_buffer.add(flagbuf[ch]);
 
 	if(to == cur_players.end()) // send to all
