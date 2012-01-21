@@ -256,14 +256,15 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	char col = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
 
 	// Assassins prefer nonlit tiles by walls; trappers prefer nonlit tree squares:
-	if(myclass == C_ASSASSIN && sym != '+' && col < C_TREE_LIT) // no door, not lit
+	if(myclass == C_ASSASSIN)
 	{
-		for(char ch = 0; ch < MAX_D; ++ch)
-		{
-			tmp_coords = c.in(e_Dir(ch));
-			if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
-				return WALK_GREAT; // by a wall
-		}
+		if(sym != '+' && col < C_TREE_LIT) // no door, not lit
+			for(char ch = 0; ch < MAX_D; ++ch)
+			{
+				tmp_coords = c.in(e_Dir(ch));
+				if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
+					return WALK_GREAT; // by a wall
+			}
 	}
 	else if(myclass == C_TRAPPER && col == C_TREE)
 		return WALK_GREAT;
@@ -272,7 +273,7 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	if(((sym == '\"' || sym == ';') && myclass != C_TRAPPER && myclass != C_SCOUT)
 		|| (sym == '^' && col < C_NEUT_FLAG))
 		return WALK_OKAY;
-	// We cannot know if a boulder is pushable or not, so don't always try
+	// We don't know if a boulder is pushable or not, so don't always try
 	if(sym == 'O')
 		return random()%2 ? WALK_OKAY : WALK_DONT;
 	return WALK_GOOD; // just a walkable tile (this includes doors)
@@ -312,8 +313,8 @@ void random_walk()
 	// if can, continue in previous direction (which the above might have just turned)
 	if(!random_turn_from_dir(prev_committed_walk, true))
 	{
-		// walk entirely randomly, then.
-		// A small chance to just stand still: (1 in 9)
+		// Couldn't; walk entirely randomly, then.
+		// A small chance to just stand still:
 		if(random()%STAND_CHANCE_1IN)
 		{
 			// Figure out a random dir to walk
@@ -324,7 +325,7 @@ void random_walk()
 			for(i = 0; i < MAX_D; ++i)
 			{
 				if((j = score_walk(walkdir, true)) == WALK_GREAT)
-					break; // pick direction with score > 1 immediately
+					break; // pick direction with great score immediately
 				if(j == WALK_GOOD)
 					goodscorer = walkdir;
 				else if(j != WALK_DONT)
