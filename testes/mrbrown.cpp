@@ -32,7 +32,7 @@ const Coords center(VIEWSIZE/2, VIEWSIZE/2);
 const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
 	// chances, in %, of not even trying to use special ability
 	10 /*Ar*/, 10 /*As*/, 15 /*Cm*/, 33 /*Mc*/, 100 /*Sc*/, 15 /*Fi*/,
-	20 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
+	15 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
 };
 const char TURN_CHANCE_1IN = 22; // turning randomly without reason
 const char STAND_CHANCE_1IN = 8; // doing nothing when otherwise would walk
@@ -55,6 +55,7 @@ const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
 const char ZAP_WAIT = 2; // zaps (combat magi)
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
+const char WALLS_FOR_CERTAIN_DIG = 38; // how many walls in sight ensure that miners will dig when possible
 const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
 
 
@@ -87,6 +88,7 @@ char limiter = 0; // used to prevent bots from repeating the same action too oft
 char abil_counter = 0; // used for various ability-related counting needs
 Coords seen_flag_coords; // if a flag has been spotted
 e_Team seen_flag_owner = T_SPEC;
+unsigned char num_walls_in_sight = 0;
 // Generic:
 Coords tmp_coords;
 int rv; // "return value"; although used for other things, too
@@ -352,7 +354,8 @@ bool scan_view() // extract PCs in view and check if in closed area
 	pcs[0].clear();
 	pcs[1].clear();
 	seen_flag_owner = T_SPEC;
-	int num_oos = 0; // number of tiles out of sight
+	int num_oos // number of tiles out of sight
+		= num_walls_in_sight = 0;
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
 		// get all PCs, not including self (center of view (note that VIEWSIZE
@@ -380,8 +383,9 @@ bool scan_view() // extract PCs in view and check if in closed area
 				break;
 			}
 			}
+			continue;
 		}
-		else if(viewbuffer[i] == '&') // flag
+		if(viewbuffer[i] == '&') // flag
 		{
 			/* Note that since '@' etc. overrule '&' in the display, we don't
 			 * have to check all possible colours (as they are, in fact, impossible) */
@@ -400,7 +404,10 @@ bool scan_view() // extract PCs in view and check if in closed area
 			seen_flag_coords.x = ((i-1)/2)%VIEWSIZE;
 			seen_flag_coords.y = ((i-1)/2)/VIEWSIZE;
 		}
-		else if(viewbuffer[i-1] <= C_WATER_DIM || viewbuffer[i-1] == C_UNKNOWN)
+		// count number of walls (in LOS) for miners:
+		else if(viewbuffer[i] == '#' && viewbuffer[i-1] >= C_WALL)
+			++num_walls_in_sight;
+		if(viewbuffer[i-1] <= C_WATER_DIM || viewbuffer[i-1] == C_UNKNOWN)
 			++num_oos;
 	}
 	/* We are stuck if we can see no more than 12 tiles. The second condition
@@ -442,36 +449,6 @@ e_Dir neighb_pc(const char t)
 	return MAX_D;
 }
 
-e_Dir should_cs()
-{
-	if(neighb_pc(myteam) != MAX_D)
-		return MAX_D;
-	return neighb_pc(opp_team[myteam]);
-}
-
-e_Dir should_dig()
-{
-	// If there are enemies in view, don't dig.
-	if(!pcs[opp_team[myteam]].empty())
-		return MAX_D;
-	// else:
-	e_Dir d = e_Dir(random()%MAX_D);
-	for(char i = 0; i < MAX_D; ++i)
-	{
-	 	tmp_coords = center.in(d);
-		if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
-			return d;
-		++d;
-	}
-	return MAX_D;
-}
-
-inline bool mmsafe()
-{
-	// at least one enemy, no friendlies, no adjacent enemies (melee is better)
-	return pcs[myteam].empty() && !pcs[opp_team[myteam]].empty()
-		&& neighb_pc(opp_team[myteam]) == MAX_D;
-}
 
 // Returns true if a shootable target is found and puts the coordinates in 'target'.
 // Set 'cardinals' true to check only cardinal directions (for zaps).
@@ -513,23 +490,6 @@ bool could_shoot(Coords &target, const bool cardinals)
 	return false; // no targets found
 }
 
-bool should_flash()
-{
-	// must be at least one non-assassin enemy and no non-assassin friends
-	// within range (3 tiles; cf. server/chores.cpp:flash_at())
-	vector<Coords>::const_iterator ti;
-	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
-	{
-		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
-			return false;
-	}
-	for(ti = pcs[opp_team[myteam]].begin(); ti != pcs[opp_team[myteam]].end(); ++ti)
-	{
-		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
-			return true;
-	}
-	return false;
-}
 
 bool could_capture_flag()
 {
@@ -592,17 +552,30 @@ bool no_class_spc_Ar()
 	return true;
 }
 
-
 bool no_class_spc_As()
 {
-	if(abil_counter && !limiter && should_flash())
+	if(!abil_counter || limiter)
+		return true;
+	// Need at least one non-assassin enemy and no non-assassin friends
+	// within range (3 tiles; cf. server/chores.cpp:flash_at())
+	vector<Coords>::const_iterator ti;
+	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
 	{
-		send_action(XN_FLASH);
-		--abil_counter;
-		limiter = FLASH_LIMIT;
-		return false;
+		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
+			return true;
 	}
-	return true;
+	for(ti = pcs[opp_team[myteam]].begin(); ti != pcs[opp_team[myteam]].end(); ++ti)
+	{
+		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
+			break;
+	}
+	if(ti == pcs[opp_team[myteam]].end())
+		return true;
+	// okay to flash:
+	send_action(XN_FLASH);
+	--abil_counter;
+	limiter = FLASH_LIMIT;
+	return false;
 }
 
 bool no_class_spc_Cm()
@@ -619,7 +592,7 @@ bool no_class_spc_Cm()
 
 bool no_class_spc_Mc()
 {
-	if(myhp <= classes[C_MINDCRAFTER].hp/2
+	if(myhp <= 2*classes[C_MINDCRAFTER].hp/3
 		&& neighb_pc(opp_team[myteam]) != MAX_D)
 	{
 		send_action(XN_BLINK); // jump away from combat
@@ -633,7 +606,9 @@ bool no_class_spc_Sc() { return true; }
 
 bool no_class_spc_Fi()
 {
-	if((rv = should_cs()) != MAX_D)
+	if(neighb_pc(myteam) != MAX_D)
+		return true;
+	if((rv = neighb_pc(opp_team[myteam])) != MAX_D)
 	{
 		send_action(XN_CIRCLE_ATTACK, rv); // do circle attack
 		wait_turns = CIRCLE_ATTACK_WAIT;
@@ -644,9 +619,23 @@ bool no_class_spc_Fi()
 
 bool no_class_spc_Mi()
 {
-	if((rv = should_dig()) != MAX_D)
+	// If there are enemies in view, don't dig. Also, the chance to dig in
+	// general is higher when there are more walls in sight.
+	if(!pcs[opp_team[myteam]].empty()
+		|| random()%WALLS_FOR_CERTAIN_DIG >= num_walls_in_sight)
+		return true;
+	// else:
+	e_Dir d = e_Dir(random()%MAX_D);
+	for(rv = 0; rv < MAX_D; ++rv)
 	{
-		send_action(XN_MINE, rv);
+	 	tmp_coords = center.in(d);
+		if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
+			break;
+		++d;
+	}
+	if(rv < MAX_D)
+	{
+		send_action(XN_MINE, d);
 		wait_turns = DIG_WAIT;
 		return false;
 	}
@@ -676,7 +665,9 @@ bool no_class_spc_He()
 
 bool no_class_spc_Wi()
 {
-	if(mmsafe())
+	// at least one enemy, no friendlies, no adjacent enemies (melee is better)
+	if(pcs[myteam].empty() && !pcs[opp_team[myteam]].empty()
+		&& neighb_pc(opp_team[myteam]) == MAX_D)
 	{
 		send_action(XN_MM); // cast magic missile
 		wait_turns = CAST_MM_WAIT;
@@ -804,18 +795,26 @@ int main(int argc, char *argv[])
 						send_action(XN_SUICIDE);
 				}
 			}
-#ifdef BOTMSG
-			// If bot messaging is enables, we print out (chat) messages.
 			else if(mid == MID_ADD_MSG)
 			{
 				recv_buffer.read_ch(); // cpair
+#ifdef BOTMSG
 				string msg_str;
 				for(mid = recv_buffer.read_ch(); mid > 0; --mid)
 				{
 					recv_buffer.read_str(msg_str);
+					if(msg_str == "That is no real wall!")
+						wait_turns = 0; // stop trying to dig illusory wall!
 					cout << "MSG: " << msg_str << endl;
 				}
+#else
+			if(recv_buffer.read_ch() == 1
+				&& !strcmp(recv_buffer.getr()+3, "That is no real wall!"))
+				wait_turns = 0;	// stop trying to dig illusory wall!
+#endif
 			}
+#ifdef BOTMSG
+			// If bot messaging is enables, we print out (chat) messages.
 			else if(mid == MID_SAY_CHAT)
 			{
 				recv_buffer.read_sh(); // skip id

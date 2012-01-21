@@ -313,6 +313,11 @@ bool Network::receive_n_handle()
 							if(abs(xcoord) > VIEWSIZE/2 || abs(ycoord) > VIEWSIZE/2
 								|| (!xcoord && !ycoord)) // both zero is bad, too
 							{
+#ifdef DEBUG
+								to_log("Read illegal shot coordinates ("
+									+ boost::lexical_cast<string>(int(xcoord)) + ","
+									+ boost::lexical_cast<string>(int(ycoord)) + ")!");
+#endif
 								cheat_attempt(pit);
 								break;
 							}
@@ -324,6 +329,11 @@ bool Network::receive_n_handle()
 							char dir = static_cast<char>(recv_buffer.read_ch());
 							if(dir > MAX_D || dir < 0 || (dir == MAX_D && mid != XN_HEAL))
 							{
+#ifdef DEBUG
+								to_log("Read illegal direction "
+									+ boost::lexical_cast<string>(int(dir)) + " in "
+									+ boost::lexical_cast<string>(int(mid)) + "-type xn!");
+#endif
 								cheat_attempt(pit);
 								break;
 							}
