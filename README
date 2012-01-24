@@ -22,7 +22,7 @@ client/     client source code
 server/     server source code
 common/     source code used by both client and server
 testes/     some auxiliary source code, see testes/README
-tmplates/   documented example config files
+tmplates/   documented example config files etc.
 
 
 Compilation, installation, and other information can be

@@ -25,5 +25,8 @@ package() {
   cd $srcdir/$pkgname
   mv -f yuxtapa_sv yuxtapa_cl ${pkgdir}/usr/bin
   mv -f tmplates/*.conf mrbrown ${pkgdir}/usr/share/yuxtapa
+  mv -f tmplates/gen_map_tmplate.sh ${pkgdir}/usr/share/yuxtapa
+  chmod +x ${pkgdir}/usr/share/yuxtapa/gen_map_tmplate.sh
+  mv -f tmplates/vim ${pkgdir}/usr/share/yuxtapa
   mv -f manual ${pkgdir}/usr/share/doc/yuxtapa
 }
