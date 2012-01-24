@@ -13,7 +13,7 @@ is well commented, and documents itself. Here we just say a few words about map 
 yuxtapa generates random maps; you cannot have 'designed' maps like in many other
 multiplayer games.</p>
 
-<p>The variable <strong>mapsizevar</strong> is used to slighly randomise the size. It is interpreted
+<p>The variable <strong>mapsizevar</strong> is used to slightly randomise the size. It is interpreted
 as a percentage of the base mapsize given in the config. So, for instance, if your config has
 <pre>
 mapsize 100
@@ -44,5 +44,15 @@ traffic to the server is usually much smaller, insignificant compared to the out
 <p>As important as the connection is that the server gets a steady slice of processor time. The
 best way to ensure this is to have as few other processes running as possible. On modern hardware these
 kind of considerations only become relevant with a huge number of players, though.</p>
+
+<h3>Multiple servers on the same machine</h3>
+<p>To run several servers on the same machine (same IP but different ports),
+you'll have to work around the fact that each server instance looks for the
+config file in the same place and takes the port to use from there. One obvious
+solution is to run each server as a different user. If you don't want to do this
+for some reason, the other possibility is to use chroot.</p>
+
+<p>See the <a href="bots.html">bots</a> page for a method to have bots on
+multiple servers on the same machine.</p>
 
 </body></html>

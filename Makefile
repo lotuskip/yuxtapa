@@ -1,11 +1,11 @@
 # yuxtapa Makefile
-VERSION = 7
+VERSION = 8
 #
 #This option for a pedantic, warnful debug build:
-#CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
+CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
 #
 #This one for the optimised version:
-CONFIG_FLAGS=-O2 -g0
+#CONFIG_FLAGS=-O2 -g0
 
 EXTRA_FLAGS=
 # Add -DMAPTEST to build a "server" for testing & creating maps.

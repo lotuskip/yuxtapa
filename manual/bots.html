@@ -39,5 +39,18 @@ most people probably don't want this). You can check the version of the bot clie
 mrbrown -v
 </pre></p>
 
+<h3>Specifying the port the bots should use</h3>
+<p>The bot executable also accepts the address to connect to as a command line
+argument. By default it connects to 127.0.0.1:12360. You cannot specify
+arguments in the server configuration, but can instead create a script to
+execute bots with alternate port. For instance, create (and make executable) the
+followingi script:
+<pre>
+#!/bin/sh
+exec /home/share/yuxtapa/mrbrown 127.0.0.1:12369
+</pre>
+and specify this script as the bot executable in the server configuration if
+your server is using the port 12369 instead of the default one.</p>
+
 </body></html>
 

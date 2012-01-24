@@ -1,6 +1,6 @@
 # Maintainer: Onni R. <onnir at iki dot fi>
 pkgname=yuxtapa
-pkgver=7
+pkgver=8
 pkgrel=1
 license=('None')
 pkgdesc="a text-mode team-based real-time multiplayer game"
