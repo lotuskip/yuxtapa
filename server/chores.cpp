@@ -10,7 +10,6 @@
 #include "../common/util.h"
 #ifdef DEBUG
 #include <iostream>
-#include <boost/lexical_cast.hpp>
 #include "log.h"
 #endif
 
@@ -1363,7 +1362,7 @@ void progress_chore(const list<Player>::iterator pit)
 #ifdef DEBUG
 	default: // Reaching this is an error!
 		to_log("Error: progress_chore called with class "
-			+ boost::lexical_cast<string>(short(pit->cl)));
+			+ lex_cast(pit->cl));
 		break;
 #endif
 	}

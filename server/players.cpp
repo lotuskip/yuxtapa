@@ -5,13 +5,13 @@
 #include "log.h"
 #include "cmds.h"
 #include "../common/utfstr.h"
+#include "../common/util.h"
 #include <netinet/in.h>
 #include <fstream>
 #include <iostream>
 #include <cctype>
 #include <cstring>
 #include <algorithm>
-#include <boost/lexical_cast.hpp>
 
 namespace Game
 {
@@ -81,7 +81,7 @@ void register_player(string nick, sockaddr_storage &sas,
 			if(found == 100)
 				numpart = "01";
 			else
-				numpart = boost::lexical_cast<string>(found);
+				numpart = lex_cast(found);
 			if(twodigits && numpart.size() == 1)
 				numpart.insert(0, 1, '0');
 
@@ -301,7 +301,7 @@ void init_known_players(const bool nopurge)
 		return;
 	}
 	if(!nopurge)
-		to_log("Player data contains " + boost::lexical_cast<string>(numpl)
+		to_log("Player data contains " + lex_cast(numpl)
 			+ " entries;");
 	PlayerStats tmpstats;
 	short sh; char ch;
@@ -338,7 +338,7 @@ void init_known_players(const bool nopurge)
 			known_players.push_back(tmpstats);
 	}
 	if(!nopurge)
-		to_log(boost::lexical_cast<string>(known_players.size()) + " entries accepted.");
+		to_log(lex_cast(known_players.size()) + " entries accepted.");
 }
 
 void store_known_players()
@@ -492,9 +492,9 @@ void usage_update()
 		short n = cur_players.size();
 		short nbots = num_bots();
 		usage_per_30min.push_back(n - nbots);
-		string msg = boost::lexical_cast<string>(n - nbots) + " players";
+		string msg = lex_cast(n - nbots) + " players";
 		if(nbots)
-			msg += " (+ " + boost::lexical_cast<string>(nbots) + " bots)";
+			msg += " (+ " + lex_cast(nbots) + " bots)";
 		timed_log(msg);
 	}
 }
@@ -510,7 +510,7 @@ void usage_report()
 			i != usage_per_30min.end(); ++i)
 			sum += *i;
 		to_log("Average presence: " +
-			boost::lexical_cast<string>(float(sum)/usage_per_30min.size()));
+			lex_cast_fl(float(sum)/usage_per_30min.size()));
 		usage_per_30min.clear();
 	}
 }

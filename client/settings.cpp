@@ -3,15 +3,14 @@
 #include "../common/utfstr.h"
 #include "../common/confdir.h"
 #include "../common/constants.h"
+#include "../common/util.h"
 #include <fstream>
 #include <iostream>
-#include <string>
 #include <vector>
 #include <sstream>
 #include <cstdlib>
 #include <algorithm>
 #include <map>
-#include <boost/algorithm/string/trim.hpp>
 
 namespace
 {
@@ -86,7 +85,7 @@ void Config::read_config(const string &servername)
 		{
 			keyw = s;
 			keyw.erase(0, keyw.find(' '));
-			boost::algorithm::trim(keyw);
+			trim_str(keyw);
 			if(!keyw.empty())
 			{
 				if(num_syms(keyw) > MAX_NICK_LEN)

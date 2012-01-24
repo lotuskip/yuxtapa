@@ -26,14 +26,6 @@ is right or not.</p>
 
 <p>The requirement of Ncurses should be obvious: we use it to display things on the client side.</p>
 
-<p>C++ Boost is used for:
-<ul>
-<li>lexical casts (change integer 123 into string &quot;123&quot;); <em>could be removed</em></li>
-<li>trimming strings of whitespaces; <em>could be removed</em></li>
-<li>boost arrays, which are sort of nice; I haven't looked into how involved coding these myself would be</li>
-</ul>
-All and all, getting rid of boost-dependencies would be nice, but for now it remains required.</p>
-
 <p>zlib is used to compress the &quot;rendered&quot; views the server sends to clients. I think this is smart. A view update is always over a KiB big, and
 we might send up to 4 of them per second to each player, and there might be something like 50 players (that would be 200 packages per second). The
 compression also doesn't seem to contribute much to the server's workload.</p>

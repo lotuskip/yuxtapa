@@ -17,9 +17,8 @@
 #include <cstring>
 #include <fstream>
 #include <vector>
-#ifdef BOTMSG
 #include <iostream>
-#endif
+#include <algorithm>
 
 using namespace std;
 

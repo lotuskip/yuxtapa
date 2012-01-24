@@ -28,12 +28,10 @@ Contributions such as RPMs are welcome, and will be made available (or linked) i
 to find out how to install them.
 <ul>
 <li>NCurses (typically called <em>ncurses</em> or <em>libncurses</em>)</li>
-<li>C++ boost (<em>boost</em>)</li>
 <li>ZLib (<em>zlib</em>)</li>
 </ul>
 If your distribution makes the distinction, these need to be the
-<em>development</em> versions (eg. <em>ncurses-devel</em>,
-<em>boost-devel</em>, <em>zlib-devel</em>).</p>
+<em>development</em> versions (eg. <em>ncurses-devel</em>, <em>zlib-devel</em>).</p>
 
 <p>Please see the <a href="terminals.html">Terminals</a> page for information about what the yuxtapa
 client requires from the terminal emulator.</p>
@@ -90,11 +88,10 @@ to modify the Makefile and possibly even some source code.</p>
 
 <p>Some points you might find useful on OSX:
 <ul>
-<li>you will need a gcc style compiler and boost installed; consider using MacPorts</li>
+<li>you will need a gcc style compiler installed; consider using MacPorts</li>
 <li>zlib and ncurses <em>should</em> be present by default; if not, make them available</li>
 <li>add '-D_XOPEN_SOURCE_EXTENDED' to the Makefile CPPFLAGS (this appeared to be required to include wide character
 support in ncurses)</li>
-<li>also add the path to the C++ boost header files to the CPPFLAGS; possibly something like '-I/opt/local/include'</li>
 <li>as mentioned, the client has been compiled succesfully; the server code might require minor modifications to compile</li>
 </ul></p>
 

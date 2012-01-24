@@ -3,7 +3,6 @@
 #define NET_UTILS_H
 
 #include <string>
-#include <boost/array.hpp>
 #include "constants.h"
 
 // Message identifiers
@@ -83,7 +82,7 @@ public:
 
 	void write_compressed(char *buffer, const unsigned short len);
 
-	const char *getr() const { return arr.data(); }
+	const char *getr() const { return arr; }
 	int amount() const { return num; }
 
 	/*
@@ -101,9 +100,9 @@ public:
 	void set_amount(const short n);
 
 private:
-	boost::array<char, BUFFER_SIZE>::iterator pos;
+	char* pos;
 	short num; // this would suffice, but we have pos for convenience, too
-	boost::array<char, BUFFER_SIZE> arr;
+	char arr[BUFFER_SIZE];
 };
 
 #endif

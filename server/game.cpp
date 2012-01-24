@@ -9,11 +9,11 @@
 #include "spiral.h"
 #include "chores.h"
 #include "cmds.h"
+#include "../common/util.h"
 #include <cstdlib>
 #include <cstring>
 #include <ctime>
 #include <sys/wait.h>
-#include <boost/lexical_cast.hpp>
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -867,11 +867,11 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		{
 			if(tdm_kills[T_GREEN] == tdm_kills[T_PURPLE])
 				obj_status_str += "; score "
-					+ boost::lexical_cast<string>(tdm_kills[T_GREEN]) + " even";
+					+ lex_cast(tdm_kills[T_GREEN]) + " even";
 			else
 				obj_status_str += " by "
-					+ boost::lexical_cast<string>(max(tdm_kills[T_PURPLE],tdm_kills[T_GREEN]))
-					+ " to " + boost::lexical_cast<string>(min(tdm_kills[T_PURPLE],tdm_kills[T_GREEN]));
+					+ lex_cast(max(tdm_kills[T_PURPLE],tdm_kills[T_GREEN]))
+					+ " to " + lex_cast(min(tdm_kills[T_PURPLE],tdm_kills[T_GREEN]));
 		}
 		obj_status_str += '!';
 	}
@@ -883,12 +883,12 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 		case GM_CONQ:
 			if(team_flags[T_PURPLE].size() > team_flags[T_GREEN].size())
 				obj_status_str = ", Purple has "
-					+ boost::lexical_cast<string>(team_flags[T_PURPLE].size());
+					+ lex_cast(team_flags[T_PURPLE].size());
 			else
 				obj_status_str = ", Green has "
-					+ boost::lexical_cast<string>(team_flags[T_GREEN].size());
+					+ lex_cast(team_flags[T_GREEN].size());
 			obj_status_str += '/';
-			obj_status_str += boost::lexical_cast<string>(noccents[NOE_FLAG].size()); 
+			obj_status_str += lex_cast(noccents[NOE_FLAG].size()); 
 			break;
 		case GM_STEAL:
 			obj_status_str = " (" + long_sector_name[obj_sector] + ") item ";
@@ -900,7 +900,7 @@ void Game::send_team_upds(const list<Player>::const_iterator to)
 				obj_status_str += "secure";
 			break;
 		case GM_DESTR:
-			obj_status_str = ", " + boost::lexical_cast<string>(boulders_left)
+			obj_status_str = ", " + lex_cast(boulders_left)
 				+ " left";
 			break;
 		case GM_TDM:

@@ -8,6 +8,7 @@
 #include "settings.h"
 #include "chores.h"
 #include "viewpoint.h"
+#include "../common/util.h"
 #include <cctype>
 #include <cstdlib>
 #include <unistd.h>
@@ -16,7 +17,6 @@
 #include <dirent.h>
 #include <algorithm>
 #include <cstring>
-#include <boost/lexical_cast.hpp>
 #ifdef DEBUG
 #include <iostream>
 #endif
@@ -27,7 +27,6 @@ extern unsigned char num_players[2]; // defined in game.cpp
 namespace
 {
 using namespace std;
-using boost::lexical_cast;
 
 const unsigned char cmd_respond_msg_col = 12;
 
@@ -138,20 +137,20 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 		{
 			using namespace Config;
 			keyw = "Max players: "
-				+ lexical_cast<string>(int_settings[IS_MAXPLAYERS])
+				+ lex_cast(int_settings[IS_MAXPLAYERS])
 				+ ", mapsize ";
 			short minmsize = (100 - int_settings[IS_MAPSIZEVAR])
 				*int_settings[IS_MAPSIZE]/100;
 			short maxmsize = (100 + int_settings[IS_MAPSIZEVAR])
 				*int_settings[IS_MAPSIZE]/100;
-			keyw += lexical_cast<string>(minmsize) + '-'
-				+ lexical_cast<string>(maxmsize) + ", classlim ";
-			keyw += lexical_cast<string>(int_settings[IS_CLASSLIMIT])
-				+ ", turn " + lexical_cast<string>(int_settings[IS_TURNMS]);
+			keyw += lex_cast(minmsize) + '-'
+				+ lex_cast(maxmsize) + ", classlim ";
+			keyw += lex_cast(int_settings[IS_CLASSLIMIT])
+				+ ", turn " + lex_cast(int_settings[IS_TURNMS]);
 			keyw += "ms, intermission "
-				+ lexical_cast<string>(int_settings[IS_INTERM_SECS]);
+				+ lex_cast(int_settings[IS_INTERM_SECS]);
 			keyw += "s, statpurge "
-				+ lexical_cast<string>(int_settings[IS_STATPURGE]) + "h, "
+				+ lex_cast(int_settings[IS_STATPURGE]) + "h, "
 				+ team_balance_str[int_settings[IS_TEAMBALANCE]];
 			keyw += " teambalance, modes: " + game_modes_str();
 			keyw += ", map types: " + map_types_str() + '.';
@@ -165,7 +164,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(nit != cur_players.end())
 			{
 				keyw = nit->nick + " has admin level "
-					+ lexical_cast<string>(short(nit->stats_i->ad_lvl))
+					+ lex_cast(nit->stats_i->ad_lvl)
 					+ admin_lvl_str[nit->stats_i->ad_lvl];
 				Network::construct_msg(keyw, cmd_respond_msg_col); 
 				Network::send_to_player(*pit);
@@ -312,7 +311,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 					{
 						known_players.front().ad_lvl = al;
 						keyw = "You are now the Super-Admin of this server. Your player ID is "
-							+ lexical_cast<string>(known_players.front().ID) + '.';
+							+ lex_cast(known_players.front().ID) + '.';
 						Network::construct_msg(keyw, cmd_respond_msg_col);
 						Network::send_to_player(*pit);
 						return true; // no broadcast
@@ -431,7 +430,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				if(nit->botpid != -1)
 					keyw += ", BOT";
 				keyw += ", t.time: ";
-				keyw += boost::lexical_cast<string>(nit->stats_i->total_time/60);
+				keyw += lex_cast(nit->stats_i->total_time/60);
 				keyw += "min";
 				Network::construct_msg(keyw, cmd_respond_msg_col); 
 				Network::send_to_player(*pit);
@@ -509,7 +508,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			if(num_players[T_GREEN]*num_players[T_PURPLE])
 			{
 				sum = 100*sum/(num_players[T_GREEN]*num_players[T_PURPLE]) - 50;
-				keyw = boost::lexical_cast<string>(sum) + " for greens -- the teams are ";
+				keyw = lex_cast(sum) + " for greens -- the teams are ";
 				if(sum < -35 || sum > 35)
 					keyw += "VERY uneven!";
 				else if(sum < -15 || sum > 15)

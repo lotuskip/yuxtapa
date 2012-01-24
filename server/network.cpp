@@ -8,6 +8,7 @@
 #include "occent.h"
 #include "actives.h"
 #include "../common/utfstr.h"
+#include "../common/util.h"
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
@@ -19,7 +20,6 @@
 #include <ctime>
 #include <vector>
 #include <cerrno>
-#include <boost/lexical_cast.hpp>
 
 // this is visible outside so that other parts of the server can construct packets directly
 namespace Network { SerialBuffer send_buffer; }
@@ -87,7 +87,7 @@ bool Network::startup()
 	hints.ai_flags = AI_PASSIVE; // use my IP
 	int rv;
 	if((rv = getaddrinfo(NULL,
-		boost::lexical_cast<string>(Config::int_settings[Config::IS_PORT]).c_str(),
+		lex_cast(Config::int_settings[Config::IS_PORT]).c_str(),
 		&hints, &servinfo)) != 0)
 	{
 		cerr << "Error in getaddrinfo: " <<  gai_strerror(rv) << endl;
@@ -315,8 +315,8 @@ bool Network::receive_n_handle()
 							{
 #ifdef DEBUG
 								to_log("Read illegal shot coordinates ("
-									+ boost::lexical_cast<string>(int(xcoord)) + ","
-									+ boost::lexical_cast<string>(int(ycoord)) + ")!");
+									+ lex_cast(xcoord) + ","
+									+ lex_cast(ycoord) + ")!");
 #endif
 								cheat_attempt(pit);
 								break;
@@ -331,8 +331,8 @@ bool Network::receive_n_handle()
 							{
 #ifdef DEBUG
 								to_log("Read illegal direction "
-									+ boost::lexical_cast<string>(int(dir)) + " in "
-									+ boost::lexical_cast<string>(int(mid)) + "-type xn!");
+									+ lex_cast(dir) + " in "
+									+ lex_cast(mid) + "-type xn!");
 #endif
 								cheat_attempt(pit);
 								break;

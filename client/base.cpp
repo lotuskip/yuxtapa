@@ -2,6 +2,7 @@
 #include "base.h"
 #include "settings.h"
 #include "../common/utfstr.h"
+#include "../common/util.h"
 #include <ncurses.h>
 #include <iostream>
 #include <string>
@@ -9,7 +10,6 @@
 #include "../common/constants.h"
 #include "../common/coords.h"
 #include "colourdef.h"
-#include <boost/lexical_cast.hpp>
 
 namespace
 {
@@ -324,12 +324,12 @@ void Base::print_teams_upd(const unsigned char greens,
 	wmove(windows[STAT_WIN], 1, 0);
 	change_colour(windows[STAT_WIN], C_GREEN_PC);
 	string str = "Green team: "
-		+ boost::lexical_cast<string>((unsigned short)greens)
+		+ lex_cast(greens)
 		+ " players ";
 	waddstr(windows[STAT_WIN], str.c_str());
 	change_colour(windows[STAT_WIN], C_PURPLE_PC);
 	str = " Purple team: "
-		+ boost::lexical_cast<string>((unsigned short)purples)
+		+ lex_cast(purples)
 		+ " players";
 	waddstr(windows[STAT_WIN], str.c_str());
 	wclrtoeol(windows[STAT_WIN]);

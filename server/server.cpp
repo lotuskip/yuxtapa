@@ -11,9 +11,9 @@
 #include "log.h"
 #include "game.h"
 #include "../common/timer.h"
+#include "../common/util.h"
 #include <ctime>
 #include <unistd.h>
-#include <boost/lexical_cast.hpp>
 
 bool intermission = true;
 
@@ -40,9 +40,8 @@ void goto_intermission(const string &loadmap)
 	Game::next_map(loadmap);
 	if(turns_lagged)
 	{
-		string str = "Warning: the server lagged ";
-		str += boost::lexical_cast<string>(turns_lagged);
-		str += " turns this map.";
+		string str = "Warning: the server lagged "
+			+ lex_cast(turns_lagged) + " turns this map.";
 		to_log(str);
 	}
 	interm_over = time(NULL) + Config::int_settings[Config::IS_INTERM_SECS];

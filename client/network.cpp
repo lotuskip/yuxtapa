@@ -3,6 +3,7 @@
 #include "settings.h"
 #include "../common/timer.h"
 #include "../common/utfstr.h"
+#include "../common/util.h"
 #include "view.h"
 #include "base.h"
 #include "msg.h"
@@ -20,7 +21,6 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
-#include <boost/lexical_cast.hpp>
 #include <ncurses.h>
 
 namespace
@@ -92,8 +92,7 @@ void add_id_info_for_server(const string &serverip)
 void store_id_for_server(const unsigned short id,
 	const string &serverip, const string &passw)
 {
-	string line2add = serverip + ' '
-		+ boost::lexical_cast<string>(id) + ' ' + passw;
+	string line2add = serverip + ' ' + lex_cast(id) + ' ' + passw;
 	// The above was a clean "lookup", but here we might need to replace...
 	vector<string> lines;
 	ifstream ifile((Config::configdir() + serversfile_name).c_str());

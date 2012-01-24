@@ -6,7 +6,7 @@
 #include "settings.h"
 #include "../common/constants.h"
 #include "../common/col_codes.h"
-#include <boost/lexical_cast.hpp>
+#include "../common/util.h"
 
 extern e_ClientState clientstate;
 extern bool walkmode;
@@ -57,25 +57,23 @@ void reprint_pcinfo()
 	tmpstr += ") ";
 	Base::print_str(tmpstr.c_str(), team_colour[myteam], 52, 3, STAT_WIN, false);
 
-	tmpstr = "HP: " + boost::lexical_cast<string>(short(hp))
-		+ '/' + boost::lexical_cast<string>(short(classes[myclass].hp));
+	tmpstr = "HP: " + lex_cast(hp)
+		+ '/' + lex_cast(classes[myclass].hp);
 	fill_to_ten(tmpstr);
 	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 4, STAT_WIN, false);
 
-	tmpstr = "DV/PV " + boost::lexical_cast<string>(short(dv))
-		+ '/' + boost::lexical_cast<string>(short(pv));
+	tmpstr = "DV/PV " + lex_cast(dv) + '/' + lex_cast(pv);
 	fill_to_ten(tmpstr);
 	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 5, STAT_WIN, false);
 
 	tmpstr.clear();
 	if(tohit > 0)
 		tmpstr += '+';
-	tmpstr += boost::lexical_cast<string>(short(tohit)) + ",1d"
-		+ boost::lexical_cast<string>(short(dam_die));
+	tmpstr += lex_cast(tohit) + ",1d" + lex_cast(dam_die);
 	if(dam_add > 0)
 		tmpstr += '+';
 	if(dam_add)
-		tmpstr += boost::lexical_cast<string>(short(dam_add));
+		tmpstr += lex_cast(dam_add);
 	fill_to_ten(tmpstr);
 	Base::print_str(tmpstr.c_str(), team_colour[myteam], PC_INFO_X, 6, STAT_WIN, false);
 

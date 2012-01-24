@@ -6,7 +6,7 @@
 #include "../common/timer.h"
 #include "../common/col_codes.h"
 #include "../common/classes_common.h"
-#include <boost/lexical_cast.hpp>
+#include "../common/util.h"
 #include <deque>
 #include <cstring>
 
@@ -108,17 +108,17 @@ void redraw_clocks()
 	string timestr = "";
 	if(mins < 10)
 		timestr += ' ';
-	timestr += boost::lexical_cast<string>(mins);
+	timestr += lex_cast(mins);
 	timestr += ':';
 	if(secs < 10)
 		timestr += '0';
-	timestr += boost::lexical_cast<string>(secs);
+	timestr += lex_cast(secs);
 	Base::print_str(timestr.c_str(), 7, 51, 6, STAT_WIN, true);
 
 	timestr.clear();
 	if(spawntime < 10)
 		timestr += ' ';
-	timestr += boost::lexical_cast<string>((unsigned short)spawntime);
+	timestr += lex_cast(spawntime);
 	Base::print_str(timestr.c_str(), 7, 54, 7, STAT_WIN, true);
 }
 

@@ -6,7 +6,6 @@
 #include "log.h"
 #include "../common/constants.h"
 #include "../common/los_lookup.h"
-#include <boost/lexical_cast.hpp>
 #endif
 #include <cstdlib>
 #include <cctype>
@@ -673,7 +672,7 @@ Map::Map(const short size, const short variation, const short players)
 		mapsize = sh;
 #ifndef MAPTEST
 		timed_log("Note: getting crowded, mapsize adjusted to "
-			+ boost::lexical_cast<string>(mapsize));
+			+ lex_cast(mapsize));
 #endif
 	}
 

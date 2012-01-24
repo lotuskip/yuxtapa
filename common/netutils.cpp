@@ -4,24 +4,19 @@
 #include <algorithm>
 #include <zlib.h>
 
-namespace
-{
 using namespace std;
-using boost::array;
-
-}
 
 
 SerialBuffer::SerialBuffer() : num(0)
 {
-	pos = arr.begin();
+	pos = arr;
 }
 
 
 void SerialBuffer::clear()
 {
 	// no need to actually touch the data
-	pos = arr.begin();
+	pos = arr;
 	num = 0;
 }
 
@@ -93,7 +88,7 @@ void SerialBuffer::read_str(string &target)
 	// Read (A) at most the maximum string length, (B) at most as much as there
 	// is buffer left!
 	short bs_read = 0;
-	while(bs_read < MAXIMUM_STR_LEN && pos != arr.end())
+	while(bs_read < MAXIMUM_STR_LEN && pos != arr+BUFFER_SIZE)
 	{
 		if(*pos == '\0')
 		{
@@ -124,12 +119,12 @@ char* SerialBuffer::getw()
 {
 	// calling get on receive implies there will be no more read calls on the same data:
 	clear();
-	return arr.c_array();
+	return arr;
 }
 
 void SerialBuffer::set_amount(const short n)
 {
-	pos = arr.begin() + (num = n);
+	pos = arr + (num = n);
 }
 
 
