@@ -14,7 +14,7 @@ md5sums=('af55f6300d6263848fc387a45bf1e288')
 build() {
   cd $srcdir/$pkgname
   make || return 1
-  make mrbrown
+  make mrbrown || return 1
 }
 
 package() {

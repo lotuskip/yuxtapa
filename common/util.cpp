@@ -23,7 +23,7 @@ void trim_str(string &s)
 }
 
 
-string lex_cast(const unsigned short n)
+string lex_cast(const int n)
 {
 	stringstream ss;
 	ss << n;

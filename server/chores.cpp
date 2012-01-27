@@ -8,6 +8,8 @@
 #include "spiral.h"
 #include "../common/los_lookup.h"
 #include "../common/util.h"
+#include <cstdlib>
+#include <algorithm>
 #ifdef DEBUG
 #include <iostream>
 #include "log.h"
@@ -1501,7 +1503,7 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 {
 	Tile* tar = Game::curmap->mod_tile(c);
 	// Arrow falling on a trap might trigger the trap:
-	if(tar->flags & TF_TRAP && rand()%100 < CHANCE_ARROW_TRIG_TRAP)
+	if(tar->flags & TF_TRAP && random()%100 < CHANCE_ARROW_TRIG_TRAP)
 	{
 		list<Trap>::iterator tr_it = any_trap_at(c);
 		// Functionality is somewhat different from trigger_trap(...), but we

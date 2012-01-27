@@ -702,7 +702,7 @@ bool no_class_specific()
 	// To make bot behaviour a bit less predictable, there is, for each class,
 	// a fixed chance that we simply don't even consider the class specific
 	// action:
-	if(rand()%100 < CHANCE_IGN_CL_SPC[myclass])
+	if(random()%100 < CHANCE_IGN_CL_SPC[myclass])
 		return true;
 	// Otherwise check for possibility of using special abilities:
 	return no_cl_spc[myclass]();
@@ -887,55 +887,52 @@ int main(int argc, char *argv[])
 		} // received a msg
 		else usleep(MSG_DELAY_MS);
 		
-		if(myhp > 0) // When alive, do sum'n
+		if(myhp > 0 && reftimer.update() - last_sent_axn > turn_ms)
 		{
-			if(reftimer.update() - last_sent_axn > turn_ms)
+			if(wait_turns) // something has forced us to wait
+				--wait_turns;
+			else
 			{
-				if(wait_turns) // something has forced us to wait
-					--wait_turns;
-				else
+				if(limiter)
+					--limiter;
+				// Basic decision making:
+				// 1. Check if could/should use class ability
+				// 2. If not, move (which can mean a lot of things,
+				// including melee)
+				if(no_class_specific()) // not doing something special
 				{
-					if(limiter)
-						--limiter;
-					// Basic decision making:
-					// 1. Check if could/should use class ability
-					// 2. If not, move (which can mean a lot of things,
-					// including melee)
-					if(no_class_specific()) // not doing something special
+					// Try walking.
+					// Check if there are enemies in sight:
+					if(pcs[opp_team[myteam]].empty()) // (no)
 					{
-						// Try walking.
-						// Check if there are enemies in sight:
-						if(pcs[opp_team[myteam]].empty()) // (no)
+						/* Walk primarily towards any seen flags we could
+						 * capture, secondarily towards heard sounds (except
+						 * mining), thirdly randomly. Don't walk on PCs
+						 * in the "try_walk_towards" calls. */
+						if(could_capture_flag())
+							try_walk_towards(seen_flag_coords, true);
+						else if(get_sound_to_follow(tmp_coords)) // have sound to follow
+							try_walk_towards(tmp_coords, true);
+						else
+							random_walk();
+					}
+					else // there are enemies in sight
+					{
+						rv = VIEWSIZE; // find the closest one
+						for(picked = ci = pcs[opp_team[myteam]].begin(); ci != pcs[opp_team[myteam]].end(); ++ci)
 						{
-							/* Walk primarily towards any seen flags we could
-							 * capture, secondarily towards heard sounds (except
-							 * mining), thirdly randomly. Don't walk on PCs
-							 * in the "try_walk_towards" calls. */
-							if(could_capture_flag())
-								try_walk_towards(seen_flag_coords, true);
-							else if(get_sound_to_follow(tmp_coords)) // have sound to follow
-								try_walk_towards(tmp_coords, true);
-							else
-								random_walk();
-						}
-						else // there are enemies in sight
-						{
-							rv = VIEWSIZE; // find the closest one
-							for(picked = ci = pcs[opp_team[myteam]].begin(); ci != pcs[opp_team[myteam]].end(); ++ci)
+							if(ci->dist_walk(center) < rv)
 							{
-								if(ci->dist_walk(center) < rv)
-								{
-									rv = ci->dist_walk(center);
-									picked = ci;
-								}
+								rv = ci->dist_walk(center);
+								picked = ci;
 							}
-							try_walk_towards(*picked, false); // *do* walk on PCs
 						}
-					} // walking
-				} // no need to wait until previous action is done
-				last_sent_axn.update(); // behave as if acted even if didn't
-			} // enough time passed to take next action
-		} // is alive
+						try_walk_towards(*picked, false); // *do* walk on PCs
+					}
+				} // walking
+			} // no need to wait until previous action is done
+			last_sent_axn.update(); // behave as if acted even if didn't
+		} // alive, and enough time passed to take next action
 	} // for eva (until server sends QUIT)
 
 	// Disconnect

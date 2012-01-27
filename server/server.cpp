@@ -1,9 +1,9 @@
 // Please see LICENSE file.
 #include <iostream>
+#include <cstdlib>
 
 #ifdef MAPTEST
 #include "map.h"
-#include <cstdlib>
 #else
 #include "network.h"
 #include "settings.h"
