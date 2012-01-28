@@ -7,7 +7,9 @@
 void init_msgs();
 void add_msg(const std::string &s, const unsigned char cp);
 void upd_msgs();
+#if 0
 void clear_msgs(); // clears all messages, resulting in an empty buffer
+#endif
 
 
 void add_to_chat(std::string &s, const std::string &talker,

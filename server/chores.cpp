@@ -332,7 +332,7 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 			&& random()%100 < CHANCE_RUST)
 		{
 			string msg = "Your weapon rusts!";
-			Network::construct_msg(msg, C_WATER_TRAP);
+			Network::construct_msg(msg, C_WATER_TRAP_LIT);
 			Network::send_to_player(*pit);
 			pit->cl_props.tohit -= RUST_MOD;
 			pit->cl_props.dam_add -= RUST_MOD;
@@ -693,7 +693,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				// so actually the map won't until the next purple spawning:
 				team_flags[T_PURPLE].clear();
 				string msg = "The green team has secured the treasure!";
-				Network::construct_msg(msg, C_ZAP);
+				Network::construct_msg(msg, C_PORTAL_IN_LIT);
 				Network::broadcast();
 				pl_with_item = cur_players.end();
 				the_item.setpos(pit->own_pc->getpos());
@@ -746,7 +746,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 			item_moved = true;
 			Game::send_team_upds(cur_players.end());
 			string msg = "The green team has stolen the treasure!";
-			Network::construct_msg(msg, C_ZAP);
+			Network::construct_msg(msg, C_PORTAL_IN_LIT);
 			Network::broadcast();
 		}
 	}
@@ -1154,7 +1154,7 @@ void kill_player(const list<Player>::iterator pit)
 		tp->flags |= TF_NOCCENT;
 		Game::send_team_upds(cur_players.end());
 		string msg = "Treasure dropped!";
-		Network::construct_msg(msg, C_ZAP);
+		Network::construct_msg(msg, C_PORTAL_IN_LIT);
 		Network::broadcast();
 	}
 	

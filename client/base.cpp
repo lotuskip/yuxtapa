@@ -59,7 +59,12 @@ void return_cursor(const bool def)
 void change_colour(WINDOW* const w, unsigned char cpair)
 {
 	if(colmode != CM_FEW)
-		wattrset(w, COLOR_PAIR(cpair));
+	{
+		if(cpair >= 8 && cpair <= 15) // make second 8 base colours "light"
+			wattrset(w, A_BOLD|COLOR_PAIR(cpair));
+		else
+			wattrset(w, COLOR_PAIR(cpair));
+	}
 	else
 	{
 		// Reduce the colours to the base 16:

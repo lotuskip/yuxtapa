@@ -25,7 +25,7 @@ using namespace std;
  * platforms (using precompiler #if .. #else if ... #else ... #endif) */
 const char KEYCODE_ENTER = 13; // != '\n'
 
-const char* offon[2] = { "off.", "on." };
+const char* offon[2] = { "off.]", "on.]" };
 
 vector<string>::const_iterator prev_str_it;
 string typed_str, viewn_str;
@@ -407,7 +407,7 @@ bool Input::inputhandle()
 				toggle_titles();
 				break;
 			case KB_o: // ouching toggle
-				add_msg(string("Reacting to damage ") + offon[Config::toggle_ouch()], 7);
+				add_msg(string("[Reacting to damage ") + offon[Config::toggle_ouch()], 15);
 				break;
 			case KB_PLUS:
 				scroll_chat_up();

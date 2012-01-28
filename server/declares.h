@@ -25,6 +25,6 @@ const std::string long_sector_name[] = {
 	"north", "north-east", "east", "south-east", "south", "south-west",
 	"west", "north-west", "central" };
 
-const unsigned char DEF_MSG_COL = 7;
+const unsigned char DEF_MSG_COL = 15;
 
 #endif

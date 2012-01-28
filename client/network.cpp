@@ -173,7 +173,7 @@ bool Network::connect(string &errors)
 
 	last_sent_axn.update(); // must init this at some point
 
-	add_msg("Connecting to " + sip + "...", 7);
+	add_msg("[Connecting to " + sip + "...]", 15);
 	// construct a hello message:
 	send_buffer.add((unsigned char)MID_HELLO);
 	send_buffer.add(INTR_VERSION);

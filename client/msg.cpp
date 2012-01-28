@@ -18,24 +18,40 @@ using namespace std;
  * For message window:
  */
 
+// Messages are added (to the screen) at most every STAY_TIME ms.
+// Messages are moved away at least every MOVE_FREQ ms.
+const unsigned short MOVE_FREQ = 3600; // ms
+const unsigned short STAY_TIME = 800;
+msTimer last_move, last_add, reference;
+
 // messages on the screen:
 struct MsgBufferLine
 {
 	string text;
 	unsigned char cpair;
 	MsgBufferLine(const string &s = "", const unsigned char c = 0)
-		: text(s), cpair(c) {}
+		: text(s), cpair(c)
+	{
+		// Make the "normal view coloured" messages lighter initially:
+		if(cpair >= C_TREE && cpair < C_TREE_LIT)
+			cpair += NUM_NORM_COLS;
+	}
+	void dimmen() // returns true if needs a redraw; update refence first!
+	{
+		if(cpair == 8 || cpair == 0)
+			return;
+		if(cpair > 8 && cpair < BASE_COLOURS)
+			cpair -= 8;
+		else if(cpair >= C_TREE_LIT)
+			cpair -= NUM_NORM_COLS;
+		else
+			cpair = 8;
+	}
 };
 deque<MsgBufferLine> msgbuffer(MSG_WIN_Y-1); // -1 to leave last row for typing space
 char bottom_idx = 0;
 // messages awaiting to go onto the screen:
 deque<MsgBufferLine> msgavail;
-
-// Messages are added (to the screen) at most every STAY_TIME ms.
-// Messages are moved away at least every MOVE_FREQ ms.
-const unsigned short MOVE_FREQ = 3600; // ms
-const unsigned short STAY_TIME = 800;
-msTimer last_move, last_add, reference;
 
 /*
  * For chat window:
@@ -91,14 +107,16 @@ void move_msgs()
 		msgbuffer.push_back(MsgBufferLine());
 		--bottom_idx;
 		last_move.update();
+		for(char y = 0; y < bottom_idx/2; ++y)
+			msgbuffer[y].dimmen();
 	}
 }
 
 void redraw_msgs()
 {
 	for(char y = 0; y < MSG_WIN_Y-1; ++y)
-		Base::print_str(msgbuffer[y].text.c_str(), msgbuffer[y].cpair, 0, y,
-			MSG_WIN, true);
+		Base::print_str(msgbuffer[y].text.c_str(), msgbuffer[y].cpair,
+			0, y, MSG_WIN, true);
 }
 
 void redraw_clocks()
@@ -185,13 +203,18 @@ void upd_msgs()
 	}
 }
 
+#if 0 // (not used)
 void clear_msgs()
 {
 	for(char i = 0; i < bottom_idx; ++i)
-		msgbuffer[i].text.clear(); // nevermind the cpairs
+	{
+		msgbuffer[i].text.clear();
+		msgbuffer[i].cpair = 0;
+	}
 	bottom_idx = 0;
 	redraw_msgs();
 }
+#endif
 
 
 void add_to_chat(string &s, const string &talker, const unsigned char t)

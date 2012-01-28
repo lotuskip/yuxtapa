@@ -201,7 +201,7 @@ void follow_change(const list<Player>::iterator pit,
 		string s = "Now following " + fit->nick + ", a "
 			+ team_name[fit->team]
 			+ ' ' + classnames[fit->cl] + '.';
-		Network::construct_msg(s, C_ZAP);
+		Network::construct_msg(s, C_FIREB_TRAP_LIT);
 		Network::send_to_player(*pit);
 	}
 }
@@ -569,7 +569,7 @@ bool Game::process_turn()
 				if(pc_it->get_owner()->burn_torch())
 				{
 					string msg = "Suddenly your torch burns out.";
-					Network::construct_msg(msg, C_TORCH);
+					Network::construct_msg(msg, C_LIGHT_TRAP_LIT);
 					Network::send_to_player(*(pc_it->get_owner()));
 					pc_it->toggle_torch();
 					event_set.insert(pc_it->getpos());
@@ -622,7 +622,7 @@ bool Game::process_turn()
 				(curmap->mod_tile(it->own_pc->getpos())->flags & TF_DROWNS))
 			{
 				string s = "You are drowning!";
-				Network::construct_msg(s, C_WATER);
+				Network::construct_msg(s, C_WATER_LIT);
 				Network::send_to_player(*it);
 				it->cl_props.hp -= 1 + random()%MAX_DROWN_DAMAGE;
 				if(it->cl_props.hp <= 0)
@@ -1042,7 +1042,7 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			if(check_class_limit(t, newcl))
 			{
 				string s = "That class is not available.";
-				Network::construct_msg(s, C_ZAP);
+				Network::construct_msg(s, C_FIREB_TRAP_LIT);
 				Network::send_to_player(*pit);
 				return;
 			}
