@@ -4,6 +4,9 @@
 
 #include <string>
 
+// NOTE: the cpair passed to add_msg should NOT be any _DIM colour, nor higher
+// than the last _LIT colour! This ensures the "dimming" of older messages works
+// correctly.
 void init_msgs();
 void add_msg(const std::string &s, const unsigned char cp);
 void upd_msgs();

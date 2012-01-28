@@ -25,10 +25,19 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 
 <p><strong>version 8</strong> released ??? ??, 2012</p>
 
-<p><strong>General:</strong>
+<p><strong>Client:</strong>
 <ul>
 <li>Client message box now &quot;dimmens&quot; the older messages; implementing
 this has caused some changes in the server, too</li>
+<li><font color="red">known issue</font>: on a recent version of urxvt, the
+client is terribly slow to start (the cause has been narrowed down to the ncurses
+routine init_color; the problem does not arise on xterm or if the
+TERM variable is set so that colour values cannot be changed in urxvt)</li>
+</ul>
+</p>
+
+<p><strong>General:</strong>
+<ul>
 <li>Removed C++ boost from dependencies</li>
 <li>Fixed a very minor, almost theoretical bug having to do with random numbers</li>
 <li>Fixed some compilation issues with the latest gcc/glibc</li>
@@ -42,6 +51,8 @@ purposes</li>
 <p><strong>Bot improvements:</strong>
 <ul>
 <li>Suicide decision now based on time of isolation instead of interpreting a single view</li>
+<li>Fixed the problem of bots spawning close to a chasm almost inevitably walking into
+it</li>
 </ul></p>
 
 <p><strong>Compatability:</strong>

@@ -36,9 +36,9 @@ struct MsgBufferLine
 		if(cpair >= C_TREE && cpair < C_TREE_LIT)
 			cpair += NUM_NORM_COLS;
 	}
-	void dimmen() // returns true if needs a redraw; update refence first!
+	void dimmen() // adjust colour "dimmer"
 	{
-		if(cpair == 8 || cpair == 0)
+		if(cpair == 8 || cpair == 0) // already at the dimmest
 			return;
 		if(cpair > 8 && cpair < BASE_COLOURS)
 			cpair -= 8;

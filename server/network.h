@@ -24,6 +24,7 @@ namespace Network
 	// This will construct a (list of) message(s) into send_buffer,
 	// and the call should be followed by a send_to_player/broadcast.
 	// Note that 's' will be modified.
+	// Please see the note in ../client/msg.h on what the cpair should not be!
 	void construct_msg(std::string &s, const unsigned char cpair);
 
 	// This sends a line to the chat (and broadcasts):

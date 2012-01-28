@@ -33,8 +33,8 @@ const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
 	10 /*Ar*/, 10 /*As*/, 15 /*Cm*/, 33 /*Mc*/, 100 /*Sc*/, 15 /*Fi*/,
 	15 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
 };
+const char RANDOM_WAIT_CHANCE_1IN = 40; // skip turn for no reason
 const char TURN_CHANCE_1IN = 22; // turning randomly without reason
-const char STAND_CHANCE_1IN = 8; // doing nothing when otherwise would walk
 const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
@@ -315,32 +315,17 @@ void random_walk()
 	if(!random_turn_from_dir(prev_committed_walk, true))
 	{
 		// Couldn't; walk entirely randomly, then.
-		// A small chance to just stand still:
-		if(random()%STAND_CHANCE_1IN)
+		e_Dir walkdir = e_Dir(random()%MAX_D);
+		for(char i = 0; i < MAX_D; ++i)
 		{
-			// Figure out a random dir to walk
-			e_Dir walkdir = e_Dir(random()%MAX_D);
-			e_Dir goodscorer = MAX_D;
-			e_Dir onescorer = MAX_D;
-			char i, j;
-			for(i = 0; i < MAX_D; ++i)
+			if(score_walk(walkdir, true) != WALK_DONT)
 			{
-				if((j = score_walk(walkdir, true)) == WALK_GREAT)
-					break; // pick direction with great score immediately
-				if(j == WALK_GOOD)
-					goodscorer = walkdir;
-				else if(j != WALK_DONT)
-					onescorer = walkdir;
-				++walkdir;
-			}
-			if(i < MAX_D) // found a very good direction
 				send_action(XN_MOVE, (prev_committed_walk = walkdir));
-			else if(goodscorer != MAX_D) // found a good direction
-				send_action(XN_MOVE, (prev_committed_walk = goodscorer));
-			else if(onescorer != MAX_D) // found an acceptable direction
-				send_action(XN_MOVE, (prev_committed_walk = onescorer));
-			// else can't walk anywhere!
+				break; // pick first direction in which we *can* walk
+			}
+			++walkdir;
 		}
+		// if here, can't walk anywhere!
 	}
 }
 
@@ -825,11 +810,15 @@ int main(int argc, char *argv[])
 			{
 				rv = myhp; // store old hp
 				myhp = static_cast<char>(recv_buffer.read_ch());
-				if(rv <= 0 && myhp > 0 // this means we spawned
-					&& myclass == C_WIZARD)
+				if(rv <= 0 && myhp > 0) // this means we spawned
 				{
 					// wizards can immediately light their torch:
-					send_action(XN_TORCH_HANDLE);	
+					if(myclass == C_WIZARD)
+						send_action(XN_TORCH_HANDLE);
+					/* Everyone ought to wait so we don't act based on an old
+					 * view (VIEW_UPD might arrive after STATE_UPD on this
+					 * turn). So wizards light their torch and others just stand
+					 * around for a single turn. */
 					wait_turns = 1;
 				}
 			}
@@ -880,16 +869,17 @@ int main(int argc, char *argv[])
 			// Maybe do something with this sometime?
 			else if(mid == MID_TIME_UPD) { }
 #endif
-		} // received a msg
+			continue; // as long as we receive messages, keep handling them!
+		} // receiving messages
 		else usleep(MSG_DELAY_MS);
 		
 		if(myhp > 0 && reftimer.update() - last_sent_axn > turn_ms)
 		{
 			if(wait_turns) // something has forced us to wait
 				--wait_turns;
-			else
+			else if(random()%RANDOM_WAIT_CHANCE_1IN)
 			{
-				if(limiter)
+				if(limiter) // technically we should decrement limiter even when skipping the turn
 					--limiter;
 				// Basic decision making:
 				// 1. Check if could/should use class ability

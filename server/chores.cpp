@@ -690,7 +690,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				&& noe_it == *(team_flags[T_GREEN].begin())) // original flag
 			{
 				// Green wins. We ensure this by clearing the purple flags list,
-				// so actually the map won't until the next purple spawning:
+				// so actually the map won't end until the next purple spawning:
 				team_flags[T_PURPLE].clear();
 				string msg = "The green team has secured the treasure!";
 				Network::construct_msg(msg, C_PORTAL_IN_LIT);
