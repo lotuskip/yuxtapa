@@ -55,7 +55,8 @@ const char ZAP_WAIT = 2; // zaps (combat magi)
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const char WALLS_FOR_CERTAIN_DIG = 38; // how many walls in sight ensure that miners will dig when possible
-const int MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
+const short MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
+const short ISOLATION_TO_SUICIDE = 360; // if no enemies in sight for this many turns, suicide
 
 
 // VARIABLES
@@ -88,6 +89,7 @@ char abil_counter = 0; // used for various ability-related counting needs
 Coords seen_flag_coords; // if a flag has been spotted
 e_Team seen_flag_owner = T_SPEC;
 unsigned char num_walls_in_sight = 0;
+short isolation_turns = 0;
 // Generic:
 Coords tmp_coords;
 int rv; // "return value"; although used for other things, too
@@ -347,15 +349,15 @@ void try_walk_towards(const Coords &c, const bool avoid_pcs)
 	// if cannot walk towards c (trying 3 different steps), walk randomly.
 	if(!random_turn_from_dir(center.dir_of(c), avoid_pcs))
 		random_walk();
+	isolation_turns = 0; // call to this function means we are not isolated
 }
 
-bool scan_view() // extract PCs in view and check if in closed area
+void scan_view() // extract PCs and flag in view, count walls
 {
 	pcs[0].clear();
 	pcs[1].clear();
 	seen_flag_owner = T_SPEC;
-	int num_oos // number of tiles out of sight
-		= num_walls_in_sight = 0;
+	num_walls_in_sight = 0;
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
 		// get all PCs, not including self (center of view (note that VIEWSIZE
@@ -407,12 +409,7 @@ bool scan_view() // extract PCs in view and check if in closed area
 		// count number of walls (in LOS) for miners:
 		else if(viewbuffer[i] == '#' && viewbuffer[i-1] >= C_WALL)
 			++num_walls_in_sight;
-		if(viewbuffer[i-1] <= C_WATER_DIM || viewbuffer[i-1] == C_UNKNOWN)
-			++num_oos;
 	}
-	/* We are stuck if we can see no more than 12 tiles. The second condition
-	 * here rules out being blind: */
-	return num_oos >= VIEWSIZE*VIEWSIZE-12 && num_oos != VIEWSIZE*VIEWSIZE;
 }
 
 // Check if PC at given coords has class 'name' (abbreviation)
@@ -786,13 +783,12 @@ int main(int argc, char *argv[])
 				send_buffer.add(curturn);
 				do_send();
 
-				if(msglen > 5) // msg is not very small => view has changed
+				if(msglen > 5 // msg is not very small => view has changed
+					&& myhp > 0) // do not scan view when dead
 				{
 					recv_buffer.read_compressed(viewbuffer);
 					// NOTE: not checking for errors -- might get a faulty view.
-					if(myhp > 0 && // don't use processor time to scan when dead
-						scan_view())
-						send_action(XN_SUICIDE);
+					scan_view();
 				}
 			}
 			else if(mid == MID_ADD_MSG)
@@ -913,6 +909,15 @@ int main(int argc, char *argv[])
 							try_walk_towards(seen_flag_coords, true);
 						else if(get_sound_to_follow(tmp_coords)) // have sound to follow
 							try_walk_towards(tmp_coords, true);
+						/* No enemies, flags, or sounds; we might be isolated.
+						 * Randomize the limit a little so we don't get mass
+						 * suicides all at once */
+						else if(++isolation_turns
+							>= ISOLATION_TO_SUICIDE + random()%50)
+						{
+							isolation_turns = 0;
+							send_action(XN_SUICIDE);
+						}
 						else
 							random_walk();
 					}
