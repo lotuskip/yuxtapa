@@ -41,7 +41,6 @@ Some guidelines for constructing bug reports:
 <li>the issue doesn't really distract normal gameplay as it is</li>
 </ul></p>
 
-
 <p><em><u>Delayed updating of destroyed things</u></em><br>
 There are generally a number of situations where the view won't update even though
 it ought to in order to keep the client up to date. The usual reason is that a player disconnects
@@ -89,5 +88,13 @@ The problem here is partly about fairness: some players could be forced to switc
 but just picking those players at random seems like an unnecessary annoyance to the players. Then
 again, if a team wants to do well, they will need a variety of classes, so it can be expected that
 good players switch class after a shuffle if they see the need.</p>
+
+<p><em><u>Phantom aiming</u></em><br>
+If you are playing an archer and are alive when a game ends, it is possible to
+&quot;aim&quot; with your bow both during the intermission and, if you are in
+the green team, before spawning in the next map. This is because the server
+doesn't bother to inform all clients that they are no longer active. If you
+actually fire your bow, the server will react to this and let your client know
+that you are no longer alive.</p>
 
 </body></html>

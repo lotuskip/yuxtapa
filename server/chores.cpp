@@ -1112,9 +1112,12 @@ void player_death(const list<Player>::iterator pit, const string &way,
 	Network::broadcast();
 	pit->stats_i->deaths++;
 	pit->needs_state_upd = true;
-	if(corpse && pit != pl_with_item) // item carrier leaves no corpse!
+	Coords pos;
+	// Item carrier leaves no corpse! Also, if the place is a water square,
+	// do not generate a corpse:
+	if(corpse && pit != pl_with_item &&
+		Game::curmap->mod_tile((pos = pit->own_pc->getpos()))->flags & TF_DROWNS)
 	{
-		Coords pos = pit->own_pc->getpos();
 		// If there is already a corpse there, this corpse "overrules" the
 		// older one. But if there is some other noccent there, do not cover
 		// it with a corpse.

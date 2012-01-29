@@ -825,8 +825,13 @@ void Game::construct_team_msgs(const list<Player>::const_iterator to)
 	string teamstrs[3] = { "Greens:", "Purples:", "Spectators:" };
 	for(list<Player>::const_iterator it = cur_players.begin();
 		it != cur_players.end(); ++it)
-		teamstrs[it->team] += ' ' + it->nick
-			+ admin_lvl_str[it->stats_i->ad_lvl];
+	{
+		teamstrs[it->team] += ' ' + it->nick;
+		if(it->botpid != -1)
+			teamstrs[it->team] += " (B)";
+		else
+			teamstrs[it->team] += admin_lvl_str[it->stats_i->ad_lvl];
+	}
 	
 	for(char c = 0; c < 3; ++c)
 	{
