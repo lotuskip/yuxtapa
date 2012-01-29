@@ -415,6 +415,9 @@ bool Input::inputhandle()
 			case KB_MINUS:
 				scroll_chat_down();
 				break;
+			case KB_PERCENT:
+				add_msg(string("[Act per turn ") + offon[Config::toggle_act_per_turn()], 15);
+				break;
 			default: break;
 			}
 			} // a recognized key binding

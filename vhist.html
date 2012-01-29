@@ -27,8 +27,11 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 
 <p><strong>Client:</strong>
 <ul>
-<li>Client message box now &quot;dimmens&quot; the older messages; implementing
+<li>Introduced the alternative &quot;send mode&quot;; see the new client.conf
+file</li>
+<li>Message box now &quot;dimmens&quot; the older messages; implementing
 this has caused some changes in the server, too</li>
+<li>Help screen shows space visibly (as 'SP') and tab properly (as '\t')</li>
 <li><font color="red">known issue</font>: on a recent version of urxvt, the
 client is terribly slow to start (the cause has been narrowed down to the ncurses
 routine init_color; the problem does not arise on xterm or if the

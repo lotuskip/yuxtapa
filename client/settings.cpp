@@ -22,7 +22,7 @@ const char MAX_ANIM_LEN = 15;
 const char CTRL_ADD = 64; // 'A'-1
 const short DEFAULT_STORED_MSGS = 100;
 
-const string default_key_bds = "896321475 p\tscTXuwt+-lQo"; // cf. enum e_Key_binding
+const string default_key_bds = "896321475 p\tscTXuwt+-lQo%"; // cf. enum e_Key_binding
 const string default_nick = "player";
 const string default_anim = "-\\|/";
 
@@ -35,6 +35,7 @@ string serverip = "";
 string qshout[MAX_QUICK_SHOUTS] = { "", "", "", "", "", "", "", "", "", "", "", "" };
 string ouch_str = "";
 bool ouching = false;
+bool actperturn = false;
 short stored_msgs = DEFAULT_STORED_MSGS;
 
 string confdir_str = "";
@@ -45,10 +46,20 @@ char keyplaceholder[3] = "  ";
 
 void fill_kph(const char k)
 {
-	if(k < 27) // means it's a ctrl key
+	if(k == '\t') // special
+	{
+		keyplaceholder[0] = '\\';
+		keyplaceholder[1] = 't';
+	}
+	else if(k < 27) // means it's a ctrl key
 	{
 		keyplaceholder[0] = '^';
 		keyplaceholder[1] = k + CTRL_ADD;
+	}
+	else if(k == ' ') // also special
+	{
+		keyplaceholder[0] = 'S';
+		keyplaceholder[1] = 'P';
 	}
 	else
 	{
@@ -243,6 +254,11 @@ void Config::read_config(const string &servername)
 			}
 			continue;
 		}
+		else if(keyw == "actperturn")
+		{
+			ss >> actperturn;
+			continue;
+		}
 		// if here, not all is okay:
 		cerr << "Warning, could not parse the following line in config file:"
 			<< endl << "\"" << s << "\"" << endl;
@@ -313,6 +329,7 @@ string &Config::get_anim() { return anim; }
 string &Config::quick_shout(const char index) { return qshout[index]; }
 string &Config::get_ouch() { return ouch_str; }
 bool Config::do_ouch() { return ouching; }
+bool Config::act_per_turn() { return actperturn; }
 string &Config::configdir() { return confdir_str; }
 
 
@@ -350,5 +367,11 @@ bool Config::toggle_ouch()
 	if(ouch_str.empty())
 		return false; // cannot use the feature without a string!
 	return (ouching = !ouching);
+}
+
+
+bool Config::toggle_act_per_turn()
+{
+	return (actperturn = !actperturn);
 }
 

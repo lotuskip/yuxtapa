@@ -347,26 +347,30 @@ bool Network::receive_n_handle()
 
 void Network::send_action(const unsigned char xncode, const unsigned char var1, const unsigned char var2)
 {
-	// Nice client behaviour: don't send way too often:
-	if(reftimer.update() - last_sent_axn > 50) // every 50 ms at most?
+	if(Config::act_per_turn())
 	{
-		send_buffer.clear();
-		send_buffer.add((unsigned char)MID_TAKE_ACTION);
-		send_buffer.add(cur_id);
-		send_buffer.add(curturn);
-		send_buffer.add(axn_counter);
-		send_buffer.add(xncode);
-		if(xncode == XN_MOVE || xncode == XN_SHOOT || xncode == XN_ZAP
-			|| xncode == XN_CIRCLE_ATTACK || xncode == XN_HEAL || xncode == XN_MINE)
-		{
-			send_buffer.add(static_cast<unsigned char>(var1));
-			if(xncode == XN_SHOOT)
-				send_buffer.add(static_cast<unsigned char>(var2));
-		}
-		do_send();
-		++axn_counter;
-		last_sent_axn.update();
+		if(axn_counter)
+			return;
 	}
+	else if(reftimer.update() - last_sent_axn < 50) // every 50 ms at most?
+		return;
+	// If here, may send:
+	send_buffer.clear();
+	send_buffer.add((unsigned char)MID_TAKE_ACTION);
+	send_buffer.add(cur_id);
+	send_buffer.add(curturn);
+	send_buffer.add(axn_counter);
+	send_buffer.add(xncode);
+	if(xncode == XN_MOVE || xncode == XN_SHOOT || xncode == XN_ZAP
+		|| xncode == XN_CIRCLE_ATTACK || xncode == XN_HEAL || xncode == XN_MINE)
+	{
+		send_buffer.add(static_cast<unsigned char>(var1));
+		if(xncode == XN_SHOOT)
+			send_buffer.add(static_cast<unsigned char>(var2));
+	}
+	do_send();
+	++axn_counter;
+	last_sent_axn.update();
 }
 
 
