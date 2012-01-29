@@ -477,7 +477,7 @@ void shuffle_teams()
 	{
 		if(playing_players.size() == 1)
 		{
-			playing_players.front()->team = e_Team(T_GREEN + random()%2);
+			++num_players[((playing_players.front()->team = e_Team(T_GREEN + random()%2)) == T_PURPLE)];
 			break; // done
 		}
 		// else
