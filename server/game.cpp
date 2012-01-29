@@ -36,7 +36,6 @@ using namespace Config;
 const char MAX_PING_TURNS = 20; // 5 seconds on default settings
 const char SECS_TO_SHUFFLE = 30; // by active team balance
 
-const char MAX_DROWN_DAMAGE = 3;
 const char POISON_EVERY_N_TURN = 40;
 
 const char game_mode_mins[] = {
@@ -624,7 +623,7 @@ bool Game::process_turn()
 				string s = "You are drowning!";
 				Network::construct_msg(s, C_WATER_LIT);
 				Network::send_to_player(*it);
-				it->cl_props.hp -= 1 + random()%MAX_DROWN_DAMAGE;
+				it->cl_props.hp -= 1 + random()%(classes[it->cl].hp/2);
 				if(it->cl_props.hp <= 0)
 				{
 					player_death(it, " drowned.", false);
@@ -632,6 +631,8 @@ bool Game::process_turn()
 				}
 				// else (needs_state_upd is set in player_death otherwise)
 				it->needs_state_upd = true;
+				// splashing sounds for drowning regardless of class:
+				add_sound(it->own_pc->getpos(), S_SPLASH);
 			}
 			// if here, did not die of drowning:
 			if(!it->acted_this_turn)
@@ -1008,7 +1009,7 @@ void Game::send_state_change(const list<Player>::const_iterator to)
 }
 
 
-void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
+void Game::class_switch(const list<Player>::iterator pit, e_Class newcl)
 {
 	if(newcl == NO_CLASS) // going spectator / resetting spectating state
 	{
@@ -1044,12 +1045,23 @@ void Game::class_switch(const list<Player>::iterator pit, const e_Class newcl)
 			else
 				t = T_GREEN;
 
-			if(check_class_limit(t, newcl))
+			/* Class limit checking. In case the desired class is unavailable,
+			 * human players (or what we think are human players...) just get
+			 * a message and nothing happens. But for bots we just give some
+			 * other class. */
+			string s;
+			while(check_class_limit(t, newcl))
 			{
-				string s = "That class is not available.";
-				Network::construct_msg(s, C_FIREB_TRAP_LIT);
-				Network::send_to_player(*pit);
-				return;
+				if(pit->botpid == -1) // not bot
+				{
+					s = "That class is not available.";
+					Network::construct_msg(s, C_FIREB_TRAP_LIT);
+					Network::send_to_player(*pit);
+					return;
+				}
+				// else
+				if((newcl = e_Class(newcl+1)) == NO_CLASS)
+					newcl = C_ARCHER;
 			}
 		}
 		// if here, okay to change class/team

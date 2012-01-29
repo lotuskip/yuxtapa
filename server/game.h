@@ -32,8 +32,7 @@ namespace Game
 	// send new PC info (no broadcasting!)
 	void send_state_change(const std::list<Player>::const_iterator to);
 
-	void class_switch(const std::list<Player>::iterator pit,
-		const e_Class newcl);
+	void class_switch(const std::list<Player>::iterator pit, e_Class newcl);
 	void team_switch(const std::list<Player>::iterator pit);
 	std::list<Player>::iterator remove_player(std::list<Player>::iterator pit,
 		const std::string &reason);

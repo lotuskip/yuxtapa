@@ -41,8 +41,20 @@ TERM variable is set so that colour values cannot be changed in urxvt)</li>
 
 <p><strong>Server:</strong>
 <ul>
+<li>Fixed a logic error in steal mode (if the purples captured any flag after
+the greens had secured the item, green team couldn't win)</li>
+<li>Fixed background colour indicators, which had been broken for a few
+versions...</li>
 <li>Bots are now identified as (B) in the team listings, instead of (G)</li>
 <li>PCs dying in water don't leave a corpse</li>
+<li>Bots trying to pick an unavailable class now get assigned another class
+(this is the way it has been documented to be all along, but apparently never was...)</li>
+<li>Amount of drowning damage now depends on the max hps of the class (so
+classes with a lot of hps will, on the average, drown just as fast as others)</li>
+<li>While drowning, PCs now create a splashing sound (regardless of class)</li>
+<li>You can now hear (see) sounds when blinded</li>
+<li>Fixed how the numbers of players in the teams was sometimes shown wrong after a
+!shuffle</li>
 </ul>
 </p>
 

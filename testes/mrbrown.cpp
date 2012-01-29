@@ -499,7 +499,8 @@ bool get_sound_to_follow(Coords &t)
 		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1
 			&& viewbuffer[i-1] != sound_col[S_RUMBLE])
 		{
-			t = Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE);
+			t.x = ((i-1)/2)%VIEWSIZE;
+			t.y = ((i-1)/2)/VIEWSIZE;
 			return true;
 		}
 	}

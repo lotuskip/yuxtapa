@@ -89,6 +89,11 @@ char cant_dig_in(const Coords &c, const e_Dir d)
 
 void capt_flag(const list<NOccEnt>::iterator fit, const e_Team t)
 {
+	/* A special situation in which capturing cannot be allowed: game mode is
+	 * steal, and green team has secured the treasure: */
+	if(gamemode == GM_STEAL && t == T_PURPLE && team_flags[t].empty())
+		return;
+	// Otherwise okay (various checks already made prior to calling this):
 	fit->set_col(team_colour[t]);
 	fit->set_misc(t);
 	team_flags[t].push_back(fit);
@@ -1116,7 +1121,7 @@ void player_death(const list<Player>::iterator pit, const string &way,
 	// Item carrier leaves no corpse! Also, if the place is a water square,
 	// do not generate a corpse:
 	if(corpse && pit != pl_with_item &&
-		Game::curmap->mod_tile((pos = pit->own_pc->getpos()))->flags & TF_DROWNS)
+		(Game::curmap->mod_tile((pos = pit->own_pc->getpos()))->flags & TF_DROWNS))
 	{
 		// If there is already a corpse there, this corpse "overrules" the
 		// older one. But if there is some other noccent there, do not cover

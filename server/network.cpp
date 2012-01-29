@@ -138,7 +138,8 @@ bool Network::receive_n_handle()
 	list<Player>::iterator pit;
 	char handled = 0;
 	short msglen;
-	while(handled++ < 10 && // handle at most 10 messages; then return control
+	unsigned short ush;
+	while(handled++ < 20 && // handle at most 20 messages; then return control
 		(msglen = recvfrom(s_me, recv_buffer.getw(), BUFFER_SIZE, 0,
 			(sockaddr *)&them, &addr_len)) != -1)
 	{
@@ -156,8 +157,8 @@ bool Network::receive_n_handle()
 				break;
 			}
 			string pl_nick, pl_passw = "";
-			unsigned short pl_id = recv_buffer.read_sh();
-			if(pl_id != 0xFFFF) // indicates a password has been sent, too
+			ush = recv_buffer.read_sh();
+			if(ush != 0xFFFF) // indicates a password has been sent, too
 				recv_buffer.read_str(pl_passw);
 			recv_buffer.read_str(pl_nick);
 			if(num_syms(pl_nick) > MAX_NICK_LEN)
@@ -166,33 +167,33 @@ bool Network::receive_n_handle()
 				 * That means it's a tampered client! Ignore the bastard. */
 				break;
 			}
-			pl_id = player_hello(pl_id, pl_passw, pl_nick, them);
+			ush = player_hello(ush, pl_passw, pl_nick, them);
 			// Note: player_hello can call something that uses send_buffer!
 			send_buffer.clear();
-			if(pl_id == ID_STEAL)
+			if(ush == ID_STEAL)
 			{
 				send_buffer.add((unsigned char)MID_HELLO_STEAL);
 				do_send_to(&them, addr_len);
 				break;
 			}
-			/*else*/ if(pl_id == IP_BANNED)
+			/*else*/ if(ush == IP_BANNED)
 			{
 				send_buffer.add((unsigned char)MID_HELLO_BANNED);
 				do_send_to(&them, addr_len);
 				break;
 			}
-			/*else*/ if(pl_id == SERVER_FULL)
+			/*else*/ if(ush == SERVER_FULL)
 			{
 				send_buffer.add((unsigned char)MID_HELLO_FULL);
 				do_send_to(&them, addr_len);
 				break;
 			}
-			/*else*/ if(pl_id == JOIN_OK_ID_OK)
+			/*else*/ if(ush == JOIN_OK_ID_OK)
 				send_buffer.add((unsigned char)MID_HELLO);
 			else
 			{
 				send_buffer.add((unsigned char)MID_HELLO_NEWID);
-				send_buffer.add(pl_id);
+				send_buffer.add(ush);
 				send_buffer.add(pl_passw);
 			}
 			do_send_to(&them, addr_len);
@@ -224,11 +225,11 @@ bool Network::receive_n_handle()
 				to_log("Incompatible bot connection.");
 				break;
 			}
-			unsigned short botpid = recv_buffer.read_sh();
-			if((botpid = bot_connect(botpid, them)) <= HIGHEST_VALID_ID)
+			ush = recv_buffer.read_sh();
+			if((ush = bot_connect(ush, them)) <= HIGHEST_VALID_ID)
 			{
 				send_buffer.add((unsigned char)MID_HELLO_NEWID);
-				send_buffer.add(botpid);
+				send_buffer.add(ush);
 				send_buffer.add((unsigned short)Config::int_settings[Config::IS_TURNMS]);
 				do_send_to(&them, addr_len);
 			}
@@ -276,12 +277,12 @@ bool Network::receive_n_handle()
 		case MID_VIEW_UPD:
 			if((pit = who_is_this()) != cur_players.end())
 			{
-				unsigned short t = recv_buffer.read_sh();
+				ush = recv_buffer.read_sh();
 				// 't' is an ack from a client "I've received the view
 				// update for turn t'. But the message might be delayed;
 				// must check if the player has acted since:
-				if(t > pit->last_heard_of)
-					pit->last_heard_of = t;
+				if(ush > pit->last_heard_of)
+					pit->last_heard_of = ush;
 			}
 			break;
 		case MID_TAKE_ACTION:
@@ -290,18 +291,18 @@ bool Network::receive_n_handle()
 			{
 				// First check sequentiality. If this action is "timestamped" earlier than
 				// the latest action we have actually received from this player, ignore it!
-				unsigned short t = recv_buffer.read_sh(); // turn
-				if(t >= pit->last_acted_on_turn)
+				ush = recv_buffer.read_sh(); // turn
+				if(ush >= pit->last_acted_on_turn)
 				{
 					// This might be the latest we've heard from this client:
-					if(t > pit->last_heard_of)
-						pit->last_heard_of = t;
+					if(ush > pit->last_heard_of)
+						pit->last_heard_of = ush;
 
 					unsigned char an = recv_buffer.read_ch(); // action number for the turn
-					if(t > pit->last_acted_on_turn || an > pit->last_axn_number)
+					if(ush > pit->last_acted_on_turn || an > pit->last_axn_number)
 					{
 						// we accept this action, so update the values:
-						pit->last_acted_on_turn = t;
+						pit->last_acted_on_turn = ush;
 						pit->last_axn_number = an;
 
 						// Now, construct the action:

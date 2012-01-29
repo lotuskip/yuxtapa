@@ -40,7 +40,8 @@ const char fg_map[C_BG_HEAL - BASE_COLOURS] = {
 	6, // C_LIGHT_TRAP
 	0, // C_TELE_TRAP
 	3, // C_BOOBY_TRAP
-	5, // C_BASE_FIREB_TRAP
+	5, // C_FIREB_TRAP
+	0, // C_ACID_TRAP
 	3, // C_NEUT_FLAG
 	4, // C_PORTAL_IN
 	3, // C_PORTAL_OUT
@@ -59,7 +60,8 @@ const char fg_map[C_BG_HEAL - BASE_COLOURS] = {
 	6, // C_LIGHT_TRAP_LIT
 	0, // C_TELE_TRAP_LIT
 	3, // C_BOOBY_TRAP_LIT
-	5, //C_BASE_FIREB_TRAP_LIT
+	5, //C_FIREB_TRAP_LIT
+	0, //C_ACID_TRAP_LIT
 	3, //C_NEUT_FLAG_LIT
 	4, // C_PORTAL_IN_LIT
 	3, // C_PORTAL_OUT_LIT
@@ -121,77 +123,67 @@ void ViewPoint::newmap()
 
 short ViewPoint::render(char *target, vector<string> &shouts)
 {
-	// If the viewpoint is blinded, just render an empty view:
-	if(blinded)
-	{
-		for(int i = 0; i < VIEWSIZE*VIEWSIZE; ++i)
-		{
-			*(target++) = EMPTY_TILE.cpair;
-			*(target++) = EMPTY_TILE.symbol;
-		}
-		*(target++) = 0; // number of titles
-		return VIEWSIZE*VIEWSIZE*2+1;
-	}
-
 	char x, y, line, ind;
 	Tile *tp;
 	Coords c;
-	// clear the part of the viewtable that is not constant:
-	for(y = 1; y < VIEWSIZE-1; ++y)
+	if(!blinded) // don't do LOS consideration if blind
 	{
-		for(x = 1; x < VIEWSIZE-1; ++x)
-			loslittbl[x][y] = 0;
-	}
-	// determine which tiles are lit and which are in LOS (see los_lookup.h)
-	for(line = 0; line < LOSrad*8; ++line)
-	{
-		for(ind = 0; ind < 2*LOSrad; ind += 2)
+		// clear the part of the viewtable that is not constant:
+		for(y = 1; y < VIEWSIZE-1; ++y)
 		{
-			// lookup next point (NOTE: x,y point directly to loslittbl!!)
-			x = loslookup[LOSrad-2][line*2*LOSrad+ind] + VIEWSIZE/2;
-			y = loslookup[LOSrad-2][line*2*LOSrad+ind+1] + VIEWSIZE/2;
-			c.x = pos.x + x - VIEWSIZE/2;
-			c.y = pos.y + y - VIEWSIZE/2;
-			// This might put us outside of the map, in which case the next point in
-			// this line will *also* be outside of the map; check:
-			if(Game::curmap->point_out_of_map(c))
-				break;
-			// else safe to fetch the tile:
-			tp = &(ownview[c.y][c.x]);
-			if(!loslittbl[x][y]) // not already considered
-			{
-				/* Determine lit status. Note that if the static lit status
-				 * of the tile has changed (by a wall being dug out), the
-				 * view won't notice this until the tile is within the
-				 * "visible-even-if-not-lit" radius. This could be a bug,
-				 * but we shall call it a feature. */
-				if(tp->flags & TF_LIT // statically lit
-					|| is_dynlit(c))
-				{
-					loslittbl[x][y] = IS_LIT|IN_LOS;
-					// update our view of this tile:
-					*tp = Game::curmap->get_tile(c);
-				}
-				else if(ind <= 2*(LOSrad+5)/3) // not lit, still in LOS if in smaller radius
-				{
-					loslittbl[x][y] = IN_LOS;
-					// upd our view of this tile:
-					*tp = Game::curmap->get_tile(c);
-				}
-			}
-			// see if need to continue on this ray:
-			if(!(tp->flags & TF_SEETHRU))
-				break; // not see-through, next line
+			for(x = 1; x < VIEWSIZE-1; ++x)
+				loslittbl[x][y] = 0;
 		}
-	}
-	// The center point of the view needs to be checked separately.
-	// It is always in LOS!
-	loslittbl[VIEWSIZE/2][VIEWSIZE/2] = IN_LOS;
-	*(tp = &(ownview[pos.y][pos.x])) = Game::curmap->get_tile(pos);
-	if(tp->flags & TF_LIT // statically lit
-			|| is_dynlit(pos))
-		loslittbl[VIEWSIZE/2][VIEWSIZE/2] |= IS_LIT;
-
+		// determine which tiles are lit and which are in LOS (see los_lookup.h)
+		for(line = 0; line < LOSrad*8; ++line)
+		{
+			for(ind = 0; ind < 2*LOSrad; ind += 2)
+			{
+				// lookup next point (NOTE: x,y point directly to loslittbl!!)
+				x = loslookup[LOSrad-2][line*2*LOSrad+ind] + VIEWSIZE/2;
+				y = loslookup[LOSrad-2][line*2*LOSrad+ind+1] + VIEWSIZE/2;
+				c.x = pos.x + x - VIEWSIZE/2;
+				c.y = pos.y + y - VIEWSIZE/2;
+				// This might put us outside of the map, in which case the next point in
+				// this line will *also* be outside of the map; check:
+				if(Game::curmap->point_out_of_map(c))
+					break;
+				// else safe to fetch the tile:
+				tp = &(ownview[c.y][c.x]);
+				if(!loslittbl[x][y]) // not already considered
+				{
+					/* Determine lit status. Note that if the static lit status
+					 * of the tile has changed (by a wall being dug out), the
+					 * view won't notice this until the tile is within the
+					 * "visible-even-if-not-lit" radius. This could be a bug,
+					 * but we shall call it a feature. */
+					if(tp->flags & TF_LIT // statically lit
+						|| is_dynlit(c))
+					{
+						loslittbl[x][y] = IS_LIT|IN_LOS;
+						// update our view of this tile:
+						*tp = Game::curmap->get_tile(c);
+					}
+					else if(ind <= 2*(LOSrad+5)/3) // not lit, still in LOS if in smaller radius
+					{
+						loslittbl[x][y] = IN_LOS;
+						// upd our view of this tile:
+						*tp = Game::curmap->get_tile(c);
+					}
+				}
+				// see if need to continue on this ray:
+				if(!(tp->flags & TF_SEETHRU))
+					break; // not see-through, next line
+			}
+		}
+		// The center point of the view needs to be checked separately.
+		// It is always in LOS!
+		loslittbl[VIEWSIZE/2][VIEWSIZE/2] = IN_LOS;
+		*(tp = &(ownview[pos.y][pos.x])) = Game::curmap->get_tile(pos);
+		if(tp->flags & TF_LIT // statically lit
+				|| is_dynlit(pos))
+			loslittbl[VIEWSIZE/2][VIEWSIZE/2] |= IS_LIT;
+	} // (not blinded)
 
 	// The actual "rendering":
 	unsigned char cp;
@@ -212,7 +204,8 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 			else // point is in map
 			{
 				tp = Game::curmap->mod_tile(c);
-				// A sound overruns anything else, so check for it first:
+				// A sound overruns anything else (even when blind!),
+				// so check for it first:
 				if(tp->flags & TF_SOUND)
 				{
 					map<Coords, string>::const_iterator vit = voices.find(c);
@@ -224,6 +217,11 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 					else // a regular sound!
 						*(target++) = sound_col[reg_sounds[c]];
 					*(target++) = '!';
+				}
+				else if(blinded)
+				{
+					*(target++) = EMPTY_TILE.cpair;
+					*(target++) = EMPTY_TILE.symbol;
 				}
 				// If tile is not in LOS (Note that in this table it cannot be
 				// "lit but not in LOS" -- if you don't see it, you can't see
@@ -274,7 +272,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 				}
 
 				// printed something; now must check for an indicator:
-				if(tp->flags & TF_ACTION && loslittbl[x][y])
+				if(!blinded && tp->flags & TF_ACTION && loslittbl[x][y])
 					*(target-2) = C_GREEN_ON_HEAL
 						+ (axn_indicators[c]%NUM_ACTIONS)*7
 						+ fg_map[*(target-2)-BASE_COLOURS];
