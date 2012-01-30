@@ -70,7 +70,7 @@ char cant_dig_in(const Coords &c, const e_Dir d)
 	if(tp->symbol == '#' && tp->flags & TF_WALKTHRU)
 		return -1;
 	if(tp->symbol == '#' || tp->symbol == '|' || tp->symbol == '-' || tp->symbol == '+'
-		|| (tp->flags & TF_NOCCENT && any_noccent_at(c, NOE_BLOCK_SOURCE)
+		|| ((tp->flags & TF_NOCCENT) && any_noccent_at(c, NOE_BLOCK_SOURCE)
 			!= noccents[NOE_BLOCK_SOURCE].end()))
 		return 0;
 	// that was (A) and (C); (B) is more complicated:

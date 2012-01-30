@@ -38,6 +38,9 @@ const char SECS_TO_SHUFFLE = 30; // by active team balance
 
 const char POISON_EVERY_N_TURN = 40;
 
+const string short_sector_name[MAX_D+1] = { "N", "NE", "E", "SE", "S",
+	"SW", "W", "NW", "C" };
+
 const char game_mode_mins[] = {
 	15, // dominion
 	18, // conquest
@@ -412,10 +415,10 @@ void Game::init_game()
 			objective_str = "Conquest";
 			break;
 		case GM_STEAL:
-			objective_str = "Steal (" + long_sector_name[obj_sector] + ')';
+			objective_str = "Steal (" + short_sector_name[obj_sector] + ')';
 			break;
 		case GM_DESTR:
-			objective_str = "Destroy " + long_sector_name[obj_sector] + " boulders";
+			objective_str = "Destroy " + short_sector_name[obj_sector] + " boulders";
 			break;
 		case GM_TDM:
 			objective_str = "Team deathmatch";
