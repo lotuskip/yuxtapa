@@ -1121,7 +1121,7 @@ void player_death(const list<Player>::iterator pit, const string &way,
 	// Item carrier leaves no corpse! Also, if the place is a water square,
 	// do not generate a corpse:
 	if(corpse && pit != pl_with_item &&
-		(Game::curmap->mod_tile((pos = pit->own_pc->getpos()))->flags & TF_DROWNS))
+		!(Game::curmap->mod_tile((pos = pit->own_pc->getpos()))->flags & TF_DROWNS))
 	{
 		// If there is already a corpse there, this corpse "overrules" the
 		// older one. But if there is some other noccent there, do not cover
@@ -1511,7 +1511,7 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 {
 	Tile* tar = Game::curmap->mod_tile(c);
 	// Arrow falling on a trap might trigger the trap:
-	if(tar->flags & TF_TRAP && random()%100 < CHANCE_ARROW_TRIG_TRAP)
+	if((tar->flags & TF_TRAP) && random()%100 < CHANCE_ARROW_TRIG_TRAP)
 	{
 		list<Trap>::iterator tr_it = any_trap_at(c);
 		// Functionality is somewhat different from trigger_trap(...), but we

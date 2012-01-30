@@ -334,7 +334,6 @@ void try_walk_towards(const Coords &c, const bool avoid_pcs)
 	// if cannot walk towards c (trying 3 different steps), walk randomly.
 	if(!random_turn_from_dir(center.dir_of(c), avoid_pcs))
 		random_walk();
-	isolation_turns = 0; // call to this function means we are not isolated
 }
 
 void scan_view() // extract PCs and flag in view, count walls
@@ -897,7 +896,10 @@ int main(int argc, char *argv[])
 						 * mining), thirdly randomly. Don't walk on PCs
 						 * in the "try_walk_towards" calls. */
 						if(could_capture_flag())
+						{
 							try_walk_towards(seen_flag_coords, true);
+							isolation_turns = 0;
+						}
 						else if(get_sound_to_follow(tmp_coords)) // have sound to follow
 							try_walk_towards(tmp_coords, true);
 						/* No enemies, flags, or sounds; we might be isolated.
@@ -924,6 +926,7 @@ int main(int argc, char *argv[])
 							}
 						}
 						try_walk_towards(*picked, false); // *do* walk on PCs
+						isolation_turns = 0;
 					}
 				} // walking
 			} // no need to wait until previous action is done
