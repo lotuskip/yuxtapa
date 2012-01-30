@@ -75,6 +75,7 @@ const char fg_map[C_BG_HEAL - BASE_COLOURS] = {
 } // end local namesapce
 
 namespace Game { extern Map *curmap; }
+extern e_GameMode gamemode;
 
 //statics:
 char ViewPoint::loslittbl[VIEWSIZE][VIEWSIZE];
@@ -252,6 +253,13 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 				{
 					target += 2;
 					titlecoords.push_back(Coords(x,y));
+				}
+				// else check for item in steal mode
+				else if(gamemode == GM_STEAL && the_item.getpos() == c
+					&& pl_with_item == cur_players.end())
+				{
+					the_item.draw(target, loslittbl[x][y] & IS_LIT);
+					target += 2;
 				}
 				// else check if there is a nonoccupying entity
 				else if(tp->flags & TF_NOCCENT)

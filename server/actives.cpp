@@ -298,7 +298,6 @@ void do_placement()
 			the_item.setpos(d);
 			obj_sector = tmpd;
 		}
-		Game::curmap->mod_tile(the_item.getpos())->flags |= TF_NOCCENT;
 		// Give the greens a neutral vantage-point (always):
 		tmpd = green_corner;
 		if(random()%2) ++tmpd;
@@ -576,13 +575,6 @@ bool render_occent_at(const Coords &c, char *target, const bool lit)
 
 void render_noccent_at(const Coords &c, char *target, const bool lit)
 {
-	// The item, if present is drawn first:
-	if(gamemode == GM_STEAL && the_item.getpos() == c
-		&& pl_with_item == cur_players.end())
-	{
-		the_item.draw(target, lit);
-		return;
-	}
 	list<NOccEnt>::const_iterator it;
 	// NOTE: do not draw traps here.
 	for(char i = NOE_CORPSE; i < NOE_TORCH; ++i)

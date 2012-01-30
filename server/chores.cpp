@@ -666,7 +666,17 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 	// Check for various effects of *walking* into various things:
 	// (the rest, those that apply regardless of whether walking or not,
 	// are checked in move_player_to(...))
-	if(tar->flags & TF_NOCCENT)
+	if(gamemode == GM_STEAL && pit->team == T_GREEN
+		&& pl_with_item == cur_players.end() && tarpos == the_item.getpos())
+	{
+		pl_with_item = pit;
+		item_moved = true;
+		Game::send_team_upds(cur_players.end());
+		string msg = "The green team has stolen the treasure!";
+		Network::construct_msg(msg, C_PORTAL_IN_LIT);
+		Network::broadcast();
+	}
+	else if(tar->flags & TF_NOCCENT)
 	{
 		list<NOccEnt>::iterator noe_it = any_noccent_at(tarpos, NOE_FLAG);
 		if(noe_it != noccents[NOE_FLAG].end()) // there's a flag
@@ -701,7 +711,7 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 				Network::construct_msg(msg, C_PORTAL_IN_LIT);
 				Network::broadcast();
 				pl_with_item = cur_players.end();
-				the_item.setpos(pit->own_pc->getpos());
+				the_item.setpos(Coords(-1,0)); // ensure it doesn't get drawn anywhere
 			}
 		}
 		else if((noe_it = any_noccent_at(tarpos, NOE_PORTAL_ENTRY))
@@ -743,16 +753,6 @@ void try_move(const list<Player>::iterator pit, const e_Dir d)
 			while(Game::curmap->mod_tile(noe_it->getpos())->flags & TF_OCCUPIED);
 			portal_jump(pit, noe_it->getpos());
 			return;
-		} // else
-		if(gamemode == GM_STEAL && pit->team == T_GREEN
-			&& pl_with_item == cur_players.end() && tarpos == the_item.getpos())
-		{
-			pl_with_item = pit;
-			item_moved = true;
-			Game::send_team_upds(cur_players.end());
-			string msg = "The green team has stolen the treasure!";
-			Network::construct_msg(msg, C_PORTAL_IN_LIT);
-			Network::broadcast();
 		}
 	}
 
@@ -1159,7 +1159,6 @@ void kill_player(const list<Player>::iterator pit)
 		pl_with_item = cur_players.end();
 		the_item.setpos(pit->own_pc->getpos());
 		obj_sector = Game::curmap->coords_in_sector(pit->own_pc->getpos());
-		tp->flags |= TF_NOCCENT;
 		Game::send_team_upds(cur_players.end());
 		string msg = "Treasure dropped!";
 		Network::construct_msg(msg, C_PORTAL_IN_LIT);
