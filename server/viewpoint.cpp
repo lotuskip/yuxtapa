@@ -267,6 +267,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 					render_noccent_at(c, target, loslittbl[x][y] & IS_LIT);
 					target += 2;
 				}
+				// else check for a seen trap
 				else if(tp->flags & TF_TRAP && owner->team != T_SPEC // specs don't see traps
 					&& render_trap_at(c, target, loslittbl[x][y] & IS_LIT))
 					target += 2;
