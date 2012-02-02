@@ -63,6 +63,8 @@ private:
 		std::list<std::string> &titles) const;
 	bool render_pc_indir(const Coords &c, char* const target) const;
 	bool render_trap_at(const Coords &c, char* const target, const bool lit) const;
+
+	void fill_loslittbl(const char rad);
 };
 
 #endif

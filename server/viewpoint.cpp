@@ -121,12 +121,59 @@ void ViewPoint::newmap()
 	poschanged = true;
 }
 
+void ViewPoint::fill_loslittbl(const char rad)
+{
+	char line, ind, x, y;
+	Coords c;
+	Tile *tp;
+	// determine which tiles are lit and which are in LOS (see los_lookup.h)
+	for(line = 0; line < rad*8; ++line)
+	{
+		for(ind = 0; ind < 2*rad; ind += 2)
+		{
+			// lookup next point (NOTE: x,y point directly to loslittbl!!)
+			x = loslookup[rad-2][line*2*rad+ind] + VIEWSIZE/2;
+			y = loslookup[rad-2][line*2*rad+ind+1] + VIEWSIZE/2;
+			c.x = pos.x + x - VIEWSIZE/2;
+			c.y = pos.y + y - VIEWSIZE/2;
+			// This might put us outside of the map, in which case the next point in
+			// this line will *also* be outside of the map; check:
+			if(Game::curmap->point_out_of_map(c))
+				break;
+			// else safe to fetch the tile:
+			tp = &(ownview[c.y][c.x]);
+			if(!loslittbl[x][y]) // not already considered
+			{
+				/* Determine lit status. Note that if the static lit status
+				 * of the tile has changed (by a wall being dug out), the
+				 * view won't notice this until the tile is within the
+				 * "visible-even-if-not-lit" radius. This could be a bug,
+				 * but we shall call it a feature. */
+				if(tp->flags & TF_LIT // statically lit
+					|| is_dynlit(c))
+				{
+					loslittbl[x][y] = IS_LIT|IN_LOS;
+					// update our view of this tile:
+					*tp = Game::curmap->get_tile(c);
+				}
+				else if(ind <= 2*(rad+5)/3) // not lit, still in LOS if in smaller radius
+				{
+					loslittbl[x][y] = IN_LOS;
+					// upd our view of this tile:
+					*tp = Game::curmap->get_tile(c);
+				}
+			}
+			// see if need to continue on this ray:
+			if(!(tp->flags & TF_SEETHRU))
+				break; // not see-through, next line
+		}
+	}
+}
 
 short ViewPoint::render(char *target, vector<string> &shouts)
 {
-	char x, y, line, ind;
+	char x, y;
 	Tile *tp;
-	Coords c;
 	if(!blinded) // don't do LOS consideration if blind
 	{
 		// clear the part of the viewtable that is not constant:
@@ -135,48 +182,19 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 			for(x = 1; x < VIEWSIZE-1; ++x)
 				loslittbl[x][y] = 0;
 		}
-		// determine which tiles are lit and which are in LOS (see los_lookup.h)
-		for(line = 0; line < LOSrad*8; ++line)
+		// Always fill the table with the full radius:
+		fill_loslittbl(LOSrad);
+		/* In addition, for the higher radii, in order to cover a few "blind
+		 * spots", we have to run with another radius (this could be optimized a
+		 * little more, I'm sure, but I haven't bothered figuring that out): */
+		if(LOSrad > 6)
 		{
-			for(ind = 0; ind < 2*LOSrad; ind += 2)
-			{
-				// lookup next point (NOTE: x,y point directly to loslittbl!!)
-				x = loslookup[LOSrad-2][line*2*LOSrad+ind] + VIEWSIZE/2;
-				y = loslookup[LOSrad-2][line*2*LOSrad+ind+1] + VIEWSIZE/2;
-				c.x = pos.x + x - VIEWSIZE/2;
-				c.y = pos.y + y - VIEWSIZE/2;
-				// This might put us outside of the map, in which case the next point in
-				// this line will *also* be outside of the map; check:
-				if(Game::curmap->point_out_of_map(c))
-					break;
-				// else safe to fetch the tile:
-				tp = &(ownview[c.y][c.x]);
-				if(!loslittbl[x][y]) // not already considered
-				{
-					/* Determine lit status. Note that if the static lit status
-					 * of the tile has changed (by a wall being dug out), the
-					 * view won't notice this until the tile is within the
-					 * "visible-even-if-not-lit" radius. This could be a bug,
-					 * but we shall call it a feature. */
-					if(tp->flags & TF_LIT // statically lit
-						|| is_dynlit(c))
-					{
-						loslittbl[x][y] = IS_LIT|IN_LOS;
-						// update our view of this tile:
-						*tp = Game::curmap->get_tile(c);
-					}
-					else if(ind <= 2*(LOSrad+5)/3) // not lit, still in LOS if in smaller radius
-					{
-						loslittbl[x][y] = IN_LOS;
-						// upd our view of this tile:
-						*tp = Game::curmap->get_tile(c);
-					}
-				}
-				// see if need to continue on this ray:
-				if(!(tp->flags & TF_SEETHRU))
-					break; // not see-through, next line
-			}
+			fill_loslittbl(LOSrad - 2);
+			fill_loslittbl(LOSrad - 1);
 		}
+		if(LOSrad == 10) // scouts have more blind spots!
+			fill_loslittbl(6);
+
 		// The center point of the view needs to be checked separately.
 		// It is always in LOS!
 		loslittbl[VIEWSIZE/2][VIEWSIZE/2] = IN_LOS;
@@ -188,6 +206,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 
 	// The actual "rendering":
 	unsigned char cp;
+	Coords c;
 	list<string> titles;
 	list<Coords> titlecoords;
 	for(y = 0; y < VIEWSIZE; ++y)

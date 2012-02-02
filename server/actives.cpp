@@ -103,6 +103,28 @@ void add_block(const Coords &c)
 	Game::curmap->mod_tile(c)->flags |= TF_OCCUPIED;
 }
 
+
+void update_static_light_r(const Coords &c, const char r)
+{
+	char line, ind;
+	Coords d;
+	// see los_lookup.h
+	for(line = 0; line < r*8; ++line)
+	{
+		for(ind = 0; ind < 2*r; ind += 2)
+		{
+			d.x = loslookup[r-2][line*2*r+ind] + c.x;
+			d.y = loslookup[r-2][line*2*r+ind+1] + c.y;
+			if(Game::curmap->point_out_of_map(d))
+				break;
+			//else
+			Game::curmap->mod_tile(d)->flags |= TF_LIT;
+			if(!(Game::curmap->mod_tile(d)->flags & TF_SEETHRU))
+				break; // next line
+		}
+	}
+}
+
 } // end local namespace
 
 
@@ -505,23 +527,12 @@ void clear_sounds()
 
 void update_static_light(const Coords &c)
 {
-	char line, ind;
-	Coords d;
-	// see los_lookup.h
-	for(line = 0; line < TORCH_LIGHT_RADIUS*8; ++line)
-	{
-		for(ind = 0; ind < 2*TORCH_LIGHT_RADIUS; ind += 2)
-		{
-			d.x = loslookup[TORCH_LIGHT_RADIUS-2][line*2*TORCH_LIGHT_RADIUS+ind] + c.x;
-			d.y = loslookup[TORCH_LIGHT_RADIUS-2][line*2*TORCH_LIGHT_RADIUS+ind+1] + c.y;
-			if(Game::curmap->point_out_of_map(d))
-				break;
-			//else
-			Game::curmap->mod_tile(d)->flags |= TF_LIT;
-			if(!(Game::curmap->mod_tile(d)->flags & TF_SEETHRU))
-				break; // next line
-		}
-	}
+	// Run the algorithm on two base radii to cover all spots.
+	/* NOTE: this works for TORCH_LIGHT_RADIUS 7-9; if it is <=6 or >=10,
+	 * adjustments are called for! */
+	update_static_light_r(c, TORCH_LIGHT_RADIUS);
+	update_static_light_r(c, TORCH_LIGHT_RADIUS-1);
+	update_static_light_r(c, TORCH_LIGHT_RADIUS-2);
 	// the LOS-algorithm doesn't consider the position itself:
 	Game::curmap->mod_tile(c)->flags |= TF_LIT;	
 }
@@ -607,6 +618,9 @@ bool is_dynlit(const Coords &c)
 	// in LOS. (There is no such thing as a "dynamic light" entity.)
 	for(list<PCEnt>::const_iterator pc_it = PCs.begin(); pc_it != PCs.end(); ++pc_it)
 	{
+		/* NOTE! This works as long as CARRIED_TORCH_RAD <= 6. If it becomes 7
+		 * or more, we need to worry about "blind spots" the same way as with
+		 * the LOS considerations in update_static_light. */
 		if(!pc_it->isvoid() && pc_it->torch_is_lit()
 			&& Game::curmap->LOS_between(c, pc_it->getpos(), CARRIED_TORCH_RAD))
 			return true;
