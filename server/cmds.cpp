@@ -459,11 +459,14 @@ void shuffle_teams()
 	{
 		if(it->team != T_SPEC)
 		{
-			Game::del_owneds(it);
-			if(it->is_alive())
-				kill_player(it);
+			if(!intermission)
+			{
+				Game::del_owneds(it);
+				if(it->is_alive())
+					kill_player(it);
+				it->own_vp->clear_memory();
+			}
 			playing_players.push_back(it);
-			it->own_vp->clear_memory();
 		}
 	}
 
