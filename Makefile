@@ -10,6 +10,7 @@ CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
 EXTRA_FLAGS=
 # Add -DMAPTEST to build a "server" for testing & creating maps.
 # Add -DBOTMSG to make the bot client print messages.
+# Add -DTIME_SERVER_TURN to time the server render (prints a lot of numbers!)
 # Add -static to build statically linked binaries.
 
 #The rest probably needs not be touched.

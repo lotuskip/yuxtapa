@@ -17,6 +17,9 @@
 #ifdef DEBUG
 #include <iostream>
 #endif
+#ifdef TIME_SERVER_TURN
+#include <sys/time.h>
+#endif
 
 extern bool intermission;
 
@@ -502,6 +505,13 @@ bool Game::process_turn()
 	 * 7. possible active teambalance check
 	 * 8. see if map should end
 	 */
+#ifdef TIME_SERVER_TURN
+	// Timing the turn process, for performance purposes:
+	timeval tv;	
+	long start_usecs;
+	gettimeofday(&tv, 0);
+	start_usecs = tv.tv_sec*1000000 + tv.tv_usec;
+#endif
 
 	// All player movement actions have been processed, finish by checking
 	// teammates swapping places:
@@ -725,6 +735,12 @@ bool Game::process_turn()
 		shuffle_teams();
 		team_unbalance = false;
 	}
+
+#ifdef TIME_SERVER_TURN
+	// Timing the turn process, for performance purposes:
+	gettimeofday(&tv, 0);
+	cout << tv.tv_sec*1000000 + tv.tv_usec - start_usecs << "µs" << endl;
+#endif
 
 	return (++curturn == map_over_turn);
 }
