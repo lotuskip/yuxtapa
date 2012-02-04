@@ -9,7 +9,7 @@ url="http://github.com/lotuskip/yuxtapa"
 depends=('zlib' 'ncurses')
 source=(http://github.com/downloads/lotuskip/yuxtapa/$pkgname-$pkgver.tar.gz)
 install=yuxtapa.install
-md5sums=('af55f6300d6263848fc387a45bf1e288')
+md5sums=('43b387b3da892bfeda233fad42836e01')
 
 build() {
   cd $srcdir/$pkgname

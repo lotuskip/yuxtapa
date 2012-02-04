@@ -636,7 +636,7 @@ bool Game::process_turn()
 				string s = "You are drowning!";
 				Network::construct_msg(s, C_WATER_LIT);
 				Network::send_to_player(*it);
-				it->cl_props.hp -= 1 + random()%(classes[it->cl].hp/2);
+				it->cl_props.hp -= 1 + random()%(classes[it->cl].hp/3);
 				if(it->cl_props.hp <= 0)
 				{
 					player_death(it, " drowned.", false);
