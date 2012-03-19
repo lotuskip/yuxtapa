@@ -82,7 +82,12 @@ bool Network::startup()
 {
 	struct addrinfo hints, *servinfo, *p;
 	bzero(&hints, sizeof(hints));
-	hints.ai_family = AF_UNSPEC; // set to AF_INET to force IPv4
+	switch(Config::int_settings[Config::IS_IPV])
+	{
+	case 0: hints.ai_family = AF_UNSPEC; break;
+	case 4: hints.ai_family = AF_INET; break;
+	case 6: hints.ai_family = AF_INET6;
+	}
 	hints.ai_socktype = SOCK_DGRAM;
 	hints.ai_flags = AI_PASSIVE; // use my IP
 	int rv;

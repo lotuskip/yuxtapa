@@ -1,6 +1,8 @@
 # Maintainer: Onni R. <onnir at iki dot fi>
+#
+# See comment below on how to install an IPv6 bot (by default this installs v4).
 pkgname=yuxtapa
-pkgver=8
+pkgver=9
 pkgrel=1
 license=('None')
 pkgdesc="a text-mode team-based real-time multiplayer game"
@@ -13,6 +15,8 @@ md5sums=('43b387b3da892bfeda233fad42836e01')
 
 build() {
   cd $srcdir/$pkgname
+# uncomment next line for IPv6 bots:
+# sed -i 's/EXTRA_FLAGS=/EXTRA_FLAGS=-DBOT_IPV6/'
   make || return 1
   make mrbrown || return 1
 }

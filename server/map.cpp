@@ -238,7 +238,7 @@ void fill2DFractArray(float* const fa, const int size, const float h)
 
 ///////////////////////////////////////////////////////////////////
 
-/* Once the random absract fractal (a table of floats!) is created using the
+/* Once the random abstract fractal (a table of floats!) is created using the
  * above code, we paint it with map tiles, using the following threshold
  * values (each map type separately): */
 

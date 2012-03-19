@@ -35,6 +35,7 @@ namespace Config
 		IS_TURNMS,
 		IS_INTERM_SECS,
 		IS_PORT,
+		IS_IPV,
 		IS_STATPURGE,
 		MAX_INT_SETTING	};
 

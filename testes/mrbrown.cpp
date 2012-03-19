@@ -136,9 +136,19 @@ bool do_connect(const string &sip)
 	if((i = sip.rfind(':')) != string::npos && i > 1 && i != sip.size()-1)
 	{
 		port = sip.substr(i+1);
-		if(sip.rfind(':', i-1) != string::npos) // two ':'s imply IPv6 (or garbage...)
-			--i; // there is "::", not just ":" before the port
 		ip = sip.substr(0, i);
+		if(ip[0] == '[') // this would indicate IPv6
+		{
+			ip.erase(0,1);
+			if(ip.empty())
+			{
+#ifdef BOTMSG
+				cerr << "Not a valid address: " << sip << endl;
+#endif
+				return true;
+			}
+			ip.erase(ip.size()-1,1); // erase assumed ']'
+		}
 	}
 	else
 	{
@@ -729,7 +739,11 @@ int main(int argc, char *argv[])
 		}
 	}
 	else
+#ifdef BOT_IPV6
+		sip = "[::1]:12360";
+#else
 		sip = "127.0.0.1:12360";
+#endif
 
 	if(do_connect(sip))
 		return 1;

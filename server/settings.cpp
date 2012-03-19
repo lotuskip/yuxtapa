@@ -30,13 +30,14 @@ Config::TB_PASSIVE,
 250, // turn in ms
 45, // intermission in seconds
 12360, // port
+0, // ip (4: IPv4, 6: IPv6, 0: unspecified)
 24 // stat purge (h)
 };
 
 // keys to these:
 const string keywords[Config::MAX_INT_SETTING] = {
 "maxplayers", "teambalance", "mapsize", "mapsizevar", "classlimit",
-"turnms", "interm", "port", "statpurge" };
+"turnms", "interm", "port", "ipv", "statpurge" };
 
 // hard limits (just staying within these is not sufficient alone):
 const unsigned int hard_lims[Config::MAX_INT_SETTING][2] = {
@@ -49,6 +50,7 @@ final map size span of 42--511 */
 { 50, 2000 }, // turn ms
 { 10, 120 }, // intermission secs
 { 1024, 61000 }, // port
+{ 0, 6 }, // port
 { 0, 50000 } // stat purge; again 0 means "no limit"
 };
 
@@ -282,6 +284,12 @@ void Config::read_config()
 			to_log("Warning: config gave invalid value for \'" + keywords[i] + "\'.");
 			int_settings[i] = default_sets[i];
 		}
+	}
+	// Check ipv further:
+	if(int_settings[IS_IPV] != 0 && int_settings[IS_IPV] != 4 && int_settings[IS_IPV] != 6)
+	{
+		to_log("Warning: config has invalid ipv.");
+		int_settings[IS_IPV] = default_sets[IS_IPV];
 	}
 	// Check modes:
 	if(poss_modes.empty())
