@@ -30,7 +30,7 @@ const Coords center(VIEWSIZE/2, VIEWSIZE/2);
 // something happening.
 const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
 	// chances, in %, of not even trying to use special ability
-	10 /*Ar*/, 10 /*As*/, 15 /*Cm*/, 33 /*Mc*/, 100 /*Sc*/, 15 /*Fi*/,
+	10 /*Ar*/, 10 /*As*/, 15 /*Cm*/, 33 /*Mc*/, 10 /*Sc*/, 15 /*Fi*/,
 	15 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
 };
 const char RANDOM_WAIT_CHANCE_1IN = 40; // skip turn for no reason
@@ -52,6 +52,7 @@ const char CIRCLE_ATTACK_WAIT = 3; // circle attack (fighters)
 const char DIG_WAIT = 7; // mining (miners)
 const char TRAP_WAIT = 8; // trap setting/disarming (trappers)
 const char ZAP_WAIT = 2; // zaps (combat magi)
+const char DISGUISE_WAIT = 8; // disguising (scouts)
 // Other stuff:
 const char AIM_TURNS = 4; // how many turns must an archer take aim before firing
 const char WALLS_FOR_CERTAIN_DIG = 38; // how many walls in sight ensure that miners will dig when possible
@@ -90,6 +91,8 @@ Coords seen_flag_coords; // if a flag has been spotted
 e_Team seen_flag_owner = T_SPEC;
 unsigned char num_walls_in_sight = 0;
 short isolation_turns = 0;
+char symbol_under_feet = 0; // what the bot thinks it is standing on
+char col_under_feet = 0;
 // Generic:
 Coords tmp_coords;
 int rv; // "return value"; although used for other things, too
@@ -117,6 +120,12 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 		send_buffer.add(static_cast<unsigned char>(var1));
 		if(xncode == XN_SHOOT)
 			send_buffer.add(static_cast<unsigned char>(var2));
+		else if(xncode == XN_MOVE) // store where we think we step on
+		{
+			Coords c = center.in(e_Dir(var1));
+			symbol_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
+			symbol_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
+		}
 	}
 	do_send();
 	++axn_counter;
@@ -276,6 +285,9 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 				if(viewbuffer[(tmp_coords.y*VIEWSIZE+tmp_coords.x)*2+1] == '#')
 					return WALK_GREAT; // by a wall
 			}
+		// give high score to light traps as they can be useful:
+		if(sym == '^' && (col == C_LIGHT_TRAP || col == C_LIGHT_TRAP_LIT))
+			return WALK_GREAT;
 	}
 	else if(myclass == C_TRAPPER && col == C_TREE)
 		return WALK_GREAT;
@@ -426,6 +438,15 @@ bool is_class_of(const Coords& c, const char* name)
 	return false; // no suck coords titled
 }
 
+
+// Return true if 'c' is the colour of the enemy team
+bool enemy_team_col(const unsigned char c)
+{
+	return (myteam == T_GREEN && (c == C_PURPLE_PC || c == C_PURPLE_PC_LIT))
+			|| (myteam == T_PURPLE && (c == C_GREEN_PC || c == C_GREEN_PC_LIT));
+}
+
+
 // For searching teammates/enemies who are in a neighbouring square:
 e_Dir neighb_pc(const char t)
 {
@@ -546,7 +567,9 @@ bool no_class_spc_Ar()
 
 bool no_class_spc_As()
 {
-	if(!abil_counter || limiter)
+	// We can either use a flash bomb or trigger a light trap. First generic
+	// checks:
+	if(limiter)
 		return true;
 	// Need at least one non-assassin enemy and no non-assassin friends
 	// within range (3 tiles; cf. server/chores.cpp:flash_at())
@@ -563,7 +586,17 @@ bool no_class_spc_As()
 	}
 	if(ti == pcs[opp_team[myteam]].end())
 		return true;
-	// okay to flash:
+	// Now check to use a light trap:
+	if(symbol_under_feet == '^'
+		&& (col_under_feet == C_LIGHT_TRAP || col_under_feet == C_LIGHT_TRAP_LIT))
+	{
+		send_action(XN_TRAP_TRIGGER);
+		limiter = FLASH_LIMIT;
+		return false;
+	}
+	// No trap chance, check to use a bomb:
+	if(!abil_counter)
+		return true;
 	send_action(XN_FLASH);
 	--abil_counter;
 	limiter = FLASH_LIMIT;
@@ -594,7 +627,23 @@ bool no_class_spc_Mc()
 	return true;
 }
 
-bool no_class_spc_Sc() { return true; }
+bool no_class_spc_Sc()
+{
+	/* Must stand on an enemy corpse, not be already disguises, and not have
+	 * enemies in sight: */
+	if(symbol_under_feet == '%' && pcs[opp_team[myteam]].empty())
+	{
+		unsigned char col = viewbuffer[(center.y*VIEWSIZE+center.x)*2];
+		if(col != C_BROWN_PC && col != C_BROWN_PC_LIT
+			&& enemy_team_col(col_under_feet))
+		{
+			send_action(XN_DISGUISE);
+			wait_turns = DISGUISE_WAIT;
+			return false;
+		}
+	}
+	return true;
+}
 
 bool no_class_spc_Fi()
 {
@@ -759,7 +808,7 @@ int main(int argc, char *argv[])
 	 * by classlimiting, be spawned as these classes (myclass will ultimately
 	 * be what the server replies). */
 	do myclass = e_Class(random()%NO_CLASS);
-	while(myclass == C_SCOUT || myclass == C_PLANEWALKER);
+	while(myclass == C_PLANEWALKER);
 	send_buffer.add((unsigned char)myclass);
 	do_send();
 
