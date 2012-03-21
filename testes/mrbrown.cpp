@@ -124,7 +124,7 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 		{
 			Coords c = center.in(e_Dir(var1));
 			symbol_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
-			symbol_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
+			col_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
 		}
 	}
 	do_send();
@@ -248,6 +248,32 @@ bool do_connect(const string &sip)
 /// AI related:
 ////////////////////////////////////////////
 
+bool green_pc_color(const unsigned char c)
+{
+	return c == C_GREEN_PC || c == C_GREEN_PC_LIT || c == C_GREEN_ON_HEAL
+		|| c == C_GREEN_ON_TRAP || c == C_GREEN_ON_POIS || c == C_GREEN_ON_DISG
+	 	|| c == C_GREEN_ON_HIT || c == C_GREEN_ON_MISS;
+}
+bool purple_pc_color(const unsigned char c)
+{
+	return c == C_PURPLE_PC || c == C_PURPLE_PC_LIT || c == C_PURPLE_ON_HEAL
+		|| c == C_PURPLE_ON_TRAP || c == C_PURPLE_ON_POIS || c == C_PURPLE_ON_DISG
+	 	|| c == C_PURPLE_ON_HIT || c == C_PURPLE_ON_MISS;
+}
+bool brown_pc_color(const unsigned char c)
+{
+	return c == C_BROWN_PC || c == C_BROWN_PC_LIT || c == C_BROWN_ON_HEAL
+		|| c == C_BROWN_ON_TRAP || c == C_BROWN_ON_POIS || c == C_BROWN_ON_DISG
+	 	|| c == C_BROWN_ON_HIT || c == C_BROWN_ON_MISS;
+}
+bool light_trap_color(const unsigned char c)
+{
+	return c == C_LIGHT_TRAP || c == C_LIGHT_TRAP_LIT || c == C_YELLOW_ON_HEAL
+		|| c == C_YELLOW_ON_TRAP || c == C_YELLOW_ON_POIS || c == C_YELLOW_ON_DISG
+	 	|| c == C_YELLOW_ON_HIT || c == C_YELLOW_ON_MISS;
+}
+
+
 enum { WALK_DONT=0, WALK_OKAY, WALK_GOOD, WALK_GREAT };
 
 // Estimate how wise it is to take a step in the given direction.
@@ -286,7 +312,7 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 					return WALK_GREAT; // by a wall
 			}
 		// give high score to light traps as they can be useful:
-		if(sym == '^' && (col == C_LIGHT_TRAP || col == C_LIGHT_TRAP_LIT))
+		if(sym == '^' && light_trap_color(col))
 			return WALK_GREAT;
 	}
 	else if(myclass == C_TRAPPER && col == C_TREE)
@@ -372,24 +398,12 @@ void scan_view() // extract PCs and flag in view, count walls
 		{
 			if(i != (int(VIEWSIZE/2)*VIEWSIZE+int(VIEWSIZE/2))*2+1)
 			{
-			switch(viewbuffer[i-1])
-			{
-			case C_GREEN_PC: case C_GREEN_PC_LIT: case C_GREEN_ON_HEAL:
-			case C_GREEN_ON_TRAP: case C_GREEN_ON_POIS: case C_GREEN_ON_DISG:
-			case C_GREEN_ON_HIT: case C_GREEN_ON_MISS:
-				pcs[0].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
-				break;
-			case C_PURPLE_PC: case C_PURPLE_PC_LIT: case C_PURPLE_ON_HEAL:
-			case C_PURPLE_ON_TRAP: case C_PURPLE_ON_POIS: case C_PURPLE_ON_DISG:
-			case C_PURPLE_ON_HIT: case C_PURPLE_ON_MISS:
-				pcs[1].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
-				break;
-			case C_BROWN_PC: case C_BROWN_PC_LIT: case C_BROWN_ON_HEAL:
-			case C_BROWN_ON_TRAP: case C_BROWN_ON_POIS: case C_BROWN_ON_DISG:
-			case C_BROWN_ON_HIT: case C_BROWN_ON_MISS:
-				pcs[myteam].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
-				break;
-			}
+				if(green_pc_color(viewbuffer[i-1]))
+					pcs[0].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
+				else if(purple_pc_color(viewbuffer[i-1]))
+					pcs[1].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
+				else if(brown_pc_color(viewbuffer[i-1]))
+					pcs[myteam].push_back(Coords(((i-1)/2)%VIEWSIZE, ((i-1)/2)/VIEWSIZE));
 			}
 			continue;
 		}
@@ -400,12 +414,15 @@ void scan_view() // extract PCs and flag in view, count walls
 			switch(viewbuffer[i-1])
 			{
 			case C_GREEN_PC: case C_GREEN_PC_LIT: case C_GREEN_ON_MISS:
+			case C_GREEN_ON_TRAP:
 				seen_flag_owner = T_GREEN;
 				break;
 			case C_PURPLE_PC: case C_PURPLE_PC_LIT: case C_PURPLE_ON_MISS:
+			case C_PURPLE_ON_TRAP:
 				seen_flag_owner = T_PURPLE;
 				break;
 			case C_NEUT_FLAG: case C_NEUT_FLAG_LIT: case C_GRAY_ON_MISS:
+			case C_GRAY_ON_TRAP:
 				seen_flag_owner = T_NO_TEAM;
 				break;
 			}
@@ -442,8 +459,10 @@ bool is_class_of(const Coords& c, const char* name)
 // Return true if 'c' is the colour of the enemy team
 bool enemy_team_col(const unsigned char c)
 {
-	return (myteam == T_GREEN && (c == C_PURPLE_PC || c == C_PURPLE_PC_LIT))
-			|| (myteam == T_PURPLE && (c == C_GREEN_PC || c == C_GREEN_PC_LIT));
+	if(myteam == T_GREEN)
+		return purple_pc_color(c);
+	// else myteam == T_PURPLE
+	return green_pc_color(c);
 }
 
 
@@ -537,6 +556,23 @@ bool get_sound_to_follow(Coords &t)
 	return false;
 }
 
+bool get_enemy_corpse_dir(Coords &t)
+{
+	// scout and not already disguised:
+	if(myclass == C_SCOUT && !brown_pc_color(viewbuffer[(center.y*VIEWSIZE+center.x)*2]))
+	{
+		for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
+		{
+			if(viewbuffer[i] == '%' && enemy_team_col(viewbuffer[i-1]))
+			{
+				t.x = ((i-1)/2)%VIEWSIZE;
+				t.y = ((i-1)/2)/VIEWSIZE;
+				return true;
+			}
+		}
+	}
+	return false;
+}
 
 /* Functions for each class to check for using the class's special ability */
 
@@ -587,8 +623,7 @@ bool no_class_spc_As()
 	if(ti == pcs[opp_team[myteam]].end())
 		return true;
 	// Now check to use a light trap:
-	if(symbol_under_feet == '^'
-		&& (col_under_feet == C_LIGHT_TRAP || col_under_feet == C_LIGHT_TRAP_LIT))
+	if(symbol_under_feet == '^' && light_trap_color(col_under_feet))
 	{
 		send_action(XN_TRAP_TRIGGER);
 		limiter = FLASH_LIMIT;
@@ -631,16 +666,13 @@ bool no_class_spc_Sc()
 {
 	/* Must stand on an enemy corpse, not be already disguises, and not have
 	 * enemies in sight: */
-	if(symbol_under_feet == '%' && pcs[opp_team[myteam]].empty())
+	if(symbol_under_feet == '%' && pcs[opp_team[myteam]].empty()
+		&& !brown_pc_color(viewbuffer[(center.y*VIEWSIZE+center.x)*2])
+		&& enemy_team_col(col_under_feet))
 	{
-		unsigned char col = viewbuffer[(center.y*VIEWSIZE+center.x)*2];
-		if(col != C_BROWN_PC && col != C_BROWN_PC_LIT
-			&& enemy_team_col(col_under_feet))
-		{
-			send_action(XN_DISGUISE);
-			wait_turns = DISGUISE_WAIT;
-			return false;
-		}
+		send_action(XN_DISGUISE);
+		wait_turns = DISGUISE_WAIT;
+		return false;
 	}
 	return true;
 }
@@ -955,14 +987,17 @@ int main(int argc, char *argv[])
 					if(pcs[opp_team[myteam]].empty()) // (no)
 					{
 						/* Walk primarily towards any seen flags we could
-						 * capture, secondarily towards heard sounds (except
-						 * mining), thirdly randomly. Don't walk on PCs
+						 * capture, secondarily scouts towards enemy corpses,
+						 * thirdly towards heard sounds (except
+						 * mining), fourthly randomly. Don't walk on PCs
 						 * in the "try_walk_towards" calls. */
 						if(could_capture_flag())
 						{
 							try_walk_towards(seen_flag_coords, true);
 							isolation_turns = 0;
 						}
+						else if(get_enemy_corpse_dir(tmp_coords))
+							try_walk_towards(tmp_coords, true);
 						else if(get_sound_to_follow(tmp_coords)) // have sound to follow
 							try_walk_towards(tmp_coords, true);
 						/* No enemies, flags, or sounds; we might be isolated.

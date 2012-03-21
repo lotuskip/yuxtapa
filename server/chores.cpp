@@ -1224,24 +1224,30 @@ void process_swaps()
 
 void progress_chore(const list<Player>::iterator pit)
 {
+	Coords c;
 	--(pit->doing_a_chore);
 	switch(pit->cl)
 	{
 	case C_SCOUT: // disguise
 		if(!pit->doing_a_chore) // done
 		{
+			c = pit->own_pc->getpos();
+			list<NOccEnt>::iterator c_it = any_noccent_at(c, NOE_CORPSE);
+			if(c_it != noccents[NOE_CORPSE].end()) // corpse might've been removed already
+				noccents[NOE_CORPSE].erase(c_it);
 			pit->own_pc->set_disguised(true);
 			string msg = "You are now disguised as the enemy.";
 			Network::construct_msg(msg, C_BROWN_PC);
 			Network::send_to_player(*pit);
-			event_set.insert(pit->own_pc->getpos());
+			event_set.insert(c);
 		}
 		break;
 	case C_FIGHTER: // circle strike 
 	{
 		list<Player>::iterator them;
 		list<PCEnt>::const_iterator pc_it;
-		Coords c = pit->own_pc->getpos(), d;
+		c = pit->own_pc->getpos();
+		Coords d;
 		char die = 8, add = 0;
 		// see if weapon has rusted:
 		if(pit->cl_props.tohit != classes[pit->cl].tohit)
@@ -1277,7 +1283,7 @@ void progress_chore(const list<Player>::iterator pit)
 	}
 	case C_MINER: // mine
 	{
-		Coords c = pit->own_pc->getpos().in(pit->facing);
+		c = pit->own_pc->getpos().in(pit->facing);
 		if(!pit->doing_a_chore) // done
 		{
 			// Digging is done; outcome depends on what exactly is there:
@@ -1348,7 +1354,7 @@ void progress_chore(const list<Player>::iterator pit)
 	case C_TRAPPER: // plant trap
 		if(!pit->doing_a_chore) // done
 		{
-			Coords c = pit->own_pc->getpos();
+			c = pit->own_pc->getpos();
 			string msg;
 			// If there is a trap, disarm it, else plant one:
 			if(Game::curmap->mod_tile(c)->flags & TF_TRAP)
