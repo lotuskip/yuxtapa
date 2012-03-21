@@ -1234,7 +1234,10 @@ void progress_chore(const list<Player>::iterator pit)
 			c = pit->own_pc->getpos();
 			list<NOccEnt>::iterator c_it = any_noccent_at(c, NOE_CORPSE);
 			if(c_it != noccents[NOE_CORPSE].end()) // corpse might've been removed already
+			{
 				noccents[NOE_CORPSE].erase(c_it);
+				Game::curmap->mod_tile(c)->flags &= ~(TF_NOCCENT);
+			}
 			pit->own_pc->set_disguised(true);
 			string msg = "You are now disguised as the enemy.";
 			Network::construct_msg(msg, C_BROWN_PC);

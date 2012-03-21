@@ -186,13 +186,15 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 		fill_loslittbl(LOSrad);
 		/* In addition, for the higher radii, in order to cover a few "blind
 		 * spots", we have to run with another radius (this could be optimized a
-		 * little more, I'm sure, but I haven't bothered figuring that out): */
+		 * little more, I'm sure, but I haven't bothered figuring that out).
+		 * A radius 6 would still give problems in one particular case, so no
+		 * class is allowed to have that LOS radius. */
 		if(LOSrad > 6)
 		{
 			fill_loslittbl(LOSrad - 2);
 			fill_loslittbl(LOSrad - 1);
 		}
-		if(LOSrad == 10) // scouts have more blind spots!
+		if(LOSrad == 10) // scouts have their own extra blind spots
 			fill_loslittbl(6);
 
 		// The center point of the view needs to be checked separately.
