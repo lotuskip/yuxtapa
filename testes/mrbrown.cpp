@@ -82,6 +82,7 @@ e_Class myclass = NO_CLASS;
 char gm_dom1_con0 = -1; // to tell if gamemode is dom or con
 char num_enemy_flags = 0;
 char viewbuffer[BUFFER_SIZE];
+bool torchlit = true;
 // AI related:
 e_Dir prev_committed_walk; // direction of last step taken
 vector<Coords> pcs[2]; // PCs of each team currently in view
@@ -330,9 +331,15 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 
 // Walk to direction d if can. If cannot, try ++d and --d in random order.
 // Returns whether did move.
-bool random_turn_from_dir(e_Dir d, const bool avoid_pcs)
+bool random_turn_from_dir(e_Dir d, const bool avoid_pcs, const bool ign_terrain)
 {
 	char score_d = score_walk(d, avoid_pcs);
+	// if ignoring terrain, don't care about rating, just go there if possible:
+	if(ign_terrain && score_d != WALK_DONT)
+	{
+		send_action(XN_MOVE, (prev_committed_walk = d));
+		return true;
+	}
 	char score_pd = score_walk(++d, avoid_pcs);
 	char score_md = score_walk(--(--d), avoid_pcs);
 
@@ -360,7 +367,7 @@ void random_walk()
 		else --prev_committed_walk;
 	}
 	// if can, continue in previous direction (which the above might have just turned)
-	if(!random_turn_from_dir(prev_committed_walk, true))
+	if(!random_turn_from_dir(prev_committed_walk, true, false))
 	{
 		// Couldn't; walk entirely randomly, then.
 		e_Dir walkdir = e_Dir(random()%MAX_D);
@@ -380,7 +387,7 @@ void random_walk()
 void try_walk_towards(const Coords &c, const bool avoid_pcs)
 {
 	// if cannot walk towards c (trying 3 different steps), walk randomly.
-	if(!random_turn_from_dir(center.dir_of(c), avoid_pcs))
+	if(!random_turn_from_dir(center.dir_of(c), avoid_pcs, true))
 		random_walk();
 }
 
@@ -738,9 +745,18 @@ bool no_class_spc_He()
 
 bool no_class_spc_Wi()
 {
+	// if no enemies and torch not lit, light it:
+	if(pcs[opp_team[myteam]].empty())
+	{
+		if(!torchlit)
+		{
+			send_action(XN_TORCH_HANDLE);
+			torchlit = true; /* necessary, because a STATE_UPD might get delayed */
+			return false;
+		}
+	}
 	// at least one enemy, no friendlies, no adjacent enemies (melee is better)
-	if(pcs[myteam].empty() && !pcs[opp_team[myteam]].empty()
-		&& neighb_pc(opp_team[myteam]) == MAX_D)
+	else if(pcs[myteam].empty() && neighb_pc(opp_team[myteam]) == MAX_D)
 	{
 		send_action(XN_MM); // cast magic missile
 		wait_turns = CAST_MM_WAIT;
@@ -819,11 +835,11 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 	}
-	else
+	else sip =
 #ifdef BOT_IPV6
-		sip = "[::1]:12360";
+		"[::1]:12360";
 #else
-		sip = "127.0.0.1:12360";
+		"127.0.0.1:12360";
 #endif
 
 	if(do_connect(sip))
@@ -916,6 +932,15 @@ int main(int argc, char *argv[])
 					 * around for a single turn. */
 					wait_turns = 1;
 				}
+				// TODO: use more of these?
+				recv_buffer.read_ch(); // tohit
+				recv_buffer.read_ch(); // +damage
+				recv_buffer.read_ch(); // dv
+				recv_buffer.read_ch(); // poisoned (0/1)
+				recv_buffer.read_ch(); // sector
+				rv = recv_buffer.read_ch(); // torch symbol
+				torchlit = (rv != ' ' && rv != ','); /* NOTE: if we don't have a torch,
+					we say the torch is 'lit', so that we won't try to light it. */
 			}
 			else if(mid == MID_STATE_CHANGE)
 			{
@@ -982,16 +1007,24 @@ int main(int argc, char *argv[])
 				// including melee)
 				if(no_class_specific()) // not doing something special
 				{
-					// Try walking.
+					// Other actions (mostly walking).
 					// Check if there are enemies in sight:
 					if(pcs[opp_team[myteam]].empty()) // (no)
 					{
+						/* Check to light own torch (if happen to stand on a
+						 * static one): */
+						if(myclass != C_WIZARD && !torchlit
+							&& classes[myclass].torch && symbol_under_feet == 't')
+						{
+							send_action(XN_TORCH_HANDLE);
+							torchlit = true;
+						}
 						/* Walk primarily towards any seen flags we could
 						 * capture, secondarily scouts towards enemy corpses,
 						 * thirdly towards heard sounds (except
 						 * mining), fourthly randomly. Don't walk on PCs
 						 * in the "try_walk_towards" calls. */
-						if(could_capture_flag())
+						else if(could_capture_flag())
 						{
 							try_walk_towards(seen_flag_coords, true);
 							isolation_turns = 0;
