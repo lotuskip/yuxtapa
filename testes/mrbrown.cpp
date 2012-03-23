@@ -25,6 +25,7 @@ using namespace std;
 // CONSTANTS
 /////////////
 const Coords center(VIEWSIZE/2, VIEWSIZE/2);
+const string unpassables = "@+O"; // TODO: add here if some others become relevant
 // a CHANCE is a chance of something happening. Usually these are
 // "1IN" chances, meaning that there is a "1 in x" chance of
 // something happening.
@@ -96,7 +97,7 @@ char symbol_under_feet = 0; // what the bot thinks it is standing on
 char col_under_feet = 0;
 // Generic:
 Coords tmp_coords;
-int rv; // "return value"; although used for other things, too
+int rv; // "return value". This is used as a _very volatile_ temp variable
 
 /// Networking related functions:
 //////////////////////////////////
@@ -124,8 +125,12 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 		else if(xncode == XN_MOVE) // store where we think we step on
 		{
 			Coords c = center.in(e_Dir(var1));
-			symbol_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1];
-			col_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
+			if(unpassables.find((rv = viewbuffer[(c.y*VIEWSIZE+c.x)*2+1])) == string::npos)
+			{
+				if((symbol_under_feet = rv) == '~')
+					wait_turns = 2; // swim properly
+				col_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
+			}
 		}
 	}
 	do_send();
@@ -293,8 +298,11 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 			all the view is going to be full of '?'s anyway */
 	}
 	// Not blind:
+	// Water only when must:
+	if(sym == '~')
+		return WALK_OKAY;
 	// Check for things we absolutely don't want to walk into:
-	if(sym == ' ' || sym == '~' || sym == '#' // always to be avoided
+	if(sym == ' ' || sym == '#' // always to be avoided
 		|| sym == '|' || sym == '-' // windows are like walls
 		|| (sym == 'O' && !classes[myclass].can_push) // a boulder you can't push is like a wall
 		|| (avoid_pcs && sym == '@')) // and PCs if requested
@@ -1014,7 +1022,7 @@ int main(int argc, char *argv[])
 						/* Check to light own torch (if happen to stand on a
 						 * static one): */
 						if(myclass != C_WIZARD && !torchlit
-							&& classes[myclass].torch && symbol_under_feet == 't')
+							/*&& classes[myclass].torch*/ && symbol_under_feet == 't')
 						{
 							send_action(XN_TORCH_HANDLE);
 							torchlit = true;
