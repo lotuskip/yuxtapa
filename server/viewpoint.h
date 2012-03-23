@@ -65,6 +65,8 @@ private:
 	bool render_trap_at(const Coords &c, char* const target, const bool lit) const;
 
 	void fill_loslittbl(const char rad);
+	bool fill_loslittbl_xy(const Coords &c, const char x, const char y,
+		const bool vis_in_dark);
 };
 
 #endif

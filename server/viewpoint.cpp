@@ -121,11 +121,94 @@ void ViewPoint::newmap()
 	poschanged = true;
 }
 
+/* An apology for the LOS algorithm:
+ *
+ * The basic idea is that if a PC has LOS-radius, say 6, we draw from the PC's
+ * location the lines to the edge of the circle of radius 6, centered at the
+ * PC's location. (This would be a circle in the walk-metric, of course.) We
+ * look through each line until we hit something that blocks vision, and stop
+ * there.
+ *
+ * But this approach has two major flaws. The first one is that our line drawing
+ * is not symmetrical. As a very simple example, consider this:
+ * ...y.
+ * ...#.
+ * ..@..
+ * .#...
+ * .x...
+ * Here the #s are walls. With the basic approach as stated above, the PC will
+ * see 'y' but not 'x'. The points are, however, in an equal position, so either
+ * either they should both be seen or neither should be seen. We choose that
+ * they are both seen.
+ *
+ * To achieve this, we also consider the "opposite" lines, those drawn from 'x' to
+ * '@' and from 'y' to '@'. This only needs to be done for the nonsymmetric
+ * lines.
+ *
+ * The second major flaw is that it is not always sufficient to look at the
+ * longest possible ray; sometimes it will miss a "blind spot" that some shorter
+ * ray would see. Consider this:
+ * ......
+ * ......
+ * ......
+ * ......
+ * .....y
+ * .....#
+ * .....#
+ * ....@#
+ * .....#
+ * Suppose the PC's LOS radius is 7. that means that he will not see to 'x', since
+ * no line of radius 7 passes through 'x'. But a PC with LOS radius 5, that is,
+ * with poorer sight, _does_ see 'x'. So this doesn't make sense and needs to be
+ * fixed.
+ *
+ * The fix is to look at the shorter rays as well. Testing has determined (but
+ * not rigorously proven; there might be some strange scenarios I didn't think
+ * of), that for base radii r>6 we need to look at the radii r-1 and r-2, and
+ * if the base radius is 10 (scouts), we also need to look at radius 6. For base
+ * radii <= 6 this problem does not arise.
+ *
+ * Hopefully this explains some complications in the code.
+ */
+
+bool ViewPoint::fill_loslittbl_xy(const Coords &c, const char x, const char y,
+	const bool vis_in_dark)
+{
+	// We might be outside of the map, in which case the next point in
+	// this line will *also* be outside of the map; check:
+	if(Game::curmap->point_out_of_map(c))
+		return true;
+	// else safe to fetch the tile:
+	Tile *tp = &(ownview[c.y][c.x]);
+	if(!loslittbl[x][y]) // not already considered
+	{
+		/* Determine lit status. Note that if the static lit status
+		 * of the tile has changed (by a wall being dug out), the
+		 * view won't notice this until the tile is within the
+		 * "visible-even-if-not-lit" radius. This could be a bug,
+		 * but we shall call it a feature. */
+		if(tp->flags & TF_LIT // statically lit
+			|| is_dynlit(c))
+		{
+			loslittbl[x][y] = IS_LIT|IN_LOS;
+			// update our view of this tile:
+			*tp = Game::curmap->get_tile(c);
+		}
+		else if(vis_in_dark) // not lit, still in LOS if in smaller radius
+		{
+			loslittbl[x][y] = IN_LOS;
+			// upd our view of this tile:
+			*tp = Game::curmap->get_tile(c);
+		}
+	}
+	// see if need to continue on this ray:
+	return !(tp->flags & TF_SEETHRU);
+}
+
 void ViewPoint::fill_loslittbl(const char rad)
 {
-	char line, ind, x, y;
-	Coords c;
-	Tile *tp;
+	char line, ind, x, y, oline;
+	Coords c, obase;
 	// determine which tiles are lit and which are in LOS (see los_lookup.h)
 	for(line = 0; line < rad*8; ++line)
 	{
@@ -136,36 +219,26 @@ void ViewPoint::fill_loslittbl(const char rad)
 			y = loslookup[rad-2][line*2*rad+ind+1] + VIEWSIZE/2;
 			c.x = pos.x + x - VIEWSIZE/2;
 			c.y = pos.y + y - VIEWSIZE/2;
-			// This might put us outside of the map, in which case the next point in
-			// this line will *also* be outside of the map; check:
-			if(Game::curmap->point_out_of_map(c))
+			if(fill_loslittbl_xy(c, x, y, ind <= 2*(rad+5)/3))
 				break;
-			// else safe to fetch the tile:
-			tp = &(ownview[c.y][c.x]);
-			if(!loslittbl[x][y]) // not already considered
+		}
+		// For unsymmetric lines we need to check the other direction, too:
+		if(line%rad)
+		{
+			oline = (line+4*rad)%(rad*8); // the "opposite" line
+			obase.x = loslookup[rad-2][line*2*rad] // start pt of orig 'line'
+				- loslookup[rad-2][(oline+1)*2*rad-2]; // end pt of 'oline'
+			obase.y = loslookup[rad-2][line*2*rad+1] // same thing here
+				- loslookup[rad-2][(oline+1)*2*rad-1];
+			for(ind = 2*rad-2; ind >= 0; ind -= 2)
 			{
-				/* Determine lit status. Note that if the static lit status
-				 * of the tile has changed (by a wall being dug out), the
-				 * view won't notice this until the tile is within the
-				 * "visible-even-if-not-lit" radius. This could be a bug,
-				 * but we shall call it a feature. */
-				if(tp->flags & TF_LIT // statically lit
-					|| is_dynlit(c))
-				{
-					loslittbl[x][y] = IS_LIT|IN_LOS;
-					// update our view of this tile:
-					*tp = Game::curmap->get_tile(c);
-				}
-				else if(ind <= 2*(rad+5)/3) // not lit, still in LOS if in smaller radius
-				{
-					loslittbl[x][y] = IN_LOS;
-					// upd our view of this tile:
-					*tp = Game::curmap->get_tile(c);
-				}
+				x = loslookup[rad-2][oline*2*rad+ind] + VIEWSIZE/2 + obase.x;
+				y = loslookup[rad-2][oline*2*rad+ind+1] + VIEWSIZE/2 + obase.y;
+				c.x = pos.x + x - VIEWSIZE/2;
+				c.y = pos.y + y - VIEWSIZE/2;
+				if(fill_loslittbl_xy(c, x, y, 2*rad-2-ind <= 2*(rad+5)/3))
+					break;
 			}
-			// see if need to continue on this ray:
-			if(!(tp->flags & TF_SEETHRU))
-				break; // not see-through, next line
 		}
 	}
 }
@@ -186,9 +259,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 		fill_loslittbl(LOSrad);
 		/* In addition, for the higher radii, in order to cover a few "blind
 		 * spots", we have to run with another radius (this could be optimized a
-		 * little more, I'm sure, but I haven't bothered figuring that out).
-		 * A radius 6 would still give problems in one particular case, so no
-		 * class is allowed to have that LOS radius. */
+		 * little more, I'm sure, but I haven't bothered figuring that out). */
 		if(LOSrad > 6)
 		{
 			fill_loslittbl(LOSrad - 2);

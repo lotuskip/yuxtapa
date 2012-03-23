@@ -16,7 +16,7 @@ md5sums=('43b387b3da892bfeda233fad42836e01')
 build() {
   cd $srcdir/$pkgname
 # uncomment next line for IPv6 bots:
-# sed -i 's/EXTRA_FLAGS=/EXTRA_FLAGS=-DBOT_IPV6/'
+# sed -i 's/EXTRA_FLAGS=/EXTRA_FLAGS=-DBOT_IPV6/' Makefile
   make || return 1
   make mrbrown || return 1
 }

@@ -1147,22 +1147,24 @@ e_Dir Map::coords_in_sector(const Coords &c) const
 }
 
 
-bool Map::LOS_between(const Coords &c1, Coords c2, const char maxrad)
+// NOTE: this works for radii <= 6. With higher radii you need more intensive
+// tests (cf. LOS algorithm in viewpoint.cpp)
+bool Map::LOS_between(const Coords &c1, const Coords& c2, const char maxrad,
+	const char calced_rad)
 {
-	char r = c2.dist_walk(c1);
+	char r = (calced_rad == -1) ? c2.dist_walk(c1) : calced_rad;
 	if(r <= maxrad) // close enough
 	{
 		// Check if there is a LOS between c1 and c2:
 		if(r <= 1)
 			return true; // seen, done
-		// Construct vector from c1 to c2 (put it in c2):
-		c2.x -= c1.x;
-		c2.y -= c1.y;
+		// Construct vector from c1 to c2:
+		Coords v(c2.x - c1.x, c2.y - c1.y);
 		char line, ind;
-		if(c2.y == -r) line = c2.x + r;
-		else if(c2.x == r) line = 3*r + c2.y;
-		else if(c2.y == r) line = 5*r - c2.x;
-		else /* c2.x == -r */ line = 7*r - c2.y;
+		if(v.y == -r) line = v.x + r;
+		else if(v.x == r) line = 3*r + v.y;
+		else if(v.y == r) line = 5*r - v.x;
+		else /* v.x == -r */ line = 7*r - v.y;
 		for(ind = 0; ind < 2*(r-1); ind += 2)
 		{
 			if(!(data[loslookup[r-2][line*2*r+ind+1]+c1.y]
@@ -1171,6 +1173,10 @@ bool Map::LOS_between(const Coords &c1, Coords c2, const char maxrad)
 		}
 		if(ind == 2*(r-1)) // got all the way!
 			return true; // seen, done
+		// else, need to check the opposite direction, the line from c2 to c1
+		// (but only if the line is one of the unsymmetric ones):
+		if(calced_rad == -1 && line%r)
+			return LOS_between(c2, c1, maxrad, r);
 	}
 	return false;
 }

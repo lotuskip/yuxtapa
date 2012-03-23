@@ -27,22 +27,14 @@ const ClassProperties classes[] =
 { "Ar",  8,  4,  0,  4, 1, 18, 1,  9,  true, false },
 { "As",  6, 10, 10,  4, 2, 19, 0,  7, false, false },
 { "Cm",  8,  2, 50,  8, 1, 14, 2,  7,  true, false },
-{ "Mc",  6,  5, 40, 10, 0, 15, 1,  7, false,  true },
+{ "Mc",  6,  5, 40, 10, 0, 15, 1,  6, false,  true },
 { "Sc",  4,  1, 10,  6, 1, 14, 0, 10,  true, false },
 { "Fi", 10,  8,  0,  8, 2, 17, 5,  5,  true,  true },
 { "Mi", 12,  6,  0, 10, 1, 13, 3,  5, false,  true },
 { "He",  6, -1, 30,  6, 1, 12, 0,  5,  true, false },
 { "Wi",  4,  0, 70,  6, 0, 11, 0,  7,  true, false },
-{ "Tr",  8,  3,  0,  8, 0, 16, 1,  5, false,  true },
-{ "Pw",  5,  7, 60,  6, 2, 14, 2,  5,  true, false }
+{ "Tr",  8,  3,  0,  8, 0, 16, 1,  6, false,  true },
+{ "Pw",  5,  7, 60,  6, 2, 14, 2,  6,  true, false }
 };
-/* NOTES ABOUT CHANGING THESE:
- * LOS radius 6 does not work properly with the current algorithm. The flaw
- * isn't a huge one, but noticable in some occasions. Radii < 5 have never been
- * tested. Higher than 11 won't work (this is the spectator LOS-radius).
- *
- * Before tweaking PV and DV, make sure you understand how they work. The manual
- * explanation should suffice, but the code at least is unambigious (see
- * server/chores.cpp). */
 
 #endif

@@ -108,4 +108,12 @@ If a PC dies to any trap, or is killed while standing on a trap, no corpse is
 generated. This is because, for simplicity, the game just doesn't allow both
 a corpse and a trap in the same spot.</p>
 
+<p><em><u>Unsymmetric torch carrying</u></em><br>
+When walking next to a long wall with a lit torch you might notice that in one
+direction more wall is lit than in the other direction. Technically this is
+because the dynamic lighting algorithm uses a simplified LOS logic, which
+suffers from the fact that Bresenham's algorithm is not symmetrical. In reality
+this is explained by the PCs carrying the torch funnily, resulting in the
+observed effect.</p>
+
 </body></html>

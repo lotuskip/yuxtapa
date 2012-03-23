@@ -106,8 +106,8 @@ void add_block(const Coords &c)
 
 void update_static_light_r(const Coords &c, const char r)
 {
-	char line, ind;
-	Coords d;
+	char line, ind, oline;
+	Coords d, obase;
 	// see los_lookup.h
 	for(line = 0; line < r*8; ++line)
 	{
@@ -121,6 +121,25 @@ void update_static_light_r(const Coords &c, const char r)
 			Game::curmap->mod_tile(d)->flags |= TF_LIT;
 			if(!(Game::curmap->mod_tile(d)->flags & TF_SEETHRU))
 				break; // next line
+		}
+		// For unsymmetric lines we need to check the other direction, too. See
+		// the comments in viewpoint.cpp where we do the same thing.
+		if(line%r)
+		{
+			oline = (line+4*r)%(r*8);
+			obase.x = loslookup[r-2][line*2*r] - loslookup[r-2][(oline+1)*2*r-2];
+			obase.y = loslookup[r-2][line*2*r+1] - loslookup[r-2][(oline+1)*2*r-1];
+			for(ind = 2*r-2; ind >= 0; ind -= 2)
+			{
+				d.x = loslookup[r-2][oline*2*r+ind] + obase.x + c.x;
+				d.y = loslookup[r-2][oline*2*r+ind+1] + obase.y + c.y;
+				if(Game::curmap->point_out_of_map(d))
+					break;
+				//else
+				Game::curmap->mod_tile(d)->flags |= TF_LIT;
+				if(!(Game::curmap->mod_tile(d)->flags & TF_SEETHRU))
+					break; // next line
+			}
 		}
 	}
 }
@@ -640,7 +659,8 @@ bool is_dynlit(const Coords &c)
 	for(list<Coords>::const_iterator fb_it = fball_centers.begin(); 
 		fb_it != fball_centers.end(); ++fb_it)
 	{
-		if(Game::curmap->LOS_between(c, *fb_it, 4)) // fireballs light a rad 4
+		// fireballs light a rad 4
+		if(Game::curmap->LOS_between(c, *fb_it, 4))
 			return true;
 	}
 	return false;
