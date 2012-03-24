@@ -35,7 +35,6 @@ const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
 	15 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
 };
 const char RANDOM_WAIT_CHANCE_1IN = 40; // skip turn for no reason
-const char TURN_CHANCE_1IN = 22; // turning randomly without reason
 const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
@@ -368,8 +367,9 @@ bool random_turn_from_dir(e_Dir d, const bool avoid_pcs, const bool ign_terrain)
 
 void random_walk()
 {
-	// a small chance of turning without a reason:
-	if(!(random()%TURN_CHANCE_1IN))
+	// a chance of turning without reason dependent on isolation time:
+	if(isolation_turns == ISOLATION_TO_SUICIDE
+		|| !(random()%(ISOLATION_TO_SUICIDE - isolation_turns)))
 	{
 		if(random()%2) ++prev_committed_walk;
 		else --prev_committed_walk;
@@ -558,14 +558,14 @@ bool get_sound_to_follow(Coords &t)
 {
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
-		// get first sound effect, not including center of view and rumbles,
-		// because those are the far-too-common digging sounds
-		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1
-			&& viewbuffer[i-1] != sound_col[S_RUMBLE])
+		// get first sound effect, not including center of view
+		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1)
 		{
 			t.x = ((i-1)/2)%VIEWSIZE;
 			t.y = ((i-1)/2)/VIEWSIZE;
-			return true;
+			// do not follow very nearby sounds (dependent on LOS radius)
+			if(center.dist_walk(t) >= classes[myclass].losr)
+				return true;
 		}
 	}
 	return false;
@@ -1056,7 +1056,7 @@ int main(int argc, char *argv[])
 					else // there are enemies in sight
 					{
 						rv = VIEWSIZE; // find the closest one
-						for(picked = ci = pcs[opp_team[myteam]].begin(); ci != pcs[opp_team[myteam]].end(); ++ci)
+						for(ci = pcs[opp_team[myteam]].begin(); ci != pcs[opp_team[myteam]].end(); ++ci)
 						{
 							if(ci->dist_walk(center) < rv)
 							{
