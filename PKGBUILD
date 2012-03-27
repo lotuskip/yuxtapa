@@ -17,14 +17,14 @@ build() {
   cd $srcdir/$pkgname
 # uncomment next line for IPv6 bots:
 # sed -i 's/EXTRA_FLAGS=/EXTRA_FLAGS=-DBOT_IPV6/' Makefile
-  make || return 1
-  make mrbrown || return 1
+  make
+  make mrbrown
 }
 
 package() {
-  mkdir -p "${pkgdir}/usr/bin" || return 1
-  mkdir -p "${pkgdir}/usr/share/yuxtapa" || return 1
-  mkdir -p "${pkgdir}/usr/share/doc" || return 1
+  mkdir -p "${pkgdir}/usr/bin"
+  mkdir -p "${pkgdir}/usr/share/yuxtapa"
+  mkdir -p "${pkgdir}/usr/share/doc"
   cd $srcdir/$pkgname
   mv -f yuxtapa_sv yuxtapa_cl ${pkgdir}/usr/bin
   mv -f tmplates/*.conf mrbrown ${pkgdir}/usr/share/yuxtapa

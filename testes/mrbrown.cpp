@@ -128,6 +128,9 @@ void send_action(const unsigned char xncode, const unsigned char var1 = 0, const
 			{
 				if((symbol_under_feet = rv) == '~')
 					wait_turns = 2; // swim properly
+				else if((symbol_under_feet == ';' || symbol_under_feet == '\"')
+					&& myclass != C_TRAPPER && myclass != C_SCOUT)
+					wait_turns = 1; // don't rush through rough terrain
 				col_under_feet = viewbuffer[(c.y*VIEWSIZE+c.x)*2];
 			}
 		}
@@ -798,8 +801,8 @@ bool no_class_specific()
 {
 	// To make bot behaviour a bit less predictable, there is, for each class,
 	// a fixed chance that we simply don't even consider the class specific
-	// action:
-	if(random()%100 < CHANCE_IGN_CL_SPC[myclass])
+	// action. No class should use ability in water.
+	if(symbol_under_feet == '~' || random()%100 < CHANCE_IGN_CL_SPC[myclass])
 		return true;
 	// Otherwise check for possibility of using special abilities:
 	return no_cl_spc[myclass]();
@@ -940,6 +943,8 @@ int main(int argc, char *argv[])
 					 * around for a single turn. */
 					wait_turns = 1;
 				}
+				else if(myhp <= 0 && rv > 0) // this means we died
+					symbol_under_feet = col_under_feet = 0;
 				// TODO: use more of these?
 				recv_buffer.read_ch(); // tohit
 				recv_buffer.read_ch(); // +damage
@@ -1005,7 +1010,7 @@ int main(int argc, char *argv[])
 		{
 			if(wait_turns) // something has forced us to wait
 				--wait_turns;
-			else if(random()%RANDOM_WAIT_CHANCE_1IN)
+			else if(symbol_under_feet == '~' || random()%RANDOM_WAIT_CHANCE_1IN)
 			{
 				if(limiter) // technically we should decrement limiter even when skipping the turn
 					--limiter;
@@ -1068,7 +1073,7 @@ int main(int argc, char *argv[])
 						isolation_turns = 0;
 					}
 				} // walking
-			} // no need to wait until previous action is done
+			} // not randomly waiting
 			last_sent_axn.update(); // behave as if acted even if didn't
 		} // alive, and enough time passed to take next action
 	} // for eva (until server sends QUIT)

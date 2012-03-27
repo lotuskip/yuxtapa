@@ -60,21 +60,24 @@ void add_noccent(const Coords &c, const e_Noccent type, const short m = 0)
 		*tp = T_FLOOR;
 	tp->flags |= TF_NOCCENT;
 
-	// Special things when placing team-owned flags:
-	if(type == NOE_FLAG && m != T_NO_TEAM)
+	// Special things when placing flags:
+	if(type == NOE_FLAG)
 	{
-		noccents[NOE_FLAG].back().set_col(team_colour[m]);
-		team_flags[m].push_back(--(noccents[NOE_FLAG].end()));
-		// The surroundings of a team flag should be open enough:
+		if(m != T_NO_TEAM)
+		{
+			noccents[NOE_FLAG].back().set_col(team_colour[m]);
+			team_flags[m].push_back(--(noccents[NOE_FLAG].end()));
+		}
+		// The surroundings of a flag should be open enough:
 		e_Dir d = D_N;
-		char obss = 0; // 'obstructions', wall or water or chasm
+		char obss = 0; // 'obstructions', unpassable or water or chasm
 		do {
 			tp = Game::curmap->mod_tile(c.in(d));
 			if(!(tp->flags & TF_WALKTHRU) || (tp->flags & (TF_KILLS|TF_DROWNS)))
 				++obss;
 			++d;
 		} while(d != D_N);
-		if(obss >= 3) // too many!
+		if(obss > 3) // too many!
 		{
 			// Replace them all with floor:
 			d = D_N;
@@ -464,7 +467,7 @@ void do_placement()
 		// put blocks in a sector not too close to the green flag
 		do
 			obj_sector = e_Dir(random()%(MAX_D+1));
-		while(obj_sector == green_corner);
+		while(obj_sector == green_corner || obj_sector == purple_corner);
 		c = Game::curmap->get_center_of_sector(obj_sector);
 		for(char j = 0; j < NUM_DESTROY_BLOCKS; ++j)
 		{

@@ -28,6 +28,10 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 <p><strong>Client:</strong>
 <ul>
 <li>Fixed connecting with IPv6, which has never worked since it hasn't been tested</li>
+<li>New keycommand (default 'd') to show in the chat all the titles in the
+current view</li>
+<li>Archer aimer path now shows different colour (red) if there is a PC on the
+arrow's prospective path</li>
 </ul>
 </p>
 
@@ -40,6 +44,12 @@ definitely)</li>
 <li>Yet another fix (and further complication) of the LOS algorithm</li>
 <li>Fixed some small issues with dynamic lighting; there are issues still, but
 these won't be touched (see manual on known bugs)</li>
+<li>Fixed how joining new players didn't receive the flag map right away</li>
+<li>The accessibility check for team flags is now applied to neutral flags,
+too</li>
+<li>Improvements in dungeon-type map generation</li>
+<li>In destroy mode, the boulders can no longer get generated around the purple
+team's initial flag (sorry if someone thought that was a cute touch)</li>
 </ul>
 </p>
 
@@ -63,7 +73,10 @@ trap</li>
 
 <p><strong>Compatability:</strong>
 <ul>
-<li>Everything should be compatible with v.8; new server.conf template</li>
+<li>If you have some key binding mapped to 'd' in your client config, this will give
+trouble</li>
+<li>Everything else should be compatible with v.8</li>
+<li>new .conf templates</li>
 </ul></p>
 
 <hr>

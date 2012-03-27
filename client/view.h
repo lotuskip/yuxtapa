@@ -16,6 +16,7 @@ enum e_ClientState {
 };
 
 void toggle_titles();
+void diff_titles();
 void redraw_view();
 
 #endif

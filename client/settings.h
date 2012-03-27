@@ -8,7 +8,7 @@ enum e_Key_binding {
 	// NOTE: the order of these matches the directions in ../common/coords.h!
 	KB_8 = 0, KB_9, KB_6, KB_3, KB_2, KB_1, KB_4, KB_7,
 	KB_5, KB_SPACE, KB_p, KB_C, KB_s, KB_c, KB_T, KB_X, KB_u, KB_w, KB_t,
-	KB_PLUS, KB_MINUS, KB_l, KB_Q, KB_o, KB_PERCENT, MAX_KEY_BINDING };
+	KB_d, KB_PLUS, KB_MINUS, KB_l, KB_Q, KB_o, KB_PERCENT, MAX_KEY_BINDING };
 
 const char MAX_QUICK_SHOUTS = 12;
 

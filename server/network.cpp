@@ -212,6 +212,8 @@ bool Network::receive_n_handle()
 				do_send_to(&them, addr_len, Game::get_miniview());
 				Game::construct_team_msgs(pit);
 			}
+			else
+				Game::send_flag_upds(pit);
 			time(&(pit->last_switched_cl));
 
 			Game::send_state_change(pit);

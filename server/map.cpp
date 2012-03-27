@@ -760,9 +760,9 @@ Map::Map(const short size, const short variation, const short players)
 	if(maptype == MT_DUNGEON)
 	{
 		// Corridor algorithm; kind of like maze generation:
-		k = random()%8 + 8; // 8--15
-		sh = mapsize/k;
-		Coords cell(random()%sh, random()%sh), cell2;
+		sh = random()%9 + 9; // 9-17, 'cell' size in map tiles
+		k = mapsize/sh; // number of 'cells'
+		Coords cell(random()%k, random()%k), cell2;
 		vector<Coords> mazed(1, cell);
 		bool widen;
 		e_Dir d;
@@ -773,7 +773,7 @@ Map::Map(const short size, const short variation, const short players)
 			for(i = 0; i < MAX_D; ++i)
 			{
 				cell2 = cell.in(d);
-				if(cell2.x >= 0 && cell2.y >= 0 && cell2.x < sh && cell2.y < sh
+				if(cell2.x >= 0 && cell2.y >= 0 && cell2.x < k && cell2.y < k
 					&& find(mazed.begin(), mazed.end(), cell2) == mazed.end())
 					break; // this will do
 				++d;
@@ -782,10 +782,10 @@ Map::Map(const short size, const short variation, const short players)
 			{
 				// This means 'cell' is an end of a corridor; make a patch
 				// of floor there, possibly:
-				if(random()%2)
-					add_patch(Coords(cell.x*k+k/2, cell.y*k+k/2), T_FLOOR);
-				// see if have generated enough (5/8 a mapfull):
-				if(mazed.size() < 5u*sh*sh/8u) // no
+				if(random()%3)
+					add_patch(Coords(cell.x*sh+sh/2, cell.y*sh+sh/2), T_GROUND/*DEBUG T_FLOOR*/);
+				// see if have generated enough (4/7 a mapfull):
+				if(mazed.size() < 4u*k*k/7u) // no
 				{
 					// try again, with a different 'cell':
 					cell2 = cell; // store old value of 'cell'
@@ -798,16 +798,16 @@ Map::Map(const short size, const short variation, const short players)
 			} // else:
 			mazed.push_back(cell2);
 			// make a corridor between 'cell' and 'cell2'
-			widen = random()%3; // every 3rd corridor is wide
-			cell.x = cell.x*k + k/2; // convert cells to middle pt coords
-			cell.y = cell.y*k + k/2;
-			cell2.x = cell2.x*k + k/2;
-			cell2.y = cell2.y*k + k/2;
+			widen = random()%3; // every 3rd corridor is narrow
+			cell.x = cell.x*sh + sh/2; // convert cells to middle pt coords
+			cell.y = cell.y*sh + sh/2;
+			cell2.x = cell2.x*sh + sh/2;
+			cell2.y = cell2.y*sh + sh/2;
 			while(!(cell == cell2))
 			{
-				data[cell.y][cell.x] = T_FLOOR;
+				data[cell.y][cell.x] = T_GROUND/*DEBUG T_FLOOR*/;
 				if(widen)
-					data[cell.y+1][cell.x] = T_FLOOR;
+					data[cell.y+1][cell.x] = T_GROUND/*DEBUG T_FLOOR*/;
 				cell = cell.in(d);
 			}
 			// prepare for next run:

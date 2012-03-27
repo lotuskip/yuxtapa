@@ -1,6 +1,7 @@
 // Please see LICENSE file.
 #include "view.h"
 #include "base.h"
+#include "msg.h"
 #include "class_cpv.h"
 #include "settings.h"
 #include "../common/constants.h"
@@ -38,23 +39,26 @@ void draw_titles()
 	{
 		y = *(pos+1); // pos&pos+1 are x/y pair, string begins at pos+2.
 		len = strlen(pos+2);
-		// x-position might need shifting so the string doesn't go over the edge:
-		syms = num_syms(string(pos+2));
-		x = *pos - syms/2;
-		if(x < 0)
-			x = 0;
-		else if(x + syms > VIEWSIZE)
-			x = VIEWSIZE - syms;
 		// If we are alive, don't draw any title coming to the center (that
 		// would be our OWN title)
 		if(*pos != VIEWSIZE/2 || y != VIEWSIZE/2 || !ClassCPV::im_alive())
+		{
+			// x-position might need shifting so the string doesn't go over the edge:
+			syms = num_syms(string(pos+2));
+			x = *pos - syms/2;
+			if(x < 0)
+				x = 0;
+			else if(x + syms > VIEWSIZE)
+				x = VIEWSIZE - syms;
 			Base::print_str(pos+2, TITLE_CPAIR, x, y, VIEW_WIN);
+		}
 		pos += len+3; // lenght of string + '\0' + 2 chars
 	}
 }
 
 void draw_aimer()
 {
+	char x, y;
 	// if the radius is 0 we don't need all the fancy logic:
 	if(aimer.x || aimer.y)
 	{
@@ -70,14 +74,26 @@ void draw_aimer()
 			// Note that we follow the line only two the second last point
 			for(char ind = 0; ind < 2*(rad-1); ind += 2)
 			{
-				Base::print_str(aimerpath, C_ARROW,
-					loslookup[rad-2][line*2*rad+ind] + VIEWSIZE/2,
-					loslookup[rad-2][line*2*rad+ind+1] + VIEWSIZE/2, VIEW_WIN);
+				x = loslookup[rad-2][line*2*rad+ind] + VIEWSIZE/2;
+				y = loslookup[rad-2][line*2*rad+ind+1] + VIEWSIZE/2;
+				// do not draw over PCs
+				if(viewbuffer[(y*VIEWSIZE+x)*2+1] != '@')
+					Base::print_str(aimerpath, C_ARROW, x, y, VIEW_WIN);
+				else
+				{
+					Base::print_str(aimerpath, C_FIREB_TRAP, x, y, VIEW_WIN);
+					break;
+				}
 			}
 		}
 	}
-	Base::print_str(aimerend, C_ARROW_LIT, VIEWSIZE/2 + aimer.x,
-		VIEWSIZE/ 2 + aimer.y, VIEW_WIN);
+	x = VIEWSIZE/2 + aimer.x;
+	y = VIEWSIZE/2 + aimer.y;
+	if((x == VIEWSIZE/2 && y == VIEWSIZE/2) || viewbuffer[(y*VIEWSIZE+x)*2+1] != '@')
+		Base::print_str(aimerend, C_ARROW_LIT, x, y, VIEW_WIN);
+	else
+		Base::print_str(aimerend, C_FIREB_TRAP, x, y, VIEW_WIN);
+
 }
 
 // The limbo view, also in 23*23 space:
@@ -214,6 +230,27 @@ void toggle_titles()
 		draw_titles();
 	else
 		redraw_view();
+}
+
+
+void diff_titles()
+{
+	// cf. "draw_titles()"
+	char *pos = &(viewbuffer[VIEWSIZE*VIEWSIZE*2+1]);
+	string s = "";
+	for(char num = viewbuffer[VIEWSIZE*VIEWSIZE*2]; num > 0; --num)
+	{
+		if(*pos != VIEWSIZE/2 || *(pos+1) != VIEWSIZE/2 || !ClassCPV::im_alive())
+		{
+			s += (pos+2);
+			s += ", ";
+		}
+		pos += strlen(pos+2)+3;
+	}
+	if(!s.empty())
+		s.erase(s.size()-2);
+	s.insert(0, "Titles: ");
+	add_to_chat(s, "", T_NO_TEAM);
 }
 
 

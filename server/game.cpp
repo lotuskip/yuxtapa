@@ -82,7 +82,7 @@ SerialBuffer miniv_buf;
 char renderbuffer[BUFFER_SIZE];
 
 // objective stuff:
-string objective_str;
+string objective_str = "Not played yet";
 unsigned short boulders_left;
 
 bool check_class_limit(const e_Team t, const e_Class c)

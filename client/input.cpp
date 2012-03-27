@@ -406,6 +406,9 @@ bool Input::inputhandle()
 			case KB_t: // titles toggle
 				toggle_titles();
 				break;
+			case KB_d: // differentiate titles
+				diff_titles();
+				break;
 			case KB_o: // ouching toggle
 				add_msg(string("[Reacting to damage ") + offon[Config::toggle_ouch()], 15);
 				break;
