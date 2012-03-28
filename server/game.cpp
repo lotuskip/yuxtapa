@@ -1051,43 +1051,41 @@ void Game::class_switch(const list<Player>::iterator pit, e_Class newcl)
 	}
 	else if(newcl != pit->cl)
 	{
-		if(int_settings[IS_CLASSLIMIT])
+		e_Team newteam = (pit->team != T_SPEC) ? pit->team
+			: e_Team(num_players[T_PURPLE] < num_players[T_GREEN]);
+		
+		/* Class limit checking. In case the desired class is unavailable,
+		 * human players (or what we think are human players...) just get
+		 * a message and nothing happens. But for bots we just give some
+		 * other class. */
+		string s;
+		while(check_class_limit(newteam, newcl))
 		{
-			// Count the number of players with class newcl in the relevant
-			// team (the players current team if != T_SPEC, or the weaker team
-			// otherwise):
-			e_Team t;
-			if(pit->team != T_SPEC)
-				t = pit->team;
-			else if(num_players[T_PURPLE] < num_players[T_GREEN])
-				t = T_PURPLE;
-			else
-				t = T_GREEN;
-
-			/* Class limit checking. In case the desired class is unavailable,
-			 * human players (or what we think are human players...) just get
-			 * a message and nothing happens. But for bots we just give some
-			 * other class. */
-			string s;
-			while(check_class_limit(t, newcl))
+			// In case teams are even and player is joining a team, check
+			// the other team, too:
+			if(pit->team == T_SPEC && num_players[T_PURPLE] == num_players[T_GREEN]
+				&& !check_class_limit(T_PURPLE, newcl))
 			{
-				if(pit->botpid == -1) // not bot
-				{
-					s = "That class is not available.";
-					Network::construct_msg(s, C_FIREB_TRAP_LIT);
-					Network::send_to_player(*pit);
-					return;
-				}
-				// else
-				if((newcl = e_Class(newcl+1)) == NO_CLASS)
-					newcl = C_ARCHER;
+				newteam = T_PURPLE;
+				break; // okay to join the purple team with this class
 			}
+			// else
+			if(pit->botpid == -1) // not bot
+			{
+				s = "That class is not available.";
+				Network::construct_msg(s, C_FIREB_TRAP_LIT);
+				Network::send_to_player(*pit);
+				return;
+			}
+			// else
+			if((newcl = e_Class(newcl+1)) == NO_CLASS)
+				newcl = C_ARCHER;
 		}
 		// if here, okay to change class/team
 		if(pit->team == T_SPEC)
 		{
 			// Currently a spectator: join the weaker team (or green)
-			++num_players[(pit->team = e_Team(num_players[T_PURPLE] < num_players[T_GREEN]))];
+			++num_players[(pit->team = newteam)];
 			post_join_msg(pit);
 			if(!intermission)
 			{

@@ -29,6 +29,9 @@ const char EVERY_N_WALL_UNDIG[MAX_MAPTYPE] = { // every Nth wall is made undigga
 	3 // complex
 };
 
+const char CORRIDOR_NARROW_1IN = 3; // every nth corridor narrow
+const char TIGHT_SPOT_CHANCE = 25; // every nth spot in a wide corridor narrow
+
 const Tile T_TREE = { TF_WALKTHRU|TF_SEETHRU, 'T', C_TREE };
 const Tile T_GROUND = { TF_WALKTHRU|TF_SEETHRU, '.', C_GRASS };
 const Tile T_WALL = { 0, '#', C_WALL };
@@ -783,7 +786,7 @@ Map::Map(const short size, const short variation, const short players)
 				// This means 'cell' is an end of a corridor; make a patch
 				// of floor there, possibly:
 				if(random()%3)
-					add_patch(Coords(cell.x*sh+sh/2, cell.y*sh+sh/2), T_GROUND/*DEBUG T_FLOOR*/);
+					add_patch(Coords(cell.x*sh+sh/2, cell.y*sh+sh/2), T_FLOOR);
 				// see if have generated enough (4/7 a mapfull):
 				if(mazed.size() < 4u*k*k/7u) // no
 				{
@@ -798,16 +801,16 @@ Map::Map(const short size, const short variation, const short players)
 			} // else:
 			mazed.push_back(cell2);
 			// make a corridor between 'cell' and 'cell2'
-			widen = random()%3; // every 3rd corridor is narrow
+			widen = random()%CORRIDOR_NARROW_1IN;
 			cell.x = cell.x*sh + sh/2; // convert cells to middle pt coords
 			cell.y = cell.y*sh + sh/2;
 			cell2.x = cell2.x*sh + sh/2;
 			cell2.y = cell2.y*sh + sh/2;
 			while(!(cell == cell2))
 			{
-				data[cell.y][cell.x] = T_GROUND/*DEBUG T_FLOOR*/;
-				if(widen)
-					data[cell.y+1][cell.x] = T_GROUND/*DEBUG T_FLOOR*/;
+				data[cell.y][cell.x] = T_FLOOR;
+				if(widen && (random()%TIGHT_SPOT_CHANCE))
+					data[cell.y+1][cell.x] = T_FLOOR;
 				cell = cell.in(d);
 			}
 			// prepare for next run:
@@ -1149,10 +1152,10 @@ e_Dir Map::coords_in_sector(const Coords &c) const
 
 // NOTE: this works for radii <= 6. With higher radii you need more intensive
 // tests (cf. LOS algorithm in viewpoint.cpp)
-bool Map::LOS_between(const Coords &c1, const Coords& c2, const char maxrad,
-	const char calced_rad)
+bool Map::LOS_between(const Coords& c1, const Coords& c2, const char maxrad,
+	const short calced_rad)
 {
-	char r = (calced_rad == -1) ? c2.dist_walk(c1) : calced_rad;
+	short r = (calced_rad == -1) ? c2.dist_walk(c1) : calced_rad;
 	if(r <= maxrad) // close enough
 	{
 		// Check if there is a LOS between c1 and c2:
@@ -1164,14 +1167,15 @@ bool Map::LOS_between(const Coords &c1, const Coords& c2, const char maxrad,
 		if(v.y == -r) line = v.x + r;
 		else if(v.x == r) line = 3*r + v.y;
 		else if(v.y == r) line = 5*r - v.x;
+		else if(v.x == -r) line = 7*r - v.y;
 		else /* v.x == -r */ line = 7*r - v.y;
-		for(ind = 0; ind < 2*(r-1); ind += 2)
+		for(ind = 0; ind < 2*r; ind += 2)
 		{
 			if(!(data[loslookup[r-2][line*2*r+ind+1]+c1.y]
 				[loslookup[r-2][line*2*r+ind]+c1.x].flags & TF_SEETHRU))
 				break;
 		}
-		if(ind == 2*(r-1)) // got all the way!
+		if(ind == 2*r) // got all the way!
 			return true; // seen, done
 		// else, need to check the opposite direction, the line from c2 to c1
 		// (but only if the line is one of the unsymmetric ones):

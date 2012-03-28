@@ -56,6 +56,24 @@ void draw_titles()
 	}
 }
 
+bool some_pc_at(const char x, const char y)
+{
+	if(viewbuffer[(y*VIEWSIZE+x)*2+1] == '@')
+		return true;
+	// sound-covered PCs must be checked separately
+	if(viewbuffer[(y*VIEWSIZE+x)*2+1] == '!')
+	{
+		char *pos = &(viewbuffer[VIEWSIZE*VIEWSIZE*2+1]);
+		for(char num = viewbuffer[VIEWSIZE*VIEWSIZE*2]; num > 0; --num)
+		{
+			if(x == *pos && y == *(pos+1))
+				return true; // there is a PC behind this '!'
+			pos += strlen(pos+2)+3; // same logic as above in draw_titles()
+		}
+	}
+	return false;
+}
+
 void draw_aimer()
 {
 	char x, y;
@@ -76,14 +94,17 @@ void draw_aimer()
 			{
 				x = loslookup[rad-2][line*2*rad+ind] + VIEWSIZE/2;
 				y = loslookup[rad-2][line*2*rad+ind+1] + VIEWSIZE/2;
-				// do not draw over PCs
-				if(viewbuffer[(y*VIEWSIZE+x)*2+1] != '@')
-					Base::print_str(aimerpath, C_ARROW, x, y, VIEW_WIN);
-				else
+				// do not draw past PCs or unpassables; and end in red for PCs
+				if(some_pc_at(x,y))
 				{
 					Base::print_str(aimerpath, C_FIREB_TRAP, x, y, VIEW_WIN);
 					break;
-				}
+				} // else
+				Base::print_str(aimerpath, C_ARROW, x, y, VIEW_WIN);
+				if(viewbuffer[(y*VIEWSIZE+x)*2+1] == '#'
+					|| viewbuffer[(y*VIEWSIZE+x)*2+1] == '+'
+					|| viewbuffer[(y*VIEWSIZE+x)*2+1] == 'O')
+					break;
 			}
 		}
 	}

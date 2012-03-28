@@ -819,6 +819,7 @@ void finish_wall_dig(const Coords &c)
 // axn is an action that "makes sense for that player to do"
 void process_action(const Axn &axn, const list<Player>::iterator pit)
 {
+	Coords c;
 	// Stuff that happens whenever a PC acts:
 	pit->acted_this_turn = true;
 	pit->wants_to_move_to = MAX_D;
@@ -830,7 +831,6 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		// Find an open door, starting the search from the facing direction:
 		e_Dir d = pit->facing;
 		Tile *t;
-		Coords c;
 		do {
 			c = pit->own_pc->getpos().in(d);
 			t = Game::curmap->mod_tile(c);
@@ -852,32 +852,32 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	}
 	case XN_TORCH_HANDLE:
 	{
-		Coords pos = pit->own_pc->getpos();
+		c = pit->own_pc->getpos();
 		if(pit->own_pc->torch_is_lit())
 		{
 			pit->own_pc->toggle_torch();
-			event_set.insert(pos);
+			event_set.insert(c);
 		}
 		else if(pit->torch_left) // wants to light it
 		{
 			// Check the three conditions: wizard, on a static torch, or
 			// next to a teammate with a lit torch:
-			if(pit->cl == C_WIZARD || any_noccent_at(pos, NOE_TORCH) != noccents[NOE_TORCH].end())
+			if(pit->cl == C_WIZARD || any_noccent_at(c, NOE_TORCH) != noccents[NOE_TORCH].end())
 			{
 				pit->own_pc->toggle_torch();
-				event_set.insert(pos);
+				event_set.insert(c);
 			}
 			else // Check the teammates:
 			{
 				for(list<PCEnt>::const_iterator pcit = PCs.begin();
 					pcit != PCs.end(); ++pcit)
 				{
-					if(pcit->getpos().dist_walk(pos) == 1
+					if(pcit->getpos().dist_walk(c) == 1
 						&& pcit->torch_is_lit()
 						&& pcit->get_owner()->team == pit->team)
 					{
 						pit->own_pc->toggle_torch();
-						event_set.insert(pos);
+						event_set.insert(c);
 						break;
 					}
 				}
@@ -892,15 +892,17 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	case XN_SUICIDE:
 	{
 		// Check for "scared to death" possibility:
-		// Go through the PCs looking for any visible enemy <= 3 tiles away
+		// Go through the PCs looking for any visible enemy close enough
 		list<PCEnt>::iterator it = PCs.begin();
 		while(it != PCs.end())
 		{
-			// not void, visible, enemy, close enough:
+			// not void, visible, enemy (NOTE: pass the actual
+			// distance to LOS_between; this way it will only check one
+			// direction (whether 'pit' sees 'it', not if 'it' sees 'pit'))
 			if(!it->isvoid() && it->visible_to_team(pit->team)
 				&& it->get_owner()->team != pit->team
-				&& Game::curmap->LOS_between(it->getpos(), pit->own_pc->getpos(),
-					SCARED_TO_DEATH_DIST))
+				&& Game::curmap->LOS_between(pit->own_pc->getpos(), it->getpos(),
+					SCARED_TO_DEATH_DIST, it->getpos().dist_walk(pit->own_pc->getpos())))
 			{
 				player_death(pit, " was scared to death by "
 					+ it->get_owner()->nick + '.', true);
@@ -927,10 +929,10 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	case XN_SHOOT:
 	{
 		// The coords are already validated in network.cpp upon receiving!
-		Coords targetc(axn.var1, axn.var2);
-		pit->facing = Coords(0,0).dir_of(targetc);
+		c.x = axn.var1; c.y = axn.var2;
+		pit->facing = Coords(0,0).dir_of(c);
 		pit->stats_i->arch_shots++;
-		arrows.push_back(Arrow(targetc, pit));
+		arrows.push_back(Arrow(c, pit));
 		break;
 	}
 	case XN_FLASH:
@@ -954,7 +956,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	case XN_HEAL:
 		if(axn.var1 != MAX_D)
 		{
-			Coords c = pit->own_pc->getpos().in((pit->facing = e_Dir(axn.var1)));
+			c = pit->own_pc->getpos().in((pit->facing = e_Dir(axn.var1)));
 			list<PCEnt>::iterator pc_it = any_pc_at(c);
 			if(pc_it != PCs.end())
 			{
@@ -976,7 +978,6 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 		limiter_upd(pit);
 
 		// Determine a point to blink to, if any:
-		Coords c;
 		Coords opos = pit->own_pc->getpos();
 		vector<Coords> optimals;
 		Coords cg = opos; // "good" coords
@@ -1027,7 +1028,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	case XN_MINE:
 	{
 		pit->facing = e_Dir(axn.var1);
-		Coords c = pit->own_pc->getpos().in(e_Dir(axn.var1));
+		c = pit->own_pc->getpos().in(e_Dir(axn.var1));
 		char rv;
 		if(!(rv = cant_dig_in(c, e_Dir(axn.var1))))
 		{
@@ -1045,16 +1046,16 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	}
 	case XN_DISGUISE:
 	{
-		Coords pos = pit->own_pc->getpos();
-		if(Game::curmap->get_tile(pos).flags & TF_NOCCENT)
+		c = pit->own_pc->getpos();
+		if(Game::curmap->get_tile(c).flags & TF_NOCCENT)
 		{
 			// check that there's an enemy corpse
-			list<NOccEnt>::iterator c_it = any_noccent_at(pos, NOE_CORPSE);
+			list<NOccEnt>::iterator c_it = any_noccent_at(c, NOE_CORPSE);
 			if(c_it != noccents[NOE_CORPSE].end()
 				&& c_it->get_colour() != team_colour[pit->team])
 			{
 				pit->doing_a_chore = DISGUISE_TURNS;
-				add_action_ind(pos, A_DISGUISE);
+				add_action_ind(c, A_DISGUISE);
 			}
 		}
 		break;
@@ -1074,18 +1075,17 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	{
 		limiter_upd(pit);
 
-		Coords pos;
 		e_Dir d;
 		unsigned short flgs;
 		for(char ch = 0; ch < 4; ++ch)
 		{
 			d = e_Dir((pit->facing + 2*ch)%MAX_D);
-			pos = pit->own_pc->getpos().in(d);
-			flgs = Game::curmap->mod_tile(pos)->flags;
+			c = pit->own_pc->getpos().in(d);
+			flgs = Game::curmap->mod_tile(c)->flags;
 			if(flgs & TF_WALKTHRU && !(flgs & TF_OCCUPIED))
 			{
 				MMs.push_back(MM(pit, d));
-				event_set.insert(pos);
+				event_set.insert(c);
 			}
 			// else cannot conjure a MM there
 		}

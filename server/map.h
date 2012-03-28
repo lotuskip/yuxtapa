@@ -72,7 +72,7 @@ public:
 	bool point_out_of_map(const Coords &c) const;
 	
 	bool LOS_between(const Coords &c1, const Coords &c2, const char maxrad,
-		const char calced_rad = -1);
+		const short calced_rad = -1);
 
 	bool is_inhabited() const { return inhabited; }
 	bool is_outdoor() const { return maptype == MT_OUTDOOR; }
