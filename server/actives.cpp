@@ -32,14 +32,25 @@ const char CHANCE_PORTALS = 45;
 const char PORTALS_FROM_EDGE = 15;
 
 // placement can take place if the tile has one of these symbols:
-const string all_placem_syms = ".\"^T";
-void next_unused_tile(Coords &c, vector<Coords> &useds)
+const string all_placem_syms = ".\";T";
+void next_unused_tile(Coords &c, vector<Coords> &useds, const bool force = false)
 {
 	init_nearby(c);
-	// Find next (A) unused, and (B) free spot:
-	while(find(useds.begin(), useds.end(), c) != useds.end()
-		|| all_placem_syms.find(Game::curmap->get_tile(c).symbol) == string::npos)
-		c = next_nearby();
+	if(force)
+	{
+		// find first not yet used:
+		while(find(useds.begin(), useds.end(), c) != useds.end())
+			c = next_nearby();
+		if(all_placem_syms.find(Game::curmap->get_tile(c).symbol) == string::npos)
+			*(Game::curmap->mod_tile(c)) = T_FLOOR; // change the map to force placement
+	}
+	else
+	{
+		// Find next (A) unused and (B) free spot
+		while(find(useds.begin(), useds.end(), c) != useds.end()
+			|| all_placem_syms.find(Game::curmap->get_tile(c).symbol) == string::npos)
+			c = next_nearby();
+	}
 	// Found it:
 	useds.push_back(c);
 }
@@ -247,7 +258,7 @@ void do_placement()
 	// One green flag in a random corner:
 	e_Dir green_corner = e_Dir(1 + 2*(random()%3));
 	d = Game::curmap->get_center_of_sector(green_corner);
-	next_unused_tile(d, used_coords);
+	next_unused_tile(d, used_coords, true);
 	add_noccent(d, NOE_FLAG, T_GREEN);
 	// A purple flag at the opposite side of the map:
 	e_Dir purple_corner = !green_corner;
@@ -259,7 +270,7 @@ void do_placement()
 	// case 2: nothing
 	}
 	d = Game::curmap->get_center_of_sector(purple_corner);
-	next_unused_tile(d, used_coords);
+	next_unused_tile(d, used_coords, true);
 	add_noccent(d, NOE_FLAG, T_PURPLE);
 	/* The result so far is either
 	 * G..      G..
@@ -277,7 +288,7 @@ void do_placement()
 		++tmpd;
 		if(random()%2) ++tmpd;
 		d = Game::curmap->get_center_of_sector(tmpd);
-		next_unused_tile(d, used_coords);
+		next_unused_tile(d, used_coords, true);
 		add_noccent(d, NOE_FLAG, T_NO_TEAM);
 		/* This makes it either
 		 * GN.       G.N
@@ -288,21 +299,21 @@ void do_placement()
 		--tmpd;
 		if(random()%2) --tmpd;
 		d = Game::curmap->get_center_of_sector(tmpd);
-		next_unused_tile(d, used_coords);
+		next_unused_tile(d, used_coords, true);
 		add_noccent(d, NOE_FLAG, T_NO_TEAM);
 		/* And that added another 'N' on the other side of 'G' */
 		// On large maps, one more in central area:
 		if(msize >= BIG_MAP_LIM)
 		{
 			d.y = d.x = msize/2;
-			next_unused_tile(d, used_coords);
+			next_unused_tile(d, used_coords, true);
 			add_noccent(d, NOE_FLAG, T_NO_TEAM);
 		}
 		break;
 	case GM_CONQ:
 		// add one purple-own 3rd flag in central area:
 		d.y = d.x = msize/2;
-		next_unused_tile(d, used_coords);
+		next_unused_tile(d, used_coords, true);
 		add_noccent(d, NOE_FLAG, T_PURPLE);
 		break;
 	case GM_STEAL:
@@ -324,14 +335,14 @@ void do_placement()
 			if(++tmpd == purple_corner)
 				--(--tmpd);
 			d = Game::curmap->get_center_of_sector(tmpd);
-			next_unused_tile(d, used_coords);
+			next_unused_tile(d, used_coords, true);
 			add_noccent(d, NOE_FLAG, T_PURPLE);
 		}
 		else // purple flag is in the corner
 		{
 			// flag:
-			d = Game::curmap->get_center_of_sector(MAX_D);
-			next_unused_tile(d, used_coords);
+			d.y = d.x = msize/2;
+			next_unused_tile(d, used_coords, true);
 			add_noccent(d, NOE_FLAG, T_PURPLE);
 			// item:
 			tmpd = !green_corner;
@@ -347,7 +358,7 @@ void do_placement()
 		if(random()%2) ++tmpd;
 		else --tmpd;
 		d = Game::curmap->get_center_of_sector(tmpd);
-		next_unused_tile(d, used_coords);
+		next_unused_tile(d, used_coords, true);
 		add_noccent(d, NOE_FLAG, T_NO_TEAM);
 		break;
 	case GM_TDM: break; // no additional flags

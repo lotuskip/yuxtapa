@@ -62,7 +62,7 @@ dist: clean
 	@echo creating dist tarball
 	@mkdir -p yuxtapa-${VERSION}
 	@cp -R LICENSE Makefile README vhist.html common client server manual \
-	testes tmplates yuxtapa-${VERSION}
+	tmplates yuxtapa-${VERSION}
 	@tar -czf yuxtapa-${VERSION}.tar.gz yuxtapa-${VERSION}
 	@rm -rf yuxtapa-${VERSION}
 

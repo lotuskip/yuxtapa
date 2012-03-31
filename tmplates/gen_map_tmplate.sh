@@ -1,11 +1,13 @@
 #!/bin/sh
-#Script to generate an empty yuxtapa map file. Usage:
+#Script to generate an empty yuxtapa map file. Extremely slow, but does the
+#job (no bashisms; way faster with dash, zsh, and probably others).
+#Usage:
 # ./gen_map_tmplate.sh [size of map, integer]
 size=100
 if test $# -gt 0; then
 	size=$1
-	if test $size -lt 70 -o $size -gt 365; then
-		echo "Invalid mapsize: $size (must be 70-365)" >&2
+	if test $size -lt 42 -o $size -gt 511; then
+		echo "Invalid mapsize: $size (must be 42-511)" >&2
 		exit 1
 	fi
 fi

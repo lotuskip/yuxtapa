@@ -328,6 +328,10 @@ void Game::next_map(const string &loadmap)
 		time(&(it->last_switched_cl));
 	}
 	axn_indicators.clear();
+	event_set.clear();
+	reg_sounds.clear();
+	voices.clear();
+	fball_centers.clear();
 
 	construct_team_msgs(cur_players.end());
 	send_team_upds(cur_players.end());

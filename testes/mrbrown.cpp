@@ -726,7 +726,9 @@ bool no_class_spc_Mi()
 	}
 	if(rv < MAX_D)
 	{
-		send_action(XN_MINE, d);
+		// set mining dir as last move dir; this way miners are more likely to
+		// continue digging roughly in the same direction (?)
+		send_action(XN_MINE, (prev_committed_walk = d));
 		wait_turns = DIG_WAIT;
 		return false;
 	}

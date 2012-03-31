@@ -1,4 +1,11 @@
 <html>
+<head>
+	<title>yuxtapa version history</title>
+	<meta http-equiv="Content-Type" content="text/ html; charset=UTF-8" />
+	<style>
+	body { color:#BBB; background-color:#000; }
+	</style>
+</head>
 <body>
 <h2>yuxtapa version history &amp; changelogs</h2>
 
@@ -23,7 +30,7 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 
 <hr>
 
-<p><strong>version 9</strong> released ??? ?, 2012</p>
+<p><strong>version 9</strong> released Apr ?, 2012</p>
 
 <p><strong>Client:</strong>
 <ul>
@@ -38,6 +45,7 @@ current view</li>
 <ul>
 <li>New config entry 'ipv' that can be used to tell the server explicitly to use
 IPv4 or IPv6 (see the new server.conf template)</li>
+<li>Fixed a segfault that could occur when using the '!nextmap' command</li>
 <li>Corpses now disappear if used by a scout to disguise (bugfix, most
 definitely)</li>
 <li>Yet another fix (and further complication) of the LOS algorithm</li>
@@ -46,6 +54,7 @@ these won't be touched (see manual on known bugs)</li>
 <li>Fixed how joining new players didn't receive the flag map right away</li>
 <li>The accessibility check for team flags is now applied to neutral flags,
 too</li>
+<li>No more than one flag can now be generated per sector (bugfix)</li>
 <li>Improvements in dungeon-type map generation</li>
 <li>In destroy mode, the boulders can no longer get generated around the purple
 team's initial flag (sorry if someone thought that was a cute touch)</li>
@@ -70,6 +79,7 @@ trap</li>
 	<li>Do not follow very nearby sounds, and with this change, now follow
 	mining sounds, too</li>
 	<li>Random turning likelihood dependent on time of isolation</li>
+	<li>Wait properly when crossing rough terrain or marsh</li>
 </ul></li>
 </ul></p>
 
