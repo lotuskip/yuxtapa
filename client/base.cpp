@@ -346,10 +346,31 @@ void Base::print_teams_upd(const unsigned char greens,
 void Base::print_flags(const string &fs)
 {
 	// First print the empty box:
+	char i;
+	change_colour(windows[STAT_WIN], 7);
+	wmove(windows[STAT_WIN], 3, 28);
+	waddch(windows[STAT_WIN], ACS_ULCORNER);
+	for(i = 0; i < 5; ++i)
+		waddch(windows[STAT_WIN], ACS_HLINE);	
+	waddch(windows[STAT_WIN], ACS_URCORNER);	
+	for(i = 0; i < 3; ++i)
+	{
+		wmove(windows[STAT_WIN], 4+i, 28);
+		waddch(windows[STAT_WIN], ACS_VLINE);	
+		waddstr(windows[STAT_WIN], "     ");
+		waddch(windows[STAT_WIN], ACS_VLINE);	
+	}
+	wmove(windows[STAT_WIN], 7, 28);
+	waddch(windows[STAT_WIN], ACS_LLCORNER);
+	for(i = 0; i < 5; ++i)
+		waddch(windows[STAT_WIN], ACS_HLINE);	
+	waddch(windows[STAT_WIN], ACS_LRCORNER);
+#if 0
 	print_str("_______", 7, 28, 3, STAT_WIN);
 	print_str("|     |", 7, 28, 4, STAT_WIN);
 	print_str("|     |", 7, 28, 5, STAT_WIN);
 	print_str("|_____|", 7, 28, 6, STAT_WIN);
+#endif
 
 	for(char i = 0; i < MAX_D+1; ++i)
 	{

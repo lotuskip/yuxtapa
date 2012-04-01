@@ -256,12 +256,10 @@ unsigned char Player::torch_symbol(const bool lit) const
 {
 	if(cl_props.torch)
 	{
+		if(!torch_left)
+			return ',';
 		if(lit)
-		{
-			if(!torch_left)
-				return ',';
 			return torch_sym[2*torch_left/TORCH_DURATION];
-		}
 		return ' '; // torch not lit
 	}
 	return '-'; // no torch whatsoever

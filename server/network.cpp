@@ -144,6 +144,7 @@ bool Network::receive_n_handle()
 	char handled = 0;
 	short msglen;
 	unsigned short ush;
+	string s;
 	while(handled++ < 20 && // handle at most 20 messages; then return control
 		(msglen = recvfrom(s_me, recv_buffer.getw(), BUFFER_SIZE, 0,
 			(sockaddr *)&them, &addr_len)) != -1)
@@ -161,18 +162,18 @@ bool Network::receive_n_handle()
 				do_send_to(&them, addr_len);
 				break;
 			}
-			string pl_nick, pl_passw = "";
+			string pl_passw = "";
 			ush = recv_buffer.read_sh();
 			if(ush != 0xFFFF) // indicates a password has been sent, too
 				recv_buffer.read_str(pl_passw);
-			recv_buffer.read_str(pl_nick);
-			if(num_syms(pl_nick) > MAX_NICK_LEN)
+			recv_buffer.read_str(s); // read nick
+			if(num_syms(s) > MAX_NICK_LEN)
 			{
 				/* Client passed version control but has too long nick??
 				 * That means it's a tampered client! Ignore the bastard. */
 				break;
 			}
-			ush = player_hello(ush, pl_passw, pl_nick, them);
+			ush = player_hello(ush, pl_passw, s, them);
 			// Note: player_hello can call something that uses send_buffer!
 			send_buffer.clear();
 			if(ush == ID_STEAL)
@@ -202,9 +203,9 @@ bool Network::receive_n_handle()
 				send_buffer.add(pl_passw);
 			}
 			do_send_to(&them, addr_len);
-			// Send greeting: (reuse pl_nick as a tmp string):
-			pl_nick = Config::greeting_str();
-			construct_msg(pl_nick, DEF_MSG_COL);
+			// Send greeting:
+			s = Config::greeting_str();
+			construct_msg(s, DEF_MSG_COL);
 			do_send_to(&them, addr_len);
 			list<Player>::iterator pit = (--cur_players.end());
 			if(intermission) // send the miniview to the new player
@@ -248,9 +249,8 @@ bool Network::receive_n_handle()
 			break;
 		case MID_SAY_ALOUD:
 			if(!intermission && (pit = who_is_this()) != cur_players.end()
-				&& pit->is_alive())
+				&& pit->is_alive() && voices.find(pit->own_pc->getpos()) == voices.end())
 			{
-				string s;
 				recv_buffer.read_str(s);
 				add_voice(pit->own_pc->getpos(), s);
 				event_set.insert(pit->own_pc->getpos());
@@ -259,7 +259,6 @@ bool Network::receive_n_handle()
 		case MID_SAY_CHAT:
 			if((pit = who_is_this()) != cur_players.end())
 			{
-				string s;
 				recv_buffer.read_str(s);
 				// Check if it is a !command
 				if(!s.empty() && s[0] == '!'

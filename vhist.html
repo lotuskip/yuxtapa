@@ -38,6 +38,8 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 <li>New keycommand (default 'd') to show in the chat all the titles in the
 current view</li>
 <li>Archer aimer path is cut off by obstacles and PCs</li>
+<li>The flag map border is now drawn more nicely (at least on terminals that support
+that!)</li>
 </ul>
 </p>
 
@@ -45,7 +47,6 @@ current view</li>
 <ul>
 <li>New config entry 'ipv' that can be used to tell the server explicitly to use
 IPv4 or IPv6 (see the new server.conf template)</li>
-<li>Fixed a segfault that could occur when using the '!nextmap' command</li>
 <li>Corpses now disappear if used by a scout to disguise (bugfix, most
 definitely)</li>
 <li>Yet another fix (and further complication) of the LOS algorithm</li>
@@ -61,6 +62,9 @@ team's initial flag (sorry if someone thought that was a cute touch)</li>
 <li>If the teams have the same number of players, a newly joining player can now
 also be put into the purple team if the class they requested is not available in
 the green team</li>
+<li>Do not allow multiple shouts on the same turn (in fact: do not allow a shout
+if there is a sound at the PC's position already)</li>
+<li>Torch symbol ',' for burnt out torch is now persistent</li>
 </ul>
 </p>
 
@@ -90,6 +94,17 @@ trouble</li>
 <li>Everything else should be compatible with v.8</li>
 <li>new .conf templates</li>
 </ul></p>
+
+<hr>
+
+<p><strong>version 4e</strong> released Apr ?, 2012</p>
+
+<p><strong>Server:</strong>
+<ul>
+<li>Fixed a segfault that could occur when using the '!nextmap' command</li>
+</ul></p>
+
+<p>Same remark as below for version 4d.</p>
 
 <hr>
 
