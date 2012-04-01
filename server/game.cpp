@@ -327,6 +327,7 @@ void Game::next_map(const string &loadmap)
 			it->stats_i->time_specced += time(NULL) - it->last_switched_cl;
 		time(&(it->last_switched_cl));
 	}
+	// Clear EVERYTHING: (the rest of EVERYTHING is cleared in do_placement)
 	axn_indicators.clear();
 	event_set.clear();
 	reg_sounds.clear();

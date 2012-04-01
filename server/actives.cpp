@@ -203,6 +203,9 @@ void do_placement()
 		noccents[tmp].clear();
 	boulders.clear();
 	PCs.clear();
+	MMs.clear();
+	arrows.clear();
+	zaps.clear();
 	team_flags[T_GREEN].clear();
 	team_flags[T_PURPLE].clear();
 
