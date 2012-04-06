@@ -201,6 +201,7 @@ void do_placement()
 	// empty previous stuff
 	for(tmp = 0; tmp < MAX_NOE; ++tmp)
 		noccents[tmp].clear();
+	traps.clear();
 	boulders.clear();
 	PCs.clear();
 	MMs.clear();

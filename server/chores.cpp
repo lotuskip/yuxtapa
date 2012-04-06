@@ -443,8 +443,8 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 	{
 		list<Trap>::iterator tr_it = any_trap_at(c);
 		// A trap is triggered always if not seen and sometimes if it's dark:
-		if(!tr_it->is_seen_by(p->team)
-			|| (!(tile->flags & TF_LIT) && random()%100 < 15))
+		if(!tr_it->is_seen_by(p->team) || p->own_vp->is_blind()
+			|| (!(tile->flags & TF_LIT) && random()%100 < 15 && !is_dynlit(c)))
 		{
 			if(trigger_trap(p, tr_it))
 			{
