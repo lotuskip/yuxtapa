@@ -561,8 +561,10 @@ bool get_sound_to_follow(Coords &t)
 {
 	for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
 	{
-		// get first sound effect, not including center of view
-		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1)
+		// Get first sound effect, not including center of view.
+		// Always follow voices, other sounds only half the time.
+		if(viewbuffer[i] == '!' && i != VIEWSIZE*(VIEWSIZE+1)+1
+			&& (viewbuffer[i-1] == VOICE_COLOUR || random()%2))
 		{
 			t.x = ((i-1)/2)%VIEWSIZE;
 			t.y = ((i-1)/2)/VIEWSIZE;

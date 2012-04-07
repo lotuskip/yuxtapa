@@ -860,6 +860,8 @@ void Game::construct_team_msgs(const list<Player>::const_iterator to)
 	
 	for(char c = 0; c < 3; ++c)
 	{
+		if(teamstrs[c][teamstrs[c].size()-1] == ':') // no players
+			teamstrs[c] += " -";
 		Network::construct_msg(teamstrs[c], team_colour[c]);
 		if(to == cur_players.end())
 			Network::broadcast();
@@ -999,10 +1001,10 @@ void Game::send_times(const list<Player>::const_iterator to)
 	// but the spawn time is team-specific!
 	unsigned char sts[3] = {
 		// green spawn time:
-		(spawn_cycle - ((curturn + spawn_cycle/2) % spawn_cycle))
-			*int_settings[IS_TURNMS]/1000,
+		(unsigned char)((spawn_cycle - ((curturn + spawn_cycle/2) % spawn_cycle))
+			*int_settings[IS_TURNMS]/1000),
 		// purple spawn time:
-		(spawn_cycle - (curturn % spawn_cycle))*int_settings[IS_TURNMS]/1000,
+		(unsigned char)((spawn_cycle - (curturn % spawn_cycle))*int_settings[IS_TURNMS]/1000),
 		0 }; // specs don't spawn
 
 	if(to == cur_players.end()) // need to send to all
