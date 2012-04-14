@@ -20,8 +20,8 @@ using namespace std;
 
 // Messages are added (to the screen) at most every STAY_TIME ms.
 // Messages are moved away at least every MOVE_FREQ ms.
-const unsigned short MOVE_FREQ = 3600; // ms
-const unsigned short STAY_TIME = 800;
+const unsigned short MOVE_FREQ = 3500; // ms
+const unsigned short STAY_TIME = 750;
 msTimer last_move, last_add, reference;
 
 // messages on the screen:
@@ -29,8 +29,9 @@ struct MsgBufferLine
 {
 	string text;
 	unsigned char cpair;
+	char repeat;
 	MsgBufferLine(const string &s = "", const unsigned char c = 0)
-		: text(s), cpair(c)
+		: text(s), cpair(c), repeat(0)
 	{
 		// Make the "normal view coloured" messages lighter initially:
 		if(cpair >= C_TREE && cpair < C_TREE_LIT)
@@ -49,7 +50,7 @@ struct MsgBufferLine
 	}
 };
 deque<MsgBufferLine> msgbuffer(MSG_WIN_Y-1); // -1 to leave last row for typing space
-char bottom_idx = 0;
+char bottom_idx = 0; // y-coord of the first free message slot
 // messages awaiting to go onto the screen:
 deque<MsgBufferLine> msgavail;
 
@@ -114,9 +115,24 @@ void move_msgs()
 
 void redraw_msgs()
 {
+	string tmp_str;
 	for(char y = 0; y < MSG_WIN_Y-1; ++y)
-		Base::print_str(msgbuffer[y].text.c_str(), msgbuffer[y].cpair,
-			0, y, MSG_WIN, true);
+	{
+		if(msgbuffer[y].repeat)
+		{
+			tmp_str = msgbuffer[y].text;
+			if(num_syms(tmp_str) > MSG_WIN_X-4) // 4: len(" [?]")
+				del_syms(tmp_str, MSG_WIN_X-4);
+			tmp_str += " [";
+			tmp_str += char(msgbuffer[y].repeat + '1');
+			tmp_str += ']';
+			Base::print_str(tmp_str.c_str(), msgbuffer[y].cpair,
+				0, y, MSG_WIN, true);
+		}
+		else
+			Base::print_str(msgbuffer[y].text.c_str(), msgbuffer[y].cpair,
+				0, y, MSG_WIN, true);
+	}
 }
 
 void redraw_clocks()
@@ -140,6 +156,23 @@ void redraw_clocks()
 	Base::print_str(timestr.c_str(), 7, 54, 7, STAT_WIN, true);
 }
 
+
+bool check_repeat_msg(const string &s, const unsigned char cp)
+{
+	if(bottom_idx && s == msgbuffer[bottom_idx-1].text
+		&& cp == msgbuffer[bottom_idx-1].cpair)
+	{
+		if(msgbuffer[bottom_idx-1].repeat != '+' - '1' // this value is -1
+			&& ++(msgbuffer[bottom_idx-1].repeat) > 8)
+			msgbuffer[bottom_idx-1].repeat = '+' - '1';
+		redraw_msgs();
+		last_move.update(); /* only update this! Then the next 
+			message can be printed without unnecessary delay */
+		return true;
+	}
+	return false;
+}
+
 } // end local namespace
 
 
@@ -153,6 +186,13 @@ void init_msgs()
 
 void add_msg(const string &s, const unsigned char cp)
 {
+	/* First check if this new message is identical with the previous (this
+	 * happens especially if someone keeps shouting something */
+	if(check_repeat_msg(s, cp))
+		return;
+
+	// The rest goes for non-repeating messages:
+
 	if(bottom_idx == MSG_WIN_Y-1) // screen buffer full
 	{
 		// check if STAY_TIME has passed:
@@ -178,12 +218,17 @@ void upd_msgs()
 	// add messages in avail, if any:
 	if(!msgavail.empty() && reference.update() - last_add >= STAY_TIME)
 	{
-		move_msgs();
-		msgbuffer[bottom_idx] = msgavail.front();
-		msgavail.pop_front();
-		++bottom_idx;
-		last_add.update();
-		redraw_msgs();
+		if(check_repeat_msg(msgavail.front().text, msgavail.front().cpair))
+			msgavail.pop_front();
+		else
+		{
+			move_msgs();
+			msgbuffer[bottom_idx] = msgavail.front();
+			msgavail.pop_front();
+			++bottom_idx;
+			last_add.update();
+			redraw_msgs();
+		}
 	}
 	else if(reference.update() - last_move >= MOVE_FREQ)
 	{
@@ -220,9 +265,9 @@ void clear_msgs()
 void add_to_chat(string &s, const string &talker, const unsigned char t)
 {
 	// Chop into pieces if line is too long:
-	short len = talker.size() + strlen(team_ind[t]);
+	unsigned short len = num_syms(talker) + strlen(team_ind[t]);
 	short new_lines = 1;
-	if(len + s.size() > Base::chat_width())
+	if(len + num_syms(s) > Base::chat_width())
 	{
 		unsigned int i;
 		if((i = s.rfind(' ', Base::chat_width() - len)) == string::npos)
@@ -230,7 +275,7 @@ void add_to_chat(string &s, const string &talker, const unsigned char t)
 		chatbuffer.push_back(ChatBufferLine(s.substr(0, i), talker, t));
 		++new_lines;
 		s.erase(0, i);
-		while(s.size() > Base::chat_width())
+		while(num_syms(s) > Base::chat_width())
 		{
 			if((i = s.rfind(' ', Base::chat_width())) == string::npos)
 				i = Base::chat_width();

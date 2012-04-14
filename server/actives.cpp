@@ -357,6 +357,7 @@ void do_placement()
 			the_item.setpos(d);
 			obj_sector = tmpd;
 		}
+		the_item.set_col(C_LIGHT_TRAP);
 		// Give the greens a neutral vantage-point (always):
 		tmpd = green_corner;
 		if(random()%2) ++tmpd;

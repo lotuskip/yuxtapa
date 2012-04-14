@@ -15,7 +15,7 @@ void nearby_set_dim(const short mapsize) { maxdim = mapsize; }
 
 void init_nearby(const Coords &c)
 {
-	pnt = c; elen = 1; lenidx = 0, eind = 1;
+	pnt = c; elen = eind = 1; lenidx = 0;
 }
 
 Coords next_nearby()

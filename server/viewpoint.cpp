@@ -72,7 +72,7 @@ const char fg_map[C_BG_HEAL - BASE_COLOURS] = {
 	6 // C_ZAP
 };
 
-} // end local namesapce
+} // end local namespace
 
 namespace Game { extern Map *curmap; }
 extern e_GameMode gamemode;
@@ -137,7 +137,7 @@ void ViewPoint::newmap()
  * .#...
  * .x...
  * Here the #s are walls. With the basic approach as stated above, the PC will
- * see 'y' but not 'x'. The points are, however, in an equal position, so either
+ * see 'y' but not 'x'. The points are, however, in an equal position, so
  * either they should both be seen or neither should be seen. We choose that
  * they are both seen.
  *
@@ -282,6 +282,7 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 	Coords c;
 	list<string> titles;
 	list<Coords> titlecoords;
+	map<Coords, string>::const_iterator vit;
 	for(y = 0; y < VIEWSIZE; ++y)
 	{
 		for(x = 0; x < VIEWSIZE; ++x)
@@ -297,11 +298,11 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 			else // point is in map
 			{
 				tp = Game::curmap->mod_tile(c);
-				// A sound overruns anything else (even when blind!),
+				// A sound overrules anything else (even when blind!),
 				// so check for it first:
 				if(tp->flags & TF_SOUND)
 				{
-					map<Coords, string>::const_iterator vit = voices.find(c);
+					vit = voices.find(c);
 					if(vit != voices.end()) // Voice?
 					{
 						*(target++) = VOICE_COLOUR;

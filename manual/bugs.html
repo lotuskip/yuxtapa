@@ -103,11 +103,6 @@ entered the portal from, not on the portal. This is not exactly intentional, but
 it's been decided that it's okay. In fact in can be more informative this way, if there
 happened to be several PCs standing around the portal.</p>
 
-<p><em><u>No corpses on traps</u></em><br>
-If a PC dies to any trap, or is killed while standing on a trap, no corpse is
-generated. This is because, for simplicity, the game just doesn't allow both
-a corpse and a trap in the same spot.</p>
-
 <p><em><u>Unsymmetric torch carrying</u></em><br>
 When walking next to a long wall with a lit torch you might notice that in one
 direction more wall is lit than in the other direction. Technically this is
@@ -115,5 +110,10 @@ because the dynamic lighting algorithm uses a simplified LOS logic, which
 suffers from the fact that Bresenham's algorithm is not symmetrical. In reality
 this is explained by the PCs carrying the torch funnily, resulting in the
 observed effect.</p>
+
+<p><em><u>Suffering a zap might feel like you're dead</u></em><br>
+If a PC is hit by a zap and survives, under certain conditions it can happen that
+it's not properly displayed afterwards (the reason for this is unclear;
+probably has something to do with multiple zap bouncing, the code of which is messy).</p>
 
 </body></html>

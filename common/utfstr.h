@@ -7,7 +7,7 @@
 // UTF-8 string manipulation. There exist some macros for this, too,
 // but we do what we need the way we like to do it.
 
-// del a symbol at index n (index in symbols, not chars!)
+// del the symbol at index n (index in symbols, not chars!)
 void del(std::string &s, const int n);
 // insert wchar c at index n (again, in symbols, not chars)
 void ins(std::string &s, const unsigned int c, const int n);
@@ -24,8 +24,8 @@ void del_syms(std::string &s, const short start_at);
 // gives the index, in chars, of the nth symbol:
 short ind_of_sym(const std::string &s, int n);
 
-// Returns, as a C-string, the substring starting at the begth *symbol*
-// and *len* symbols in length
+// Returns, as a C-string, the substring starting at the 'beg'th symbol
+// and 'len' symbols in length
 const char* mb_substr(const std::string &s, const short beg, short len);
 
 // If "s.substr(0,n)" would cut the string in the middle of a multi-byte

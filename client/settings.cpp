@@ -215,10 +215,10 @@ void Config::read_config(const string &servername)
 					continue;
 				}
 				qshout[sh-1].erase(0,1); // remove ' '
-				if(num_syms(qshout[sh-1]) >= MSG_WIN_X-4) // -4 is for the "!: " prefix
+				if(num_syms(qshout[sh-1]) > MSG_WIN_X-3) // -3 is for the "!: " prefix
 				{
 					cerr << "Quick shout " << sh << " is too long!" << endl;
-					del_syms(qshout[sh-1], MSG_WIN_X-4);
+					del_syms(qshout[sh-1], MSG_WIN_X-3);
 				}
 			}
 			continue;
@@ -305,15 +305,15 @@ void Config::read_config(const string &servername)
 
 void Config::save_msg_memory()
 {
+	ofstream cmfile((confdir_str + "chatmemory").c_str());
 	if(stored_msgs)
 	{
-		while(prev_strs.size() > (unsigned int)stored_msgs)
-			prev_strs.erase(prev_strs.begin());
-		ofstream cmfile((confdir_str + "chatmemory").c_str());
 		if(!cmfile)
 			cerr << "Warning: failed to save chat memory." << endl;
 		else
 		{
+			while(prev_strs.size() > (unsigned int)stored_msgs)
+				prev_strs.erase(prev_strs.begin());
 			while(!prev_strs.empty())
 			{
 				cmfile << prev_strs.front() << endl;
@@ -321,6 +321,7 @@ void Config::save_msg_memory()
 			}
 		}
 	}
+	// else opening the file causes it to be emptied
 }
 
 string &Config::get_server_ip() { return serverip; }

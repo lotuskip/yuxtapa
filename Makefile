@@ -13,6 +13,7 @@ EXTRA_FLAGS=
 # Add -DBOTMSG to make the bot client print messages.
 # Add -DTIME_SERVER_TURN to time the server render (prints a lot of numbers!)
 # Add -static to build statically linked binaries.
+# Adding -D_XOPEN_SOURCE_EXTENDED on OSX seems to be necessary (for the client)
 
 #The rest probably needs not be touched.
 ###############################################################################

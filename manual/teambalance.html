@@ -33,16 +33,10 @@ either the green or the purple team, so that in the end the teams have an equal 
 (or if the amount of players is odd, one of the teams has one player more than the other).</p>
 
 <p>The players are not treated equally in this shuffle, but they are first ordered according
-to the following comparison logic:
-<ul>
-<li>The player with the higher <a href="adminlevels.html">AL</a> is placed higher</li>
-<li>If the ALs are equal, certain reference numbers are compared. These are affected by
-<ul>
-<li>the average time played as each class</li>
-<li>the kill/death ratio</li>
-</ul>
-so that players who have lots of kills and few deaths, and who have played a lot with all classes will rank high</li>
-</ul>
+to a comparison logic that takes into account the average time played as each
+class and the kill/death ratio.
+Players who have lots of kills and few deaths, and who have played a lot with
+all classes will rank high.
 The actual order of the players is not visible to the clients; all this is internal to the server.
 For more details, look at the source code.</p>
 

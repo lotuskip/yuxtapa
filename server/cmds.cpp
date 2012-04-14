@@ -47,14 +47,11 @@ unsigned long total_kills(const list<PlayerStats>::iterator st)
 }
 
 // For sorting players by their "level" for team shuffling.
-// We want a *descending* order; return true if i should be before j.
+// We want a *descending* order; return true if *i is better than *j.
 // Note that this ordering is completely hidden from the players!
 bool pl_level_cmp(const list<Player>::const_iterator i, const list<Player>::const_iterator j)
 {
-	// 1. Higher admin level wins.
-	if(j->stats_i->ad_lvl != i->stats_i->ad_lvl)
-		return (i->stats_i->ad_lvl > j->stats_i->ad_lvl);
-	// 2. A consideration of kills/deaths & playing time:
+	// Ordering is based on a consideration of kills/deaths & playing time:
 	unsigned long resi = 0, resj = 0;
 	for(char ch = 0; ch < NO_CLASS; ++ch)
 	{
@@ -69,8 +66,10 @@ bool pl_level_cmp(const list<Player>::const_iterator i, const list<Player>::cons
 	if(j->stats_i->deaths >= 20)
 		resj *= float(total_kills(j->stats_i))/j->stats_i->deaths;
 	// It might be that resi == resj, although this is very unlikely.
-	// In that case, we just arbitrarily let j win:
-	return (resi > resj);
+	// In that case, less healing received wins (or arbitrarily j if equal):
+	if(resi != resj)
+		return (resi > resj);
+	return (i->stats_i->healing_recvd > j->stats_i->healing_recvd);
 }
 
 // If 's' can be uniquely matched to a single player's nick, returns
@@ -112,6 +111,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 {
 	cmd.erase(0, 1); // remove '!'
 	size_t i = cmd.find(' ');
+	int tmpi;
 	string keyw = cmd.substr(0, i);
 	transform(keyw.begin(), keyw.end(), keyw.begin(), (int(*)(int))tolower);
 
@@ -368,7 +368,6 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			char num = min(int(cmd[i+1]-'0'),
 				int(int_settings[IS_MAXPLAYERS] - cur_players.size()));
 			pid_t pid;
-			int ces;
 			for(; num > 0; --num)
 			{
 				if((pid = vfork()) < 0)
@@ -385,7 +384,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				// Server code continues:
 				// It might be that the bot executable doesn't exists, in which
 				// case the forked child just exited; check:
-				if(waitpid(pid, &ces, WNOHANG) == pid && WIFEXITED(ces))
+				if(waitpid(pid, &tmpi, WNOHANG) == pid && WIFEXITED(tmpi))
 				{
 					timed_log("!spawnbot -- could not find/run \'mrbrown\' executable!");
 					Network::to_chat("Cannot spawn bots! Mr. Brown executable most likely missing...");
@@ -488,33 +487,35 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	case CMD_HOWFAIR: // must be TU
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 		{
-			int sum = 0;
-			list<Player>::const_iterator it2;
-			for(list<Player>::const_iterator it = cur_players.begin();
-				it != cur_players.end(); ++it)
-			{
-				if(it->team == T_GREEN)
-				{
-					// Compute how many purple players this player "beats":
-					for(it2 = cur_players.begin(); it2 != cur_players.end(); ++it2)
-					{
-						if(it2->team == T_PURPLE && pl_level_cmp(it, it2))
-							++sum;
-					}
-				}
-			}
-			/* Now 'sum' is between 0 (all purples better than all greens) and
-			 * ngreen*npurple (all greens better than all purples). */
 			if(num_players[T_GREEN]*num_players[T_PURPLE])
 			{
-				sum = 100*sum/(num_players[T_GREEN]*num_players[T_PURPLE]) - 50;
-				keyw = lex_cast(sum) + " for greens -- the teams are ";
-				if(sum < -35 || sum > 35)
+				tmpi = 0;
+				list<Player>::const_iterator it2;
+				for(list<Player>::const_iterator it = cur_players.begin();
+					it != cur_players.end(); ++it)
+				{
+					if(it->team == T_GREEN)
+					{
+						// Compute how many purple players this player "beats":
+						for(it2 = cur_players.begin(); it2 != cur_players.end(); ++it2)
+						{
+							if(it2->team == T_PURPLE && pl_level_cmp(it, it2))
+								++tmpi;
+						}
+					}
+				}
+				/* Now 'tmpi' is between 0 (all purples better than all greens) and
+				 * ngreen*npurple (all greens better than all purples). */
+				tmpi = 100*tmpi/(num_players[T_GREEN]*num_players[T_PURPLE]) - 50;
+				keyw = lex_cast(tmpi) + " for greens -- the teams are ";
+				if(tmpi < -35 || tmpi > 35)
 					keyw += "VERY uneven!";
-				else if(sum < -15 || sum > 15)
-					keyw += "not even";
 				else
-					keyw += "even";
+				{
+					if(tmpi < -15 || tmpi > 15)
+						keyw += "not ";
+					keyw += "even.";
+				}
 			}
 			else // one or both teams is empty
 				keyw = "Cannot compute evenness!";
@@ -563,6 +564,7 @@ void shuffle_teams()
 	{
 		if(it->team != T_SPEC)
 		{
+			it->own_vp->move_watchers();
 			if(!intermission)
 			{
 				Game::del_owneds(it);

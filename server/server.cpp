@@ -82,6 +82,7 @@ int main(int argc, char *argv[])
 			std::cout << "Failed to save the map as \'" << argv[2] << "\'!" << std::endl;
 	}
 #else
+	setlocale(LC_ALL, "");
 	string str = "";
 	if(argc >= 2)
 		str = argv[1];

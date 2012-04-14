@@ -183,6 +183,7 @@ void post_spawn_msg(const list<Player>::const_iterator pit)
 
 void player_left_team(const list<Player>::iterator pit)
 {
+	pit->own_vp->move_watchers();
 	if(!intermission)
 	{
 		if(pit->is_alive())
@@ -273,6 +274,7 @@ bool spawn_team(const e_Team t)
 			it->sector = Game::curmap->coords_in_sector(c);
 			follow_change(it, it);
 
+			it->action_queue.clear();
 			it->set_class();
 			it->own_vp->set_losr(it->cl_props.losr);
 			it->init_torch();
@@ -326,6 +328,7 @@ void Game::next_map(const string &loadmap)
 		else if(it->team == T_SPEC)
 			it->stats_i->time_specced += time(NULL) - it->last_switched_cl;
 		time(&(it->last_switched_cl));
+		send_full_state_refresh(it);
 	}
 	// Clear EVERYTHING: (the rest of EVERYTHING is cleared in do_placement)
 	axn_indicators.clear();
@@ -641,7 +644,7 @@ bool Game::process_turn()
 				string s = "You are drowning!";
 				Network::construct_msg(s, C_WATER_LIT);
 				Network::send_to_player(*it);
-				it->cl_props.hp -= random()%(classes[it->cl].hp/3);
+				it->cl_props.hp -= random()%(classes[it->cl].hp/2 + (classes[it->cl].hp%2));
 				if(it->cl_props.hp <= 0)
 				{
 					player_death(it, " drowned.", false);
@@ -690,6 +693,7 @@ bool Game::process_turn()
 	/// Render&Send
 	using Network::send_buffer;
 	vector<string> shouts;
+	short i, j;
 	for(it = cur_players.begin(); it != cur_players.end(); ++it)
 	{
 		// check if this player's viewpoint has any watchers (if not, no point
@@ -703,11 +707,23 @@ bool Game::process_turn()
 			/* Check if there have been any events during this turn in the
 			 * vicinity of this viewpoint. If there are none, we don't
 			 * need to render, but must anyway send a "tick message"
-			 * indicating that a turn has passed. */
-			if(it->own_vp->pos_changed()
-				|| events_around(it->own_vp->get_pos()))
-				send_buffer.write_compressed(renderbuffer,
-					it->own_vp->render(renderbuffer, shouts));
+			 * indicating that a turn has passed. Also always rerender for
+			 * poisoned PCs. */
+			if(it->own_vp->pos_changed() || events_around(it->own_vp->get_pos())
+				|| it->poisoner != cur_players.end())
+			{
+				i = it->own_vp->render(renderbuffer, shouts);
+				if(it->poisoner != cur_players.end())
+				{
+					// if poisoned, draw random tiles sickly green
+					for(j = 0; j < 2*VIEWSIZE*VIEWSIZE; j += 2)
+					{
+						if(renderbuffer[j+1] != '?' && !(random()%3))
+							renderbuffer[j] = C_ACID_TRAP;
+					}
+				}
+				send_buffer.write_compressed(renderbuffer, i);
+			}
 
 			// Send to all watchers:
 			for(vector< list<Player>::iterator >::const_iterator wi =
@@ -1041,6 +1057,7 @@ void Game::class_switch(const list<Player>::iterator pit, e_Class newcl)
 	{
 		if(pit->team != T_SPEC)
 		{
+			pit->own_vp->move_watchers();
 			if(pit->is_alive())
 				kill_player(pit); /* see player_left_team; it won't call this
 				after we've set the team to spec! */
@@ -1056,7 +1073,7 @@ void Game::class_switch(const list<Player>::iterator pit, e_Class newcl)
 		pit->own_vp->set_pos(pit->viewn_vp->get_pos());
 		follow_change(pit, pit);
 	}
-	else if(newcl != pit->cl)
+	else if(newcl != pit->cl || newcl != pit->next_cl)
 	{
 		e_Team newteam = (pit->team != T_SPEC) ? pit->team
 			: e_Team(num_players[T_PURPLE] < num_players[T_GREEN]);
@@ -1176,6 +1193,7 @@ list<Player>::iterator Game::remove_player(list<Player>::iterator pit,
 
 	if(pit->team != T_SPEC)
 	{
+		pit->own_vp->move_watchers();
 		--num_players[pit->team - T_GREEN];
 		send_team_upds(cur_players.end());
 	}

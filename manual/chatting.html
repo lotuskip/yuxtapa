@@ -28,11 +28,11 @@ can utter without typing by just pressing one of the function keys F1&mdash;F12.
 These always start with an exclamation mark. It is possible for the server admin
 to disable any of these commands in the <a href="serverconf.html">server configuration</a>.</p>
 
-<p>Usable by anyone, anytime:
+<p>Usable by anyone, anytime (if not disabled):
 <ul>
 <li><strong>!serverinfo</strong> prints information about the settings of the server into the chat</li>
 <li><strong>!adminlvl [nick]</strong> prints the <a href="adminlevels.html">admin level</a> (AL) of the player with the specified nick</li>
-<li><strong>!teams</strong> prints the current teams</li>
+<li><strong>!teams</strong> returns a message containing a listing of the current teams</li>
 <li><strong>!lscmd</strong> prints the supported commands (only those that are not disabled)</li>
 </ul></p>
 
@@ -45,8 +45,8 @@ to disable any of these commands in the <a href="serverconf.html">server configu
 <li>if <em>name</em> is given, tries to load a map by that name (see <a href="mapsaving.html">map saving</a>). If successful, regardless of current game
 state, loads that map and starts an intermission. If no map by such name could be loaded, generates a random map instead</li>
 </ul></li>
-<li><strong>!listmaps</strong> prints a lists of previously saved maps</li>
-<li><strong>!plinfo [nick]</strong> prints the specified player's IP, total time played, and mentions if they are a bot</li>
+<li><strong>!listmaps</strong> returns a list of previously saved maps</li>
+<li><strong>!plinfo [nick]</strong> returns the specified player's IP, total time played, and mentions if they are a bot</li>
 <li><strong>!howfair</strong> makes an estimate at how &quot;fair&quot; (even/uneven) the teams are. The result is a number between -50 and +50; the
 higher the number, the more dominant the <em>green</em> team is (teams are even if the number is close to 0). The computation is based on the same
 data as the team shuffling, so to get reasonable results you should have sufficient statistics on each player</li>

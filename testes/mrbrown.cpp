@@ -34,8 +34,9 @@ const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
 	10 /*Ar*/, 10 /*As*/, 15 /*Cm*/, 33 /*Mc*/, 10 /*Sc*/, 15 /*Fi*/,
 	15 /*Mi*/, 10 /*He*/, 10 /*Wi*/, 30 /*Tr*/, 100 /*Pw*/
 };
-const char RANDOM_WAIT_CHANCE_1IN = 40; // skip turn for no reason
+const char WAIT_ON_RANDOM_WALK_1IN = 4; // wait when would otherwise walk randomly
 const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
+const char TURN_WITHOUT_REASON_1IN = 50; // turning when walking randomly
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
 const char HEAL_POISON_LIMIT = 5; // after heal/poison others
@@ -91,7 +92,7 @@ char abil_counter = 0; // used for various ability-related counting needs
 Coords seen_flag_coords; // if a flag has been spotted
 e_Team seen_flag_owner = T_SPEC;
 unsigned char num_walls_in_sight = 0;
-short isolation_turns = 0;
+short isolation_turns;
 char symbol_under_feet = 0; // what the bot thinks it is standing on
 char col_under_feet = 0;
 // Generic:
@@ -370,9 +371,10 @@ bool random_turn_from_dir(e_Dir d, const bool avoid_pcs, const bool ign_terrain)
 
 void random_walk()
 {
-	// a chance of turning without reason dependent on isolation time:
-	if(isolation_turns == ISOLATION_TO_SUICIDE
-		|| !(random()%(ISOLATION_TO_SUICIDE - isolation_turns)))
+	if(symbol_under_feet != '~' && !(random()%WAIT_ON_RANDOM_WALK_1IN))
+		return;
+	// a small chance of turning without reason:
+	if(!(random()%TURN_WITHOUT_REASON_1IN))
 	{
 		if(random()%2) ++prev_committed_walk;
 		else --prev_committed_walk;
@@ -454,7 +456,8 @@ void scan_view() // extract PCs and flag in view, count walls
 }
 
 // Check if PC at given coords has class 'name' (abbreviation)
-bool is_class_of(const Coords& c, const char* name)
+char last_check_class[3] = "";
+void get_class_of(const Coords& c)
 {
 	// Titles are in the form [num of titles (char)][so many titles: [x][y][C-string]]
 	char *p = viewbuffer+(VIEWSIZE*VIEWSIZE*2);
@@ -465,12 +468,13 @@ bool is_class_of(const Coords& c, const char* name)
 			// friendly PC is "nick|Cl", hostile "Cl"; this will
 			// get the Cl-part only:
 			p += strlen(p+2); // -2 for "Cl", but +2 to skip coords
-			return !strcmp(p, name);
+			strncpy(last_check_class, p, 3);
+			return;
 		}
 		p += 2;
 		p += strlen(p);
 	}
-	return false; // no suck coords titled
+	last_check_class[0] = '\0';
 }
 
 
@@ -576,6 +580,27 @@ bool get_sound_to_follow(Coords &t)
 	return false;
 }
 
+bool teammate_to_follow(Coords &t)
+{
+	// Scouts and trappers do not follow anyone
+	if(myclass == C_SCOUT || myclass == C_TRAPPER)
+		return false;
+	// Go through seen teammates:
+	vector<Coords>::const_iterator ti;
+	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
+	{
+		get_class_of(*ti);
+		// Follow first found Scout or Miner
+		if(!strcmp(last_check_class, "Sc")
+			|| !strcmp(last_check_class, "Mi"))
+		{
+			t = *ti;
+			return true;
+		}
+	}
+	return false;
+}
+
 bool get_enemy_corpse_dir(Coords &t)
 {
 	// scout and not already disguised:
@@ -632,13 +657,21 @@ bool no_class_spc_As()
 	vector<Coords>::const_iterator ti;
 	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
 	{
-		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
-			return true;
+		if(center.dist_walk(*ti) <= 3)
+		{
+			get_class_of(*ti);
+			if(strcmp(last_check_class, "As")) // not assassin
+				return true;
+		}
 	}
 	for(ti = pcs[opp_team[myteam]].begin(); ti != pcs[opp_team[myteam]].end(); ++ti)
 	{
-		if(center.dist_walk(*ti) <= 3 && !is_class_of(*ti, "As"))
-			break;
+		if(center.dist_walk(*ti) <= 3)
+		{
+			get_class_of(*ti);
+			if(strcmp(last_check_class, "As")) // not assassin
+				break;
+		}
 	}
 	if(ti == pcs[opp_team[myteam]].end())
 		return true;
@@ -946,6 +979,7 @@ int main(int argc, char *argv[])
 					 * turn). So wizards light their torch and others just stand
 					 * around for a single turn. */
 					wait_turns = 1;
+					isolation_turns = random()%50;
 				}
 				else if(myhp <= 0 && rv > 0) // this means we died
 					symbol_under_feet = col_under_feet = 0;
@@ -1014,9 +1048,9 @@ int main(int argc, char *argv[])
 		{
 			if(wait_turns) // something has forced us to wait
 				--wait_turns;
-			else if(symbol_under_feet == '~' || random()%RANDOM_WAIT_CHANCE_1IN)
+			else
 			{
-				if(limiter) // technically we should decrement limiter even when skipping the turn
+				if(limiter)
 					--limiter;
 				// Basic decision making:
 				// 1. Check if could/should use class ability
@@ -1038,27 +1072,28 @@ int main(int argc, char *argv[])
 						}
 						/* Walk primarily towards any seen flags we could
 						 * capture, secondarily scouts towards enemy corpses,
-						 * thirdly towards heard sounds (except
-						 * mining), fourthly randomly. Don't walk on PCs
-						 * in the "try_walk_towards" calls. */
+						 * then follow teammates (see separate logic),
+						 * then towards heard sounds, lastly randomly.
+						 * Don't walk on PCs in the "try_walk_towards" calls. */
 						else if(could_capture_flag())
 						{
 							try_walk_towards(seen_flag_coords, true);
-							isolation_turns = 0;
+							isolation_turns = random()%50;
 						}
 						else if(get_enemy_corpse_dir(tmp_coords))
 							try_walk_towards(tmp_coords, true);
 						else if(get_sound_to_follow(tmp_coords)) // have sound to follow
 							try_walk_towards(tmp_coords, true);
-						/* No enemies, flags, or sounds; we might be isolated.
-						 * Randomize the limit a little so we don't get mass
-						 * suicides all at once */
+						// No enemies, flags, or sounds; we might be isolated:
 						else if(++isolation_turns
-							>= ISOLATION_TO_SUICIDE + random()%50)
+							>= ISOLATION_TO_SUICIDE)
 						{
-							isolation_turns = 0;
+							isolation_turns = random()%50;
 							send_action(XN_SUICIDE);
 						}
+						// Ignore following teammates every third time:
+						else if(random()%3 && teammate_to_follow(tmp_coords))
+							try_walk_towards(tmp_coords, true);
 						else
 							random_walk();
 					}
@@ -1073,8 +1108,11 @@ int main(int argc, char *argv[])
 								picked = ci;
 							}
 						}
-						try_walk_towards(*picked, false); // *do* walk on PCs
-						isolation_turns = 0;
+						/* if the closest one is not very close and playing a
+						 * scout, do nothing (spotting the enemy for teammates) */
+						if(rv < 6 || myclass != C_SCOUT)
+							try_walk_towards(*picked, false); // *do* walk on PCs
+						isolation_turns = random()%50;
 					}
 				} // walking
 			} // not randomly waiting

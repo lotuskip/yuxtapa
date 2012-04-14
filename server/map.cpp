@@ -428,7 +428,7 @@ void room_recur(const char rx, const char ry, const char dir)
 // Here's the entry point function.
 void gen_house(const bool outdoor)
 {
-	short sh;
+	unsigned short sh;
 	for(sh = 0; sh < MAX_HS*MAX_HS; ++sh)
 		house[sh] = '#';
 	for(sh = 0; sh < ROOM_NUM*ROOM_NUM; ++sh)
@@ -522,7 +522,6 @@ void gen_house(const bool outdoor)
 		else if(!outdoor && house[sh] == '#' && !(random()%15))
 			house[sh] = 'I';
 	}
-
 } // gen_house
 
 

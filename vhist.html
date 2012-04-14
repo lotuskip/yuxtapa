@@ -25,7 +25,8 @@ than 5).</p>
 manual. Please report any out-of-date information you find there. BUT note that
 the manual of the old branch (version 4x) is not being updated anymore.</p>
 <p>A <font color="red">known issue</font> is something that was noticed just
-prior to release; the aim is to fix them by the next release. Notifications of
+prior to release (the aim is then to fix them by the next release), or something
+that appears to be a problem in some dependency rather than yuxtapa. Notifications of
 bugs are not added retrospectively to listings for old versions, though.</p>
 
 <hr>
@@ -38,8 +39,16 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 <li>New keycommand (default 'd') to show in the chat all the titles in the
 current view</li>
 <li>Archer aimer path is cut off by obstacles and PCs</li>
-<li>The flag map border is now drawn more nicely (at least on terminals that support
+<li>The flag map border is drawn more nicely (at least on terminals that support
 that!)</li>
+<li>Consecutive identical messages are no longer repeated; also adjusted message
+scrolling speed</li>
+<li>Fixed splitting non-ASCII unicode strings in the chat</li>
+<li>If stored_chat_msgs is set to 0 the chat storage file now gets emptied</li>
+<li><font color="red">known issue</font> with urxvt from version 8 persists</li>
+<li><font color="red">known issue</font>: (this has been around for ever)
+something strange is wrong with resetting the terminal colours on urxvt when the
+client closes; noticable when afterwards using vim with syntax highlighting</li>
 </ul>
 </p>
 
@@ -53,8 +62,7 @@ definitely)</li>
 <li>Fixed some small issues with dynamic lighting; there are issues still, but
 these won't be touched (see manual on known bugs)</li>
 <li>Fixed how joining new players didn't receive the flag map right away</li>
-<li>The accessibility check for team flags is now applied to neutral flags,
-too</li>
+<li>The accessibility check for team flags is applied to neutral flags, too</li>
 <li>No more than one flag can now be generated per sector (bugfix)</li>
 <li>Improvements in dungeon-type map generation</li>
 <li>In destroy mode, the boulders can no longer get generated around the purple
@@ -71,8 +79,21 @@ takes longer)</li>
 <li>Traps are also automatically triggered if stumbled upon while blind</li>
 <li>Team messages now indicate an empty team with '-' instead of printing
 nothing</li>
-<li>Adjusted some class properties (archers weakened, scouts and healers
-strenghtened)</li>
+<li>Tweaked several game values (nothing radical)</li>
+<li>Poisoned PCs now have their view disturbed by sickly green flickering</li>
+<li>Healers can randomly heal more than 1 hp per action</li>
+<li>Fixed splitting non-ASCII unicode strings in messages</li>
+<li>Fixed a typo in message: &quot;[...] her ownmagic missile&quot;</li>
+<li>Player comparison (in shuffling and !howfair) no longer dependent on admin
+level</li>
+<li>A player's death no longer causes watchers to be dropped</li>
+<li>Fixed how team deathmatch mode was not shown properly in !serverinfo</li>
+<li>Treasure item now has different colour when lying in water or in chasm</li>
+<li>Fixed two issues with switching class (switching <em>back</em> to current
+class; and not being informed of new class if &quot;killed&quot; by
+intermission)</li>
+<li>Players receive message about detecting traps (useful if the detected trap
+is covered by, e.g. the treasure item)</li>
 </ul>
 </p>
 
@@ -87,11 +108,14 @@ strenghtened)</li>
 trap</li>
 <li>Small but important improvements in bot walking:
 <ul>
+	<li>Follow teammate scouts/miners when nothing else to do (does not apply to
+	scouts and trappers)</li>
 	<li>Accept even worse terrain if really want to get to someplace</li>
 	<li>Do not follow very nearby sounds, follow voices always and all other
 	sounds only randomly</li>
-	<li>Random turning likelihood dependent on time of isolation</li>
 	<li>Wait properly when crossing rough terrain or marsh</li>
+	<li>Chance <em>not</em> to walk included in random walking</li>
+	<li>Scouts won't rush towards far-off enemies</li>
 </ul></li>
 </ul></p>
 

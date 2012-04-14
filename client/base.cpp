@@ -26,7 +26,7 @@ const char walk_syms[2] = { ' ', 'W' };
 const char flagy[9] = { 4, 4, 5, 6, 6, 6, 5, 4, 5 };
 const char flagx[9] = { 31, 33, 33, 33, 31, 29, 29, 29, 31 };
 
-short scr_x, scr_y;
+unsigned short scr_x, scr_y;
 enum e_ColorMode { CM_FULL=0, //full colours that can be changed
 	CM_MANY, //full, immutable colours
 	CM_FEW }; // 8+8 colour mode (xterm)
@@ -263,7 +263,7 @@ void Base::less_chat_ind()
 }
 
 unsigned char Base::num_chat_lines_to_show() { return scr_y - VIEWSIZE; }
-short Base::chat_width() { return scr_x; }
+unsigned short Base::chat_width() { return scr_x; }
 
 
 void Base::print_view(const char *source)

@@ -225,7 +225,6 @@ void Zap::update()
 			}
 			// else we hit a PC and will pass right through her
 		}
-		// else
 		pos = pos.in(dir);
 	}
 	// Travelled all the way without hitting anything.

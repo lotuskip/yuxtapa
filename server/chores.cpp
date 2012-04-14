@@ -27,7 +27,7 @@ using namespace std;
 const string teammate_str = "TEAMMATE ";
 
 const string spell_kill_msg[2][3] = {
-/* mms: */ { " could not outrun ", "her own", "magic missile." },
+/* mms: */ { " could not outrun ", "her own ", "magic missile." },
 /* zaps */ { " was zapped by ", "herself", "." }
 };
 
@@ -157,7 +157,7 @@ void missile_hit_PC(const list<Player>::iterator pit, OwnedEnt* mis,
 		if(pit->team != shooter->team) // shooting teammates don't count as hit
 			shooter->stats_i->arch_hits++;
 
-		if(test_hit(pit, 7, 1, 6, 0)) // arrows: 1d6+0 damage, +7 to hit
+		if(test_hit(pit, 7, 1, 7, 0)) // arrows: 1d7+0 damage, +7 to hit
 		{
 			if(pit->cl_props.hp <= 0) // (check if died)
 			{
@@ -226,8 +226,9 @@ void heal_PC(const list<Player>::iterator pit)
 {
 	if(pit->cl_props.hp < classes[pit->cl].hp)
 	{
-		pit->cl_props.hp++;
-		pit->stats_i->healing_recvd++;
+		/* always heal at least once, but sometimes more */
+		while(++(pit->stats_i->healing_recvd) && // this first one is of course always true
+			++(pit->cl_props.hp) < classes[pit->cl].hp && !(random()%4));
 		pit->poisoner = cur_players.end();
 		pit->needs_state_upd = true;
 		add_action_ind(pit->own_pc->getpos(), A_HEAL);
@@ -1158,6 +1159,13 @@ void kill_player(const list<Player>::iterator pit)
 	{
 		pl_with_item = cur_players.end();
 		the_item.setpos(pit->own_pc->getpos());
+		// Change item colour for certain tile types:
+		if(tp->flags & TF_DROWNS) // water
+			the_item.set_col(C_WATER_TRAP);
+		else if(tp->flags & TF_KILLS) // chasm
+			the_item.set_col(C_BROWN_PC);
+		else
+			the_item.set_col(C_LIGHT_TRAP);
 		obj_sector = Game::curmap->coords_in_sector(pit->own_pc->getpos());
 		Game::send_team_upds(cur_players.end());
 		string msg = "Treasure dropped!";
@@ -1173,7 +1181,6 @@ void kill_player(const list<Player>::iterator pit)
 	tp->flags &= ~(TF_OCCUPIED);
 	pit->own_pc->makevoid();
 	
-	pit->own_vp->move_watchers(); // remove any watchers except self
 	pit->action_queue.clear();
 	pit->poisoner = cur_players.end();
 
@@ -1493,6 +1500,8 @@ void trap_detection(const list<Player>::iterator pit)
 		Coords c;
 		short f;
 		char line, ind;
+		list<Trap>::iterator tr_i;
+		bool ded = false; // detected any traps?
 		for(line = 0; line < DETECT_TRAPS_RAD*8; ++line)
 		{
 			for(ind = 0; ind < 2*DETECT_TRAPS_RAD; ind += 2)
@@ -1504,12 +1513,20 @@ void trap_detection(const list<Player>::iterator pit)
 					break;
 				else if(f & TF_TRAP && (req_turns < BASE_TURNS_TO_DETECT_TRAPS
 					|| ((f & TF_LIT) && random()%100 < 75)
-					|| (!(f & TF_LIT) && random()%100 < 60)))
+					|| (!(f & TF_LIT) && random()%100 < 60))
+					&& !(tr_i = any_trap_at(c))->is_seen_by(pit->team))
 				{
-					any_trap_at(c)->set_seen_by(pit->team);
+					tr_i->set_seen_by(pit->team);
+					ded = true;
 					event_set.insert(c);
 				}
 			}
+		}
+		if(ded)
+		{
+			string msg = "You detect some traps.";
+			Network::construct_msg(msg, C_FIREB_TRAP);
+			Network::send_to_player(*pit);
 		}
 	} // if should detect traps
 }

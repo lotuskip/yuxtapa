@@ -71,7 +71,7 @@ list<Player>::iterator who_is_this()
 
 void cheat_attempt(const list<Player>::iterator pit)
 {
-	Network::to_chat(pit->nick + " might be cheating...");
+	Network::to_chat(pit->nick + " is malfunctioning or cheating.");
 	Game::remove_player(pit, " auto-kicked.");
 }
 
@@ -252,8 +252,14 @@ bool Network::receive_n_handle()
 				&& pit->is_alive() && voices.find(pit->own_pc->getpos()) == voices.end())
 			{
 				recv_buffer.read_str(s);
-				add_voice(pit->own_pc->getpos(), s);
-				event_set.insert(pit->own_pc->getpos());
+				// A proper client wouldn't send too long messages:
+				if(num_syms(s) > MSG_WIN_X-3)
+					cheat_attempt(pit);
+				else
+				{
+					add_voice(pit->own_pc->getpos(), s);
+					event_set.insert(pit->own_pc->getpos());
+				}
 			}
 			break;
 		case MID_SAY_CHAT:
@@ -393,7 +399,7 @@ void Network::construct_msg(string &s, const unsigned char cpair)
 	vector<string> blocks;
 	unsigned int i;
 	// break up at spaces:
-	while(s.size() > MSG_WIN_X)
+	while(num_syms(s) > MSG_WIN_X)
 	{
 		if((i = s.rfind(' ', MSG_WIN_X)) == string::npos)
 			i = MSG_WIN_X;

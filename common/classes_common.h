@@ -24,17 +24,17 @@ struct ClassProperties
 
 const ClassProperties classes[] =
 {//     hp  2hit res  dX+Y  dv pv los  torch   push
-{ "Ar",  7,  +3,  0,  4, 1, 18, 1,  9,  true, false },
-{ "As",  6, +10, 10,  4, 2, 19, 0,  7, false, false },
-{ "Cm",  8,  +2, 50,  8, 1, 14, 2,  7,  true, false },
-{ "Mc",  6,  +5, 40, 10, 0, 15, 1,  6, false,  true },
-{ "Sc",  4,  +4, 10,  6, 1, 14, 0, 10,  true, false },
-{ "Fi", 10,  +8,  0,  8, 2, 17, 5,  5,  true,  true },
-{ "Mi", 12,  +6,  0, 10, 1, 13, 3,  5, false,  true },
-{ "He",  6,  -1, 35,  6, 1, 12, 0,  5,  true, false },
-{ "Wi",  4,  +0, 70,  6, 0, 11, 0,  7,  true, false },
-{ "Tr",  8,  +3,  0,  8, 0, 16, 1,  6, false,  true },
-{ "Pw",  5,  +7, 60,  6, 2, 14, 2,  6,  true, false }
+{ "Ar",  8,  +3,  0,  4, 1, 18, 2,  9,  true, false },
+{ "As",  7, +10, 10,  4, 2, 19, 0,  7, false, false },
+{ "Cm",  9,  +2, 50,  8, 1, 14, 2,  7,  true, false },
+{ "Mc",  7,  +5, 40, 10, 0, 15, 1,  6, false,  true },
+{ "Sc",  5,  +4, 10,  6, 1, 14, 1, 10,  true, false },
+{ "Fi", 11,  +8,  0,  8, 2, 17, 5,  5,  true,  true },
+{ "Mi", 13,  +6,  0, 10, 1, 13, 3,  5, false,  true },
+{ "He",  7,  -1, 35,  6, 1, 12, 1,  5,  true, false },
+{ "Wi",  5,  +0, 70,  6, 0, 11, 0,  7,  true, false },
+{ "Tr",  9,  +3,  0,  8, 0, 16, 2,  6, false,  true },
+{ "Pw",  6,  +7, 60,  6, 2, 14, 2,  6,  true, false }
 };
 
 #endif
