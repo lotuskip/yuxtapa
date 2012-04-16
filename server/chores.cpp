@@ -1447,8 +1447,10 @@ bool missile_coll(OwnedEnt* mis, const Coords &c)
 				return missile_coll(mis, c1);
 			}
 			// else both or neither is walkthru; bounce back
+			if(mis_as_z->bounce(!d))
+				return true;
 			mis->setpos(c);
-			return mis_as_z->bounce(!d);
+			return missile_coll(mis, c.in(!d));
 		}
 		//else
 		mis->makevoid(); // caller has unset occupied flag

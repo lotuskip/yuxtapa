@@ -387,7 +387,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				if(waitpid(pid, &tmpi, WNOHANG) == pid && WIFEXITED(tmpi))
 				{
 					timed_log("!spawnbot -- could not find/run \'mrbrown\' executable!");
-					Network::to_chat("Cannot spawn bots! Mr. Brown executable most likely missing...");
+					Network::to_chat("Cannot spawn bots! Check configuration.");
 					break;
 				}
 				// else bot is running and network will handle its connection attempt
@@ -600,10 +600,7 @@ void shuffle_teams()
 			++num_players[t];
 			playing_players.pop_front();
 		}
-		if(t == T_GREEN)
-			t = T_PURPLE;
-		else
-			t = T_GREEN;
+		t = (t == T_GREEN) ? T_PURPLE : T_GREEN;
 		for(ch = 0; ch < num; ++ch)
 		{
 			playing_players.front()->team = t;

@@ -984,11 +984,11 @@ void Map::apply_house(const Coords &c)
 	Tile* tp;
 	for(i = 0; i < MAX_HS; ++i)
 	{
-		if(c.x+i >= mapsize)
+		if(c.x+i >= mapsize-1 || c.y+i <= 0)
 			break;
 		for(j = 0; j < MAX_HS; ++j)
 		{
-			if(c.y+j >= mapsize)
+			if(c.y+j >= mapsize-1 || c.y+j <= 0)
 				break;
 			tp = mod_tile(c.x + i, c.y + j);
 			switch(house[j*MAX_HS+i])

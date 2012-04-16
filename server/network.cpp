@@ -306,7 +306,7 @@ bool Network::receive_n_handle()
 				ush = recv_buffer.read_sh(); // turn
 				if(ush >= pit->last_acted_on_turn)
 				{
-					// This might be the latest we've heard from this client:
+					// This is the latest we've heard from this client:
 					if(ush > pit->last_heard_of)
 						pit->last_heard_of = ush;
 

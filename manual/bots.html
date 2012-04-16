@@ -40,7 +40,7 @@ the server are now.</p>
 directory (such as '/usr/bin'), but the important thing is that you point the
 server configuration to it (see the server configuration file).</p>
 
-<p>After this, bots should be runnable from within the game. They can also be
+<p>After this, bots should be spawnable from within the game. They can also be
 executed stand-alone (but most people probably don't want this). You can check
 the version of the bot client with
 <pre>
@@ -55,7 +55,7 @@ execute bots with alternate port. For instance, create (and make executable) the
 following script:
 <pre>
 #!/bin/sh
-exec /home/share/yuxtapa/mrbrown 127.0.0.1:12369
+exec /home/username/.config/yuxtapa/mrbrown 127.0.0.1:12369
 </pre>
 and specify this script as the bot executable in the server configuration if
 your server is using the port 12369 instead of the default one.</p>
