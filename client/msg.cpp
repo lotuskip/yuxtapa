@@ -54,65 +54,6 @@ char bottom_idx = 0; // y-coord of the first free message slot
 // messages awaiting to go onto the screen:
 deque<MsgBufferLine> msgavail;
 
-/*
- * For chat window:
- */
-const char CHAT_BUFFER_SIZE = 50;
-
-// cf. e_Team im ../common/classes_common.h
-const char* team_ind[4] = { " @: ", " @: ", ": ", "" };
-
-struct ChatBufferLine
-{
-	string text, speaker;
-	unsigned char team;
-	ChatBufferLine(const string &m = "", const string &s = "",
-		const unsigned char t = 0) : text(m), speaker(s), team(t) {}
-};
-deque<ChatBufferLine> chatbuffer;
-short chat_top = 0;
-short num_chat_lines = 0;
-
-/*
- * For clocks:
- */
-unsigned short maptime = 0;
-unsigned char spawntime = 0;
-msTimer last_second;
-
-
-void redraw_chat()
-{
-	char num = min(int(Base::num_chat_lines_to_show()), int(num_chat_lines - chat_top));
-	for(char i = 0; i < num; ++i)
-	{
-		Base::incr_print_start(0, i, CHAT_WIN);
-		Base::incr_print(chatbuffer[chat_top+i].speaker.c_str(), 3, CHAT_WIN);
-		Base::incr_print(team_ind[chatbuffer[chat_top+i].team],
-			team_colour[chatbuffer[chat_top+i].team], CHAT_WIN);
-		Base::incr_print(chatbuffer[chat_top+i].text.c_str(), 7, CHAT_WIN);
-		Base::incr_print_end(CHAT_WIN, true);
-	}
-	// if necessary, print indicators of there being more messages:
-	if(chat_top)
-		Base::less_chat_ind();
-	if(chat_top + num < num_chat_lines)
-		Base::more_chat_ind();
-}
-
-void move_msgs()
-{
-	if(bottom_idx)
-	{
-		msgbuffer.pop_front();
-		msgbuffer.push_back(MsgBufferLine());
-		--bottom_idx;
-		last_move.update();
-		for(char y = 0; y < bottom_idx/2; ++y)
-			msgbuffer[y].dimmen();
-	}
-}
-
 void redraw_msgs()
 {
 	string tmp_str;
@@ -135,6 +76,81 @@ void redraw_msgs()
 	}
 }
 
+void move_msgs()
+{
+	if(bottom_idx)
+	{
+		msgbuffer.pop_front();
+		msgbuffer.push_back(MsgBufferLine());
+		--bottom_idx;
+		last_move.update();
+		for(char y = 0; y < bottom_idx/2; ++y)
+			msgbuffer[y].dimmen();
+	}
+}
+
+bool check_repeat_msg(const string &s, const unsigned char cp)
+{
+	if(bottom_idx && s == msgbuffer[bottom_idx-1].text
+		&& cp == msgbuffer[bottom_idx-1].cpair)
+	{
+		if(msgbuffer[bottom_idx-1].repeat != '+' - '1' // this value is -1
+			&& ++(msgbuffer[bottom_idx-1].repeat) > 8)
+			msgbuffer[bottom_idx-1].repeat = '+' - '1';
+		redraw_msgs();
+		last_move.update(); /* only update this! Then the next 
+			message can be printed without unnecessary delay */
+		return true;
+	}
+	return false;
+}
+
+
+/*
+ * For chat window:
+ */
+const char CHAT_BUFFER_SIZE = 50;
+
+// cf. e_Team im ../common/classes_common.h
+const char* team_ind[4] = { " @: ", " @: ", ": ", "" };
+
+struct ChatBufferLine
+{
+	string text, speaker;
+	unsigned char team;
+	ChatBufferLine(const string &m = "", const string &s = "",
+		const unsigned char t = 0) : text(m), speaker(s), team(t) {}
+};
+deque<ChatBufferLine> chatbuffer;
+short chat_top = 0;
+short num_chat_lines = 0;
+
+void redraw_chat()
+{
+	char num = min(int(Base::num_chat_lines_to_show()), int(num_chat_lines - chat_top));
+	for(char i = 0; i < num; ++i)
+	{
+		Base::incr_print_start(0, i, CHAT_WIN);
+		Base::incr_print(chatbuffer[chat_top+i].speaker.c_str(), 3, CHAT_WIN);
+		Base::incr_print(team_ind[chatbuffer[chat_top+i].team],
+			team_colour[chatbuffer[chat_top+i].team], CHAT_WIN);
+		Base::incr_print(chatbuffer[chat_top+i].text.c_str(), 7, CHAT_WIN);
+		Base::incr_print_end(CHAT_WIN, true);
+	}
+	// if necessary, print indicators of there being more messages:
+	if(chat_top)
+		Base::less_chat_ind();
+	if(chat_top + num < num_chat_lines)
+		Base::more_chat_ind();
+}
+
+/*
+ * For clocks:
+ */
+unsigned short maptime = 0;
+unsigned char spawntime = 0;
+msTimer last_second;
+
 void redraw_clocks()
 {
 	unsigned short mins = maptime/60;
@@ -154,23 +170,6 @@ void redraw_clocks()
 		timestr += ' ';
 	timestr += lex_cast(spawntime);
 	Base::print_str(timestr.c_str(), 7, 54, 7, STAT_WIN, true);
-}
-
-
-bool check_repeat_msg(const string &s, const unsigned char cp)
-{
-	if(bottom_idx && s == msgbuffer[bottom_idx-1].text
-		&& cp == msgbuffer[bottom_idx-1].cpair)
-	{
-		if(msgbuffer[bottom_idx-1].repeat != '+' - '1' // this value is -1
-			&& ++(msgbuffer[bottom_idx-1].repeat) > 8)
-			msgbuffer[bottom_idx-1].repeat = '+' - '1';
-		redraw_msgs();
-		last_move.update(); /* only update this! Then the next 
-			message can be printed without unnecessary delay */
-		return true;
-	}
-	return false;
 }
 
 } // end local namespace
@@ -247,6 +246,7 @@ void upd_msgs()
 		last_second.update();
 	}
 }
+
 
 #if 0 // (not used)
 void clear_msgs()

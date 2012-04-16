@@ -7,6 +7,8 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <csignal>
+#include <cstdlib>
 #include "../common/constants.h"
 #include "../common/coords.h"
 #include "colourdef.h"
@@ -93,6 +95,14 @@ void change_colour(WINDOW* const w, unsigned char cpair)
 	} // only few colours
 }
 
+void update_screen_size(const int sig)
+{
+	signal(SIGWINCH, SIG_IGN);
+	endwin();
+	refresh();
+	signal(SIGWINCH, update_screen_size);
+}
+
 } // end local namespace
 
 
@@ -119,6 +129,7 @@ bool Base::init_ncurses()
 			<< int(MIN_SCREEN_X) << 'x' << int(MIN_SCREEN_Y) << '.' << endl;
 		return false;
 	}
+	signal(SIGWINCH, update_screen_size);
 
 	start_color();
 	raw();
