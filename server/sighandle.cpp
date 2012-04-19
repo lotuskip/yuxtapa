@@ -25,6 +25,9 @@ void reg_sig_handlers()
 	// List here all signals we're interested in:
 	sigaction(SIGINT, &sa, 0);
 	sigaction(SIGQUIT, &sa, 0);
+
+	// Child processes would be bots. Let them be reaped:
+	signal(SIGCHLD, SIG_IGN);
 }
 
 #endif // not maptest build

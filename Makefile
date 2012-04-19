@@ -2,10 +2,10 @@
 VERSION = 9
 #
 #This option for a pedantic, warnful debug build:
-CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
+#CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
 #
 #This one for the optimised version:
-#CONFIG_FLAGS=-O2 -g0
+CONFIG_FLAGS=-O2 -g0
 
 EXTRA_FLAGS=
 # Add -DBOT_IPV6 to have the bots connect to localhost using IPv6 instead of v4
@@ -33,7 +33,7 @@ SRCS_CL = client/base.cpp client/class_cpv.cpp client/client.cpp \
 	client/settings.cpp client/view.cpp
 OBJS_CL=$(subst .cpp,.o,$(SRCS_CL))
 
-OBJS_MB=testes/mrbrown.o common/netutils.o common/timer.o common/coords.o
+OBJS_MB=testes/mrbrown.o common/netutils.o common/timer.o common/coords.o common/util.o
 
 SRCS_SV = server/server.cpp server/network.cpp server/settings.cpp \
 	server/sighandle.cpp server/players.cpp server/log.cpp server/map.cpp \

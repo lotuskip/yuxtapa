@@ -31,7 +31,7 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 
 <hr>
 
-<p><strong>version 9</strong> released Apr ?, 2012</p>
+<p><strong>version 9</strong> released Apr 19, 2012</p>
 
 <p><strong>Client:</strong>
 <ul>
@@ -56,49 +56,58 @@ client closes; noticable when afterwards using vim with syntax highlighting</li>
 
 <p><strong>Server:</strong>
 <ul>
+<li>Additions:
+<ul>
 <li>New config entry 'ipv' that can be used to tell the server explicitly to use
 IPv4 or IPv6 (see the new server.conf template)</li>
-<li>Corpses now disappear if used by a scout to disguise (bugfix, most
-definitely)</li>
-<li>Yet another fix (and further complication) of the LOS algorithm</li>
-<li>Fixed some small issues with dynamic lighting; there are issues still, but
-these won't be touched (see manual on known bugs)</li>
-<li>Fixed how joining new players didn't receive the flag map right away</li>
+<li>Poisoned PCs now have their view disturbed by sickly green flickering</li>
+<li>Treasure item now has different colour when lying in water or in chasm</li>
+<li>Players receive message about detecting traps (useful if the detected trap
+is covered by, e.g., the treasure item)</li>
+</ul></li>
+<li>Changes:
+<ul>
+<li>Tweaked several game values (nothing radical)</li>
+<li>Corpses now disappear if used by a scout to disguise</li>
 <li>The accessibility check for team flags is applied to neutral flags, too</li>
-<li>No more than one flag can now be generated per sector (bugfix)</li>
 <li>Improvements in dungeon-type map generation</li>
 <li>In destroy mode, the boulders can no longer get generated around the purple
 team's initial flag (sorry if someone thought that was a cute touch)</li>
 <li>If the teams have the same number of players, a newly joining player can now
 also be put into the purple team if the class they requested is not available in
 the green team</li>
-<li>Do not allow multiple shouts on the same turn (in fact: do not allow a shout
-if there is a sound at the PC's position already)</li>
-<li>Torch symbol ',' for burnt out torch is now persistent</li>
 <li>Drowning damage can be zero, too (meaning in practice that drowning death
 takes longer)</li>
-<li>Fixed how dynamic lighting would not protect from known traps</li>
 <li>Traps are also automatically triggered if stumbled upon while blind</li>
 <li>Team messages now indicate an empty team with '-' instead of printing
 nothing</li>
-<li>Tweaked several game values (nothing radical)</li>
-<li>Poisoned PCs now have their view disturbed by sickly green flickering</li>
 <li>Healers can randomly heal more than 1 hp per action</li>
-<li>Fixed splitting non-ASCII unicode strings in messages</li>
-<li>Fixed a typo in message: &quot;[...] her ownmagic missile&quot;</li>
+<li>A player's death no longer causes watchers to be dropped</li>
 <li>Player comparison (in shuffling and !howfair) no longer dependent on admin
 level</li>
-<li>A player's death no longer causes watchers to be dropped</li>
+</ul></li>
+<li>Fixes:
+<ul>
+<li>Yet another fix (and further complication) of the LOS algorithm</li>
+<li>Fixed some small issues with dynamic lighting; there are issues still, but
+these won't be touched (see manual on known bugs)</li>
+<li>Fixed how joining new players didn't receive the flag map right away</li>
+<li>No more than one flag can now be generated per sector (bugfix)</li>
+<li>Do not allow multiple shouts on the same turn (in fact: do not allow a shout
+if there is a sound at the PC's position already)</li>
+<li>Torch symbol ',' for burnt out torch is now persistent</li>
+<li>Fixed how dynamic lighting would not protect from known traps</li>
+<li>Fixed splitting non-ASCII unicode strings in messages</li>
+<li>Fixed a typo in message: &quot;[...] her ownmagic missile&quot;</li>
 <li>Fixed how team deathmatch mode was not shown properly in !serverinfo</li>
-<li>Treasure item now has different colour when lying in water or in chasm</li>
-<li>Fixed two issues with switching class (switching <em>back</em> to current
-class; and not being informed of new class if &quot;killed&quot; by
-intermission)</li>
-<li>Players receive message about detecting traps (useful if the detected trap
-is covered by, e.g. the treasure item)</li>
 <li>Fixed a bug in zap bouncing (situation where a direct bounce back hits a PC
 immediately)</li>
 <li>Fixed (in a brutal way) a fatal bug in map generation</li>
+<li>Fixed two issues with switching class (switching <em>back</em> to current
+class; and not being informed of new class if &quot;killed&quot; by
+intermission)</li>
+<li>Let zombie bots be reaped</li>
+</ul></li>
 </ul>
 </p>
 
@@ -134,7 +143,7 @@ trouble</li>
 
 <hr>
 
-<p><strong>version 4e</strong> released Apr ?, 2012</p>
+<p><strong>version 4e</strong> released Apr 19, 2012</p>
 
 <p><strong>Server:</strong>
 <ul>

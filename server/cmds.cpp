@@ -29,6 +29,7 @@ namespace
 using namespace std;
 
 const unsigned char cmd_respond_msg_col = 12;
+const unsigned short KILLS_DEATHS_REQ_FOR_COMP = 20;
 
 const string ad_lvl_name[4] = { "guest", "regular", "trusted user",
 	"admin" };
@@ -61,9 +62,9 @@ bool pl_level_cmp(const list<Player>::const_iterator i, const list<Player>::cons
 	resi /= NO_CLASS; // averages of times played as each class
 	resj /= NO_CLASS;
 	// only take kill/death ratio into account if have enough deaths:
-	if(i->stats_i->deaths >= 20)
+	if(i->stats_i->deaths >= KILLS_DEATHS_REQ_FOR_COMP)
 		resi *= float(total_kills(i->stats_i))/i->stats_i->deaths;
-	if(j->stats_i->deaths >= 20)
+	if(j->stats_i->deaths >= KILLS_DEATHS_REQ_FOR_COMP)
 		resj *= float(total_kills(j->stats_i))/j->stats_i->deaths;
 	// It might be that resi == resj, although this is very unlikely.
 	// In that case, less healing received wins (or arbitrarily j if equal):

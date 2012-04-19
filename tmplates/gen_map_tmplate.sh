@@ -2,7 +2,8 @@
 #Script to generate an empty yuxtapa map file. Extremely slow, but does the
 #job (no bashisms; way faster with dash, zsh, and probably others).
 #Usage:
-# ./gen_map_tmplate.sh [size of map, integer]
+# ./gen_map_tmplate.sh [size of map, integer; default 100]
+#
 size=100
 if test $# -gt 0; then
 	size=$1

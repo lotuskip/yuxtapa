@@ -5,6 +5,7 @@
 #include "../common/coords.h"
 #include "../common/col_codes.h"
 #include "../common/los_lookup.h"
+#include "../common/util.h"
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/types.h>
@@ -37,6 +38,7 @@ const char CHANCE_IGN_CL_SPC[NO_CLASS] = {
 const char WAIT_ON_RANDOM_WALK_1IN = 4; // wait when would otherwise walk randomly
 const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 const char TURN_WITHOUT_REASON_1IN = 50; // turning when walking randomly
+const char FOLLOW_ANYONE_1IN = 4; // following non-scout, non-miner teammates
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
 const char HEAL_POISON_LIMIT = 5; // after heal/poison others
@@ -597,6 +599,12 @@ bool teammate_to_follow(Coords &t)
 			t = *ti;
 			return true;
 		}
+	}
+	// No scouts or miners; follow anyone with a small chance:
+	if(!pcs[myteam].empty() && !(random()%FOLLOW_ANYONE_1IN))
+	{
+		t = pcs[myteam][randor0(pcs[myteam].size())];
+		return true;
 	}
 	return false;
 }
