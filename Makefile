@@ -2,7 +2,7 @@
 VERSION = 9
 #
 #This option for a pedantic, warnful debug build:
-#CONFIG_FLAGS=-ggdb -O0 -Wall -pedantic -Wno-char-subscripts -DDEBUG
+#CONFIG_FLAGS=-ggdb -O0 -Wall -Wextra -pedantic -Wno-char-subscripts -DDEBUG
 #
 #This one for the optimised version:
 CONFIG_FLAGS=-O2 -g0

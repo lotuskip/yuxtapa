@@ -758,8 +758,8 @@ bool no_class_spc_Mi()
 	if(!pcs[opp_team[myteam]].empty()
 		|| random()%WALLS_FOR_CERTAIN_DIG >= num_walls_in_sight)
 		return true;
-	// else:
-	e_Dir d = e_Dir(random()%MAX_D);
+	// else; primarily dig in the direction of previous move:
+	e_Dir d = prev_committed_walk;
 	for(rv = 0; rv < MAX_D; ++rv)
 	{
 	 	tmp_coords = center.in(d);
@@ -977,7 +977,8 @@ int main(int argc, char *argv[])
 			{
 				rv = myhp; // store old hp
 				myhp = static_cast<char>(recv_buffer.read_ch());
-				if(rv <= 0 && myhp > 0) // this means we spawned
+				if(torchlit = (rv <= 0 && myhp > 0)) /* this means we spawned
+					* (use torchlit as a temp variable) */
 				{
 					// wizards can immediately light their torch:
 					if(myclass == C_WIZARD)
@@ -996,7 +997,12 @@ int main(int argc, char *argv[])
 				recv_buffer.read_ch(); // +damage
 				recv_buffer.read_ch(); // dv
 				recv_buffer.read_ch(); // poisoned (0/1)
-				recv_buffer.read_ch(); // sector
+				rv = recv_buffer.read_ch(); // sector
+				if(torchlit) /* this means we spawned! (See above.)
+					* Set walking dir towards center, or to random if spawning
+					* in central sector. */
+					prev_committed_walk = (rv == MAX_D) ? e_Dir(random()%MAX_D)
+						: !e_Dir(rv);
 				rv = recv_buffer.read_ch(); // torch symbol
 				torchlit = (rv != ' ' && rv != ','); /* NOTE: if we don't have a torch,
 					we say the torch is 'lit', so that we won't try to light it. */
@@ -1011,7 +1017,6 @@ int main(int argc, char *argv[])
 					abil_counter = 3; // flash bombs
 				myteam = e_Team(recv_buffer.read_ch());
 				limiter = 0;
-				prev_committed_walk = e_Dir(random()%MAX_D);
 			}
 			else if(mid == MID_GAME_UPD)
 			{
