@@ -2,10 +2,14 @@
 VERSION = 9
 #
 #This option for a pedantic, warnful debug build:
-#CONFIG_FLAGS=-ggdb -O0 -Wall -Wextra -pedantic -Wno-char-subscripts -DDEBUG
+CONFIG_FLAGS=-ggdb -O0 -Wall -Wextra -pedantic -Wno-char-subscripts -DDEBUG
 #
 #This one for the optimised version:
-CONFIG_FLAGS=-O2 -g0
+#CONFIG_FLAGS=-O2 -g0
+
+# Define your C++ compiler.
+#CXX=clang++
+CXX=g++
 
 EXTRA_FLAGS=
 # Add -DBOT_IPV6 to have the bots connect to localhost using IPv6 instead of v4
@@ -18,7 +22,6 @@ EXTRA_FLAGS=
 #The rest probably needs not be touched.
 ###############################################################################
 CPPFLAGS=$(CONFIG_FLAGS) $(EXTRA_FLAGS) -fsigned-char -DVERSION=$(VERSION)
-CXX=g++
 RM=rm -f
 LDLIBS_CL=-lncursesw -lz
 LDLIBS_SV=-lz

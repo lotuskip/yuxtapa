@@ -36,14 +36,6 @@ SerialBuffer recv_buffer;
 
 int s_me; // the socket for the server
 
-// get sockaddr, IPv4 or IPv6:
-void *get_in_addr(struct sockaddr *sa)
-{
-	if(sa->sa_family == AF_INET)
-		return &(((struct sockaddr_in*)sa)->sin_addr);
-	return &(((struct sockaddr_in6*)sa)->sin6_addr);
-}
-
 
 // returns true on error
 bool do_send_to(sockaddr_storage *sas, socklen_t len,

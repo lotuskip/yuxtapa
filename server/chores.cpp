@@ -270,8 +270,7 @@ void flash_at(const Coords &pos)
 }
 
 
-void fireball_trigger(const list<Trap>::iterator tr, const Coords &pos,
-	const list<Player>::iterator triggerer)
+void fireball_trigger(const Coords &pos, const list<Player>::iterator triggerer)
 {
 	Coords c;
 	list<PCEnt>::iterator pc_it;
@@ -397,7 +396,7 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		Game::curmap->mod_tile(pos)->flags &= ~(TF_TRAP);
 		return !pit->is_alive(); // cannot set the destroyed trap as seen!
 	case TRAP_FIREB:
-		fireball_trigger(tr, pos, pit);
+		fireball_trigger(pos, pit);
 		if(!pit->is_alive())
 			return true;
 		break;
@@ -1560,7 +1559,7 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 			break;
 		//case TRAP_TELE: // (detected by nothing happening!)
 		case TRAP_FIREB:
-			fireball_trigger(tr_it, c, arr->get_owner());
+			fireball_trigger(c, arr->get_owner());
 			break;
 		}
 	} // trap found there

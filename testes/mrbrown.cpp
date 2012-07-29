@@ -977,7 +977,7 @@ int main(int argc, char *argv[])
 			{
 				rv = myhp; // store old hp
 				myhp = static_cast<char>(recv_buffer.read_ch());
-				if(torchlit = (rv <= 0 && myhp > 0)) /* this means we spawned
+				if((torchlit = (rv <= 0 && myhp > 0))) /* this means we spawned
 					* (use torchlit as a temp variable) */
 				{
 					// wizards can immediately light their torch:
