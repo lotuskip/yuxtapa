@@ -1482,6 +1482,14 @@ bool missile_coll(OwnedEnt* mis, const Coords &c)
 		add_action_ind(c, A_MISS);
 		return true;
 	}
+	// else tile is passable and not occupied -- check for trees:
+	/*else*/ if(tar->symbol == 'T' && mis->hit_tree())
+	{
+		mis->makevoid();
+		add_action_ind(c, A_MISS);
+		return true;
+	}
+	
 	return false; // no collision or bounced
 }
 

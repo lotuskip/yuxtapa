@@ -2,7 +2,7 @@
 #
 # See comment below on how to install an IPv6 bot (by default this installs v4).
 pkgname=yuxtapa
-pkgver=9
+pkgver=9a
 pkgrel=1
 license=('None')
 pkgdesc="a text-mode team-based real-time multiplayer game"

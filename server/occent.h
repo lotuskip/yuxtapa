@@ -24,6 +24,7 @@ public:
 		const std::list<Player>::iterator o);	
 	virtual ~OwnedEnt() {}
 	virtual void update() = 0;
+	virtual bool hit_tree() { return false; }
 
 	std::list<Player>::iterator get_owner() const { return owner; }
 	void set_owner(const std::list<Player>::iterator pp) { owner = pp; }
@@ -69,9 +70,11 @@ public:
 	Arrow(Coords t, const std::list<Player>::iterator o);
 	~Arrow() {}
 	void update();
+	bool hit_tree();
 
 private:
 	std::list<Coords> path;
+	char init_path_len;
 };
 
 
@@ -81,6 +84,7 @@ public:
 	MM(const std::list<Player>::iterator o, const e_Dir dir);
 	~MM() {}
 	void update();
+	bool hit_tree();
 
 private:
 	e_Dir lmd; // last move dir
@@ -94,6 +98,7 @@ public:
 	Zap(const std::list<Player>::iterator o, const e_Dir d);
 	~Zap() {}
 	void update();
+	bool hit_tree();
 
 	bool bounce(const e_Dir nd); // returns true if should die out
 	e_Dir get_dir() const { return dir; }

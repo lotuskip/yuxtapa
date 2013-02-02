@@ -1,6 +1,7 @@
 //Please see LICENSE file.
 #include "confdir.h"
 #include <cstdlib>
+#include <iostream>
 
 std::string get_conf_dir()
 {
@@ -10,7 +11,12 @@ std::string get_conf_dir()
 		s = std::string(tmp);
 	else
 	{
-		s = getenv("HOME"); // this should be set, though
+		tmp = getenv("HOME"); // this should be set, though
+		if(!tmp)
+		{
+			std::cerr << "Neither HOME nor XDG_CONFIG_HOME defined!" << std::endl;
+			exit(1);
+		}
 		s += "/.config";
 	}
 	s += "/yuxtapa/";

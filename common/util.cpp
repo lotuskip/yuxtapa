@@ -1,5 +1,4 @@
 //Please see LICENSE file.
-
 #include "util.h"
 #include <cstdlib>
 #include <sstream>

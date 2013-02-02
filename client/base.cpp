@@ -5,7 +5,6 @@
 #include "../common/util.h"
 #include <ncurses.h>
 #include <iostream>
-#include <string>
 #include <vector>
 #include <csignal>
 #include <cstdlib>

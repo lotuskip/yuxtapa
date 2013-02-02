@@ -1,4 +1,4 @@
-yux+apa, version 9
+yux+apa, version 9a
 
 yuxtapa is a multiplayer game; text-based, real-time, and open-source.
 Taking most of its influences from roguelike games and team-oriented
@@ -6,9 +6,9 @@ multiplayer first-person shooters, it is rather difficult to describe
 briefly. The package includes a manual with some screenshots.
 
 The game is at the moment only available for Linux-like operating systems.
-It is still being developed further, but is fully playable and already fairly
-rich in features. yuxtapa is written in C++ and uses NCurses for the visual
-stuff.
+It is considered 'finished', but major bugs will, if reported and time
+allowing, be fixed, and it is not carved in stone that there won't some day
+be released a version with wholly new features.
 
 
 The structure of this package:

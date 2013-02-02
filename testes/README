@@ -5,7 +5,7 @@ anims.cpp
 	Used to test the "update animations"; you can use this to see how a non-
 	laggy update indicator looks like... Give the animation string (just like
 	the ones in client.conf) as the 1st argument, and turn length as the 2nd;
-	default for this is 250ms. Compile with -lncursesw
+	default for this is 250(ms). Compile with -lncursesw
 
 lostbl.cpp
 	Used to generate the ../common/los_lookup.h file. (Runs Bresenham's

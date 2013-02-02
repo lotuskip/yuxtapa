@@ -28,6 +28,7 @@ const char MAX_ZAP_BOUNCES = 7;
 const char ZAP_TRAVEL_DIST = 6;
 const char MAX_MM_HOMING_DIST = 15;
 
+const char MM_HIT_TREE_1IN = 4;
 }
 
 namespace Game { extern Map* curmap; }
@@ -85,6 +86,7 @@ Arrow::Arrow(Coords t, const list<Player>::iterator o)
 				loslookup[r-2][line*2*r+ind+1] + pos.y));
 	}
 	pos = Coords(0,0); // indicates the arrow isn't anywhere yet
+	init_path_len = path.size();
 }
 
 
@@ -115,6 +117,14 @@ void Arrow::update()
 	symbol = arrowpath_sym[pos.dir_of(path.front())];
 }
 
+bool Arrow::hit_tree()
+{
+	// chance to hit trees depends on distance travelled
+	return random()%100 < (init_path_len - (signed int)path.size() - 2)*60/9;
+	/* This gives a chance of 0% when 2 or less tiles have been travelled, a
+	 * chance of 60% when 11 tiles have been travelled, and linearly in
+	 * between. */
+}
 
 
 MM::MM(const std::list<Player>::iterator o, const e_Dir dir)
@@ -188,6 +198,11 @@ void MM::update()
 	cpair = (cpair == C_MM1) ? C_MM2 : C_MM1;
 }
 
+bool MM::hit_tree()
+{
+	// fixed chance:
+	return !(random() % MM_HIT_TREE_1IN);
+}
 
 
 Zap::Zap(const std::list<Player>::iterator o, const e_Dir d)
@@ -237,6 +252,24 @@ void Zap::update()
 		event_set.insert(pos);
 		symbol = zappath_sym[dir];
 	}
+}
+
+bool Zap::hit_tree()
+{
+	/* Chance to hit trees depends on distance travelled and whether has
+	 * bounced: */
+	char chance;
+	if(bounces > 0)
+		chance = 70;
+	else
+	{
+		chance = 10;
+		if(travelled > 2)
+			chance += (travelled - 2)*20;
+	}
+	/* Chance when hasn't bounced yet is 10% when travelled <= 2 tiles, 70% when
+	 * has travelled >= 5 tiles, and linearly in between. */
+	return random()%100 < chance;
 }
 
 

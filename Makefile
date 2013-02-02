@@ -1,5 +1,5 @@
 # yuxtapa Makefile
-VERSION = 9
+VERSION = 9a
 #
 #This option for a pedantic, warnful debug build:
 CONFIG_FLAGS=-ggdb -O0 -Wall -Wextra -pedantic -Wno-char-subscripts -DDEBUG
