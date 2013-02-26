@@ -21,7 +21,7 @@ EXTRA_FLAGS=
 
 #The rest probably needs not be touched.
 ###############################################################################
-CPPFLAGS=$(CONFIG_FLAGS) $(EXTRA_FLAGS) -fsigned-char -DVERSION=$(VERSION)
+CPPFLAGS=$(CONFIG_FLAGS) $(EXTRA_FLAGS) -fsigned-char -DVERSION=\"$(VERSION)\"
 RM=rm -f
 LDLIBS_CL=-lncursesw -lz
 LDLIBS_SV=-lz

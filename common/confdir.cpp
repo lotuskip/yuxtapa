@@ -11,8 +11,7 @@ std::string get_conf_dir()
 		s = std::string(tmp);
 	else
 	{
-		tmp = getenv("HOME"); // this should be set, though
-		if(!tmp)
+		if(!(tmp = getenv("HOME"))) // this should be set, though
 		{
 			std::cerr << "Neither HOME nor XDG_CONFIG_HOME defined!" << std::endl;
 			exit(1);

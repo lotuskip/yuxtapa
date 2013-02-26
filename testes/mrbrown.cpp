@@ -649,7 +649,7 @@ bool no_class_spc_Ar()
 		}
 		return false; // even if didn't do anything
 	}// else:
-	if(abil_counter)
+	if(abil_counter && random()%3)
 		--abil_counter; // gradually lower aim
 	return true;
 }

@@ -31,6 +31,6 @@ const char* mb_substr(const std::string &s, const short beg, short len);
 // If "s.substr(0,n)" would cut the string in the middle of a multi-byte
 // symbol, returns the last index m<=n so that "s.substr(0,m)" is valid utf8.
 // Assumes that s[n-1] is safe and that the whole 's' is valid utf8.
-short low_bound(const std::string &s, short n);
+short low_bound(const std::string &s, const short n);
 
 #endif

@@ -120,9 +120,9 @@ void Arrow::update()
 bool Arrow::hit_tree()
 {
 	// chance to hit trees depends on distance travelled
-	return random()%100 < (init_path_len - (signed int)path.size() - 2)*60/9;
+	return random()%100 < (init_path_len - (signed int)path.size() - 2)*40/9;
 	/* This gives a chance of 0% when 2 or less tiles have been travelled, a
-	 * chance of 60% when 11 tiles have been travelled, and linearly in
+	 * chance of 40% when 11 tiles have been travelled, and linearly in
 	 * between. */
 }
 
