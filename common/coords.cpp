@@ -3,30 +3,13 @@
 #include <cmath>
 #include <cstdlib>
 
-namespace
-{
-
-const e_Dir opposites[MAX_D] = {
-D_S, // D_N
-D_SW, // D_NE
-D_W, // D_E
-D_NW, // D_SE
-D_N, // D_S
-D_NE, // D_SW
-D_E, // D_W
-D_SE // D_NW
-};
-
-} // end local namespace
-
 
 e_Dir& operator++(e_Dir& d) { return d = (D_NW==d) ? D_N : e_Dir(d+1); }
 e_Dir& operator--(e_Dir& d) { return d = (D_N==d) ? D_NW : e_Dir(d-1); }
 
 e_Dir operator!(const e_Dir d)
 {
-	//assert(d != MAX_D);
-	return opposites[d];
+	return e_Dir((int(d)+4)%MAX_D);
 }
 
 Coords::Coords(const short nx, const short ny) : x(nx), y(ny) { }
