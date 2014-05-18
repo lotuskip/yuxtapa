@@ -31,13 +31,14 @@ Config::TB_PASSIVE,
 45, // intermission in seconds
 12360, // port
 0, // ip (4: IPv4, 6: IPv6, 0: unspecified)
-24 // stat purge (h)
+24, // stat purge (h)
+1 // safe chasms (how many warnings are given)
 };
 
 // keys to these:
 const string keywords[Config::MAX_INT_SETTING] = {
 "maxplayers", "teambalance", "mapsize", "mapsizevar", "classlimit",
-"turnms", "interm", "port", "ipv", "statpurge" };
+"turnms", "interm", "port", "ipv", "statpurge", "safe_chasms" };
 
 // hard limits (just staying within these is not sufficient alone):
 const unsigned int hard_lims[Config::MAX_INT_SETTING][2] = {
@@ -51,7 +52,8 @@ final map size span of 42--511 */
 { 10, 120 }, // intermission secs
 { 1024, 61000 }, // port
 { 0, 6 }, // port
-{ 0, 50000 } // stat purge; again 0 means "no limit"
+{ 0, 50000 }, // stat purge; again 0 means "no limit"
+{ 0, 255 } // safe chasms (number of warnings given)
 };
 
 string confdir_str = "";

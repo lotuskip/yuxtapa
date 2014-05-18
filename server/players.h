@@ -112,6 +112,7 @@ struct Player
 	e_Dir facing;
 	e_Dir sector;
 	short torch_left;
+	unsigned char warned_of_chasm;
 
 	// This is -1 for humans and process pid for bots:
 	int botpid;

@@ -37,6 +37,7 @@ namespace Config
 		IS_PORT,
 		IS_IPV,
 		IS_STATPURGE,
+		IS_SAFE_CHASMS,
 		MAX_INT_SETTING	};
 
 	void read_config();

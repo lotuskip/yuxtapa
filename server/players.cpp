@@ -112,7 +112,8 @@ void register_player(string nick, sockaddr_storage &sas,
 	npit->team = T_SPEC;
 	npit->cl = npit->next_cl = NO_CLASS;
 	npit->cl_props.hp = // this assures the player is !alive()
-		npit->doing_a_chore = 0;
+		npit->doing_a_chore =
+		npit->warned_of_chasm = 0;
 	npit->botpid = -1;
 
 	// A newly connected player is watching her own viewpoint:

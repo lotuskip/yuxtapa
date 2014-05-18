@@ -6,6 +6,7 @@
 #include "game.h"
 #include "viewpoint.h"
 #include "spiral.h"
+#include "settings.h"
 #include "../common/los_lookup.h"
 #include "../common/util.h"
 #include <cstdlib>
@@ -441,11 +442,25 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 	Tile* tile = Game::curmap->mod_tile(c);
 	if(tile->flags & TF_KILLS) // chasm
 	{
-		player_death(p, " fell into oblivion.", false);
-		add_voice(c, "Aieeeee...!");	
-		Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
-		return; // dead, no need to check anything else
+		if(p->warned_of_chasm == Config::int_settings[Config::IS_SAFE_CHASMS])
+		{
+			player_death(p, " fell into oblivion.", false);
+			add_voice(c, "Aieeeee...!");	
+			Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
+		}
+		else
+		{
+			p->warned_of_chasm++;
+			string msg = "You almost fall into a chasm!";
+			Network::construct_msg(msg, C_WALL_LIT);
+			Network::send_to_player(*p);
+			// revert original coords:
+			p->own_pc->setpos(opos);
+			p->own_vp->set_pos(opos);
+		}
+		return; // either died or did not move
 	}
+
 	if(tile->flags & TF_TRAP)
 	{
 		list<Trap>::iterator tr_it = any_trap_at(c);
@@ -1157,7 +1172,7 @@ void kill_player(const list<Player>::iterator pit)
 {
 	if(pit->cl_props.hp > 0)
 		pit->cl_props.hp = 0; // if they're negative, we don't overwrite that
-	pit->doing_a_chore = 0;
+	pit->doing_a_chore = pit->warned_of_chasm = 0;
 	event_set.insert(pit->own_pc->getpos());
 	Tile* tp = Game::curmap->mod_tile(pit->own_pc->getpos());
 	// if was carrying item, drop it
