@@ -270,7 +270,8 @@ void flash_at(const Coords &pos)
 }
 
 
-void fireball_trigger(const Coords &pos, const list<Player>::iterator triggerer)
+void fireball_trigger(const Coords &pos, const list<Player>::iterator triggerer,
+	const bool intentional)
 {
 	Coords c;
 	list<PCEnt>::iterator pc_it;
@@ -297,7 +298,11 @@ void fireball_trigger(const Coords &pos, const list<Player>::iterator triggerer)
 					{
 						msg = " was taken to the flames by ";
 						if(pc_it->get_owner()->team == triggerer->team)
-							msg += teammate_str; // note: no team kill recorded
+						{
+							msg += teammate_str;
+							if(intentional)
+								triggerer->stats_i->tks++;
+						}
 						else
 							record_kill(pc_it->get_owner(), WTK_FIREB);
 						msg += triggerer->nick + '.';
@@ -321,7 +326,8 @@ void fireball_trigger(const Coords &pos, const list<Player>::iterator triggerer)
 void move_player_to(const list<Player>::iterator p, const Coords &c,
 	const bool do_flags); // (This needs to call trigger_trap needs to call this)
 
-bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator tr)
+bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator tr,
+	const bool intentional)
 {
 	Coords pos = pit->own_pc->getpos();
 	switch(tr->get_m())
@@ -380,7 +386,8 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 					if(tr->get_owner()->team == pit->team)
 					{
 						msg += teammate_str;
-						tr->get_owner()->stats_i->tks++;
+						if(!intentional)
+							tr->get_owner()->stats_i->tks++;
 					}
 					else
 						record_kill(tr->get_owner(), WTK_BOOBY);
@@ -396,7 +403,7 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 		Game::curmap->mod_tile(pos)->flags &= ~(TF_TRAP);
 		return !pit->is_alive(); // cannot set the destroyed trap as seen!
 	case TRAP_FIREB:
-		fireball_trigger(pos, pit);
+		fireball_trigger(pos, pit, intentional);
 		if(!pit->is_alive())
 			return true;
 		break;
@@ -446,7 +453,7 @@ void move_player_to(const list<Player>::iterator p, const Coords &c,
 		if(!tr_it->is_seen_by(p->team) || p->own_vp->is_blind()
 			|| (!(tile->flags & TF_LIT) && random()%100 < 15 && !is_dynlit(c)))
 		{
-			if(trigger_trap(p, tr_it))
+			if(trigger_trap(p, tr_it, false))
 			{
 				// if returned true, PC died or teleported
 				Game::curmap->mod_tile(opos)->flags &= ~(TF_OCCUPIED);
@@ -887,7 +894,7 @@ void process_action(const Axn &axn, const list<Player>::iterator pit)
 	}
 	case XN_TRAP_TRIGGER:
 		if(Game::curmap->get_tile(pit->own_pc->getpos()).flags & TF_TRAP)
-			trigger_trap(pit, any_trap_at(pit->own_pc->getpos()));
+			trigger_trap(pit, any_trap_at(pit->own_pc->getpos()), true);
 		break;
 	case XN_SUICIDE:
 	{
@@ -1567,7 +1574,7 @@ void arrow_fall(const OwnedEnt* arr, const Coords &c)
 			break;
 		//case TRAP_TELE: // (detected by nothing happening!)
 		case TRAP_FIREB:
-			fireball_trigger(c, arr->get_owner());
+			fireball_trigger(c, arr->get_owner(), tr_it->is_seen_by(arr->get_owner()->team));
 			break;
 		}
 	} // trap found there
