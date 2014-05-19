@@ -242,7 +242,10 @@ void conditional_blind(const Coords &c)
 	// Must be valid PC, not assassin, and not a mind's eye using planewalker:
 	if(pc_it != PCs.end() && pc_it->get_owner()->cl != C_ASSASSIN
 		&& (pc_it->get_owner()->cl != C_PLANEWALKER || !pc_it->get_owner()->limiter))
+	{
+		pc_it->get_owner()->turns_without_axn = 0; // being blinded stops "idling"
 		pc_it->get_owner()->own_vp->blind();
+	}
 }
 
 void flash_at(const Coords &pos)

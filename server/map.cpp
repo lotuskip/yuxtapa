@@ -97,8 +97,8 @@ bool tile_from_char(const char ch, Tile& t)
 	case '\"': t = T_SWAMP; break;
 	case '~': t = T_WATER; break;
 	case ';': t = T_ROUGH; break;
-	case '+':
-	case '\\': t = T_DOOR; t.symbol = ch; break;
+	case '+': t = T_DOOR; break;
+	case '\\': t = T_DOOR; t.symbol = ch; t.flags |= TF_WALKTHRU|TF_SEETHRU; break;
 	case '|':
 	case '-': t = T_WINDOW; t.symbol = ch; break;
 	default: return true; // unrecognized!
@@ -443,6 +443,7 @@ void gen_house(const bool outdoor)
 	Coords c, d;
 	string card;
 	bool outwall;
+	size_t i;
 	for(c.y = 0; c.y < MAX_HS; ++(c.y))
 	{
 		for(c.x = 0; c.x < MAX_HS; ++(c.x))
@@ -469,7 +470,7 @@ void gen_house(const bool outdoor)
 				else // See if this is a wall we could place a window on
 				{
 					// replace any ':' with '.' (there can be at most one)
-					if((sh = card.find(':')) != string::npos)
+					if((i = card.find(':')) != string::npos)
 						card[sh] = '.';
 					if(card == "_#.#" || card == ".#_#")
 						house[c.y*MAX_HS+c.x] = '-';

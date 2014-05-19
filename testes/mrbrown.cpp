@@ -62,6 +62,22 @@ const char WALLS_FOR_CERTAIN_DIG = 38; // how many walls in sight ensure that mi
 const short MSG_DELAY_MS = 10000; // wait for 10ms between checking for server messages
 const short ISOLATION_TO_SUICIDE = 360; // if no enemies in sight for this many turns, suicide
 
+// Table for checking whether it makes sense to melee another class.
+// These are rough guidelines based on DV/2hit and PV/damage pairs.
+const char should_melee[NO_CLASS][NO_CLASS] = {
+    //Ar As Cm Mc Sc Fi Mi He Wi Tr Pw   <----target
+	{ 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0 }, // Ar
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // As  | attacker
+	{ 0, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1 }, // Cm  |
+	{ 0, 0, 1, 1, 1, 0, 1, 1, 1, 1, 1 }, // Mc  v
+	{ 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0 }, // Sc
+	{ 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // Fi
+	{ 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1 }, // Mi
+	{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0 }, // He
+	{ 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0 }, // Wi
+	{ 0, 0, 1, 1, 1, 0, 0, 1, 1, 0, 1 }, // Tr
+	{ 1, 1, 1, 1, 1, 0, 1, 1, 1, 1, 1 } // Pw
+};
 
 // VARIABLES
 //////////////
@@ -406,6 +422,12 @@ void try_walk_towards(const Coords &c, const bool avoid_pcs)
 		random_walk();
 }
 
+void try_walk_away_from(const Coords &c)
+{
+	if(!random_turn_from_dir(!(center.dir_of(c)), true, true))
+		random_walk();
+}
+
 void scan_view() // extract PCs and flag in view, count walls
 {
 	pcs[0].clear();
@@ -474,9 +496,19 @@ void get_class_of(const Coords& c)
 			return;
 		}
 		p += 2;
-		p += strlen(p);
+		p += strlen(p)+1;
 	}
 	last_check_class[0] = '\0';
+}
+
+int class_abr_to_idx(const Coords &c)
+{
+	int i;
+	get_class_of(c);
+	for(i = 0; i < NO_CLASS; ++i)
+		if(!strcmp(last_check_class, classes[i].abbr))
+			return i;
+	return 0; // this shouldn't be reached
 }
 
 
@@ -593,8 +625,8 @@ bool teammate_to_follow(Coords &t)
 	{
 		get_class_of(*ti);
 		// Follow first found Scout or Miner
-		if(!strcmp(last_check_class, "Sc")
-			|| !strcmp(last_check_class, "Mi"))
+		if(!strcmp(last_check_class, classes[C_SCOUT].abbr)
+			|| !strcmp(last_check_class, classes[C_MINER].abbr))
 		{
 			t = *ti;
 			return true;
@@ -668,7 +700,7 @@ bool no_class_spc_As()
 		if(center.dist_walk(*ti) <= 3)
 		{
 			get_class_of(*ti);
-			if(strcmp(last_check_class, "As")) // not assassin
+			if(strcmp(last_check_class, classes[C_ASSASSIN].abbr)) // not assassin
 				return true;
 		}
 	}
@@ -677,7 +709,7 @@ bool no_class_spc_As()
 		if(center.dist_walk(*ti) <= 3)
 		{
 			get_class_of(*ti);
-			if(strcmp(last_check_class, "As")) // not assassin
+			if(strcmp(last_check_class, classes[C_ASSASSIN].abbr)) // not assassin
 				break;
 		}
 	}
@@ -811,7 +843,7 @@ bool no_class_spc_Wi()
 			return false;
 		}
 	}
-	// at least one enemy, no friendlies, no adjacent enemies (melee is better)
+	// at least one enemy, no friendlies, no adjacent enemies (melee/move is better)
 	else if(pcs[myteam].empty() && neighb_pc(opp_team[myteam]) == MAX_D)
 	{
 		send_action(XN_MM); // cast magic missile
@@ -1113,7 +1145,8 @@ int main(int argc, char *argv[])
 					else // there are enemies in sight
 					{
 						rv = VIEWSIZE; // find the closest one
-						for(ci = pcs[opp_team[myteam]].begin(); ci != pcs[opp_team[myteam]].end(); ++ci)
+						for(ci = pcs[opp_team[myteam]].begin();
+							ci != pcs[opp_team[myteam]].end(); ++ci)
 						{
 							if(ci->dist_walk(center) < rv)
 							{
@@ -1124,7 +1157,14 @@ int main(int argc, char *argv[])
 						/* if the closest one is not very close and playing a
 						 * scout, do nothing (spotting the enemy for teammates) */
 						if(rv < 6 || myclass != C_SCOUT)
-							try_walk_towards(*picked, false); // *do* walk on PCs
+						{
+							// Now check the meleeing chances table to see if we
+							// should attack or avoid this enemy:
+							if(should_melee[myclass][class_abr_to_idx(*picked)])
+								try_walk_towards(*picked, false); // *do* walk on PCs
+							else
+								try_walk_away_from(*picked);
+						}
 						isolation_turns = random()%50;
 					}
 				} // walking
