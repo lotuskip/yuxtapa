@@ -39,6 +39,7 @@ const char WAIT_ON_RANDOM_WALK_1IN = 4; // wait when would otherwise walk random
 const char WALK_BLIND_CHANCE_1IN = 7; // walking around blind
 const char TURN_WITHOUT_REASON_1IN = 50; // turning when walking randomly
 const char FOLLOW_ANYONE_1IN = 4; // following non-scout, non-miner teammates
+const char EMERGENCY_TRAP_1IN = 3; // triggering teleport/fireball trap intentionally
 // LIMITs mean how many turns a bot has to spend doing *something else* after
 // using their special ability (so a higher number limits the usage of the ability more)
 const char HEAL_POISON_LIMIT = 5; // after heal/poison others
@@ -298,6 +299,18 @@ bool light_trap_color(const unsigned char c)
 	return c == C_LIGHT_TRAP || c == C_LIGHT_TRAP_LIT || c == C_YELLOW_ON_HEAL
 		|| c == C_YELLOW_ON_TRAP || c == C_YELLOW_ON_POIS || c == C_YELLOW_ON_DISG
 	 	|| c == C_YELLOW_ON_HIT || c == C_YELLOW_ON_MISS;
+}
+bool tele_trap_color(const unsigned char c)
+{
+	return c == C_TELE_TRAP || c == C_TELE_TRAP_LIT || c == C_GREEN_ON_HEAL
+		|| c == C_GREEN_ON_TRAP || c == C_GREEN_ON_POIS || c == C_GREEN_ON_DISG
+	 	|| c == C_GREEN_ON_HIT || c == C_GREEN_ON_MISS;
+}
+bool fireb_trap_color(const unsigned char c)
+{
+	return c == C_FIREB_TRAP || c == C_FIREB_TRAP_LIT || c == C_RED_ON_HEAL
+		|| c == C_RED_ON_TRAP || c == C_RED_ON_POIS || c == C_RED_ON_DISG
+	 	|| c == C_RED_ON_HIT || c == C_RED_ON_MISS;
 }
 
 
@@ -639,6 +652,15 @@ bool teammate_to_follow(Coords &t)
 		return true;
 	}
 	return false;
+}
+
+bool no_close_teammates()
+{
+	vector<Coords>::const_iterator ti;
+	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
+		if(center.dist_walk(*ti) <= 3)
+			return false;
+	return true;
 }
 
 bool get_enemy_corpse_dir(Coords &t)
@@ -1098,10 +1120,17 @@ int main(int argc, char *argv[])
 				if(limiter)
 					--limiter;
 				// Basic decision making:
+				// 0. Check for emergency trap triggering possibility
 				// 1. Check if could/should use class ability
 				// 2. If not, move (which can mean a lot of things,
 				// including melee)
-				if(no_class_specific()) // not doing something special
+				if(symbol_under_feet == '^' && !(random()%EMERGENCY_TRAP_1IN)
+					&& myhp <= classes[myclass].hp/3
+					&& neighb_pc(opp_team[myteam]) != MAX_D
+					&& ((myclass != C_MINDCRAFTER && tele_trap_color(col_under_feet))
+					|| (fireb_trap_color(col_under_feet) && no_close_teammates())))
+					send_action(XN_TRAP_TRIGGER);
+				else if(no_class_specific()) // not doing something special
 				{
 					// Other actions (mostly walking).
 					// Check if there are enemies in sight:
