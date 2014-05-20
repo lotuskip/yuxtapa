@@ -382,7 +382,7 @@ bool trigger_trap(const list<Player>::iterator pit, const list<Trap>::iterator t
 			string msg = " died to a trap.";
 			if(tr->get_owner() != cur_players.end())
 			{
-				msg = " failed to notice ";
+				msg = intentional ? " decided to step into " : " failed to notice ";
 				if(tr->get_owner() == pit)
 					msg += "her own";
 				else

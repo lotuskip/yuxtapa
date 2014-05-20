@@ -389,7 +389,7 @@ void Network::construct_msg(string &s, const unsigned char cpair)
 	// Hence, we can rest assured that the strings do not contain words of
 	// lenght > MSG_WIN_X (=57).
 	vector<string> blocks;
-	unsigned int i;
+	size_t i;
 	// break up at spaces:
 	while(num_syms(s) > MSG_WIN_X)
 	{
