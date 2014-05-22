@@ -226,9 +226,11 @@ bool check_typing()
 	else // no key at all
 		return false;
 
+	// color by chat/say:
+	k = (clientstate == CS_TYPE_CHAT) ? 7 : 11;
 	Base::print_str(mb_substr(viewn_str, printb_pos,
 		min(str_syms - printb_pos, int(MSG_WIN_X))),
-		7, 0, MSG_WIN_Y-1, MSG_WIN, true);
+		k, 0, MSG_WIN_Y-1, MSG_WIN, true);
 	Base::type_cursor(type_pos - printb_pos);
 	return false;
 }

@@ -106,8 +106,8 @@ bool SerialBuffer::read_compressed(char *buffer)
 	// read the size of the block:
 	unsigned short sh = read_sh();
 	uLongf res_size = BUFFER_SIZE;
-	sh = uncompress((Bytef*)buffer, &res_size, (Bytef*)pos, sh);
-	if(sh == Z_BUF_ERROR || sh == Z_DATA_ERROR)
+	int r = uncompress((Bytef*)buffer, &res_size, (Bytef*)pos, sh);
+	if(r == Z_BUF_ERROR || r == Z_DATA_ERROR)
 		return true;
 	// Z_MEM_ERROR (insufficient memory) is highly unlikely and would cause more
 	// general problems.
