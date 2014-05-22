@@ -1,4 +1,6 @@
 # Maintainer: Onni R. <onnir at iki dot fi>
+# (Not really maintained anymore -- since I've stopped active use of Arch -- but
+# shipped for people to fiddle with.)
 #
 # See comment below on how to install an IPv6 bot (by default this installs v4).
 pkgname=yuxtapa
