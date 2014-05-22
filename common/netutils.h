@@ -14,6 +14,7 @@ enum {
 	MID_VIEW_UPD, /* S->C: new view or a "next turn" notice, also acts as a
 		'ping'. C->S: the corresponding 'pong' */
 	MID_SAY_CHAT,
+	MID_TEAM_INFO, /* C->S: request team info; S->C: respond with said info */
 // C to S only:
 	MID_SAY_ALOUD,
 	MID_TAKE_ACTION,
