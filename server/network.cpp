@@ -360,6 +360,10 @@ bool Network::receive_n_handle()
 			if((pit = who_is_this()) != cur_players.end())
 				Game::team_switch(pit);
 			break;
+		case MID_TEAM_INFO:
+			if((pit = who_is_this()) != cur_players.end())
+				Game::send_team_info(pit);
+			break;
 		default: break;
 		}
 	}

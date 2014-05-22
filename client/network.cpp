@@ -123,6 +123,7 @@ void store_id_for_server(const unsigned short id,
 
 extern e_ClientState clientstate;
 extern char viewbuffer[BUFFER_SIZE]; // defined in view.cpp
+extern char teambuffer[BUFFER_SIZE]; // defined in view.cpp
 
 
 bool Network::connect(string &errors)
@@ -288,7 +289,8 @@ bool Network::receive_n_handle()
 			{
 				if(recv_buffer.read_compressed(viewbuffer))
 					break; // could not read package, ignore it...
-				if(clientstate != CS_LIMBO && clientstate != CS_HELP)
+				if(clientstate != CS_LIMBO && clientstate != CS_HELP
+					&& clientstate != CS_TEAM_INFO)
 					redraw_view();
 			}
 			Base::viewtick();
@@ -346,6 +348,14 @@ bool Network::receive_n_handle()
 			clocksync(sh, recv_buffer.read_ch());
 			break;
 		}
+		case MID_TEAM_INFO:
+			// This is a respond to player's request, so view the info now
+			if(recv_buffer.read_compressed(teambuffer))
+				break;// corrupt package? Ignore and don't switch cs
+			draw_team_info();
+			clientstate = CS_TEAM_INFO;
+			Base::type_cursor(0);
+			break;
 		default: break;
 		}
 	}
@@ -414,6 +424,13 @@ void Network::send_switch()
 	do_send();	
 }
 
+void Network::send_teami_req()
+{
+	send_buffer.clear();
+	send_buffer.add((unsigned char)MID_TEAM_INFO);
+	send_buffer.add(cur_id);
+	do_send();
+}
 
 bool Network::not_acted() { return !axn_counter; }
 

@@ -257,10 +257,9 @@ bool Input::inputhandle()
 		if(key == KEYCODE_INT)
 			return true; // ^C quits
 
-		if(clientstate == CS_HELP)
+		if(clientstate == CS_HELP || clientstate == CS_TEAM_INFO)
 		{
 			// any key in help screen closes help
-			clientstate = CS_NORMAL;
 			leave_limbo(); // not leaving limbo, but the functionality is the same
 			return false;
 		}
@@ -392,6 +391,9 @@ bool Input::inputhandle()
 				redraw_view();
 				Base::type_cursor(0);
 				break;
+			case KB_i: // request team info
+				Network::send_teami_req();
+				break;	
 			case KB_Q: // quit
 				return true; // confirmation? nah
 

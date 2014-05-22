@@ -41,9 +41,6 @@ const char SECS_TO_SHUFFLE = 30; // by active team balance
 
 const char POISON_EVERY_N_TURN = 40;
 
-const string short_sector_name[MAX_D+1] = { "N", "NE", "E", "SE", "S",
-	"SW", "W", "NW", "C" };
-
 const char game_mode_mins[] = {
 	15, // dominion
 	18, // conquest
@@ -1047,6 +1044,48 @@ void Game::send_state_change(const list<Player>::const_iterator to)
 	Network::send_buffer.add((unsigned char)MID_STATE_CHANGE);
 	Network::send_buffer.add((unsigned char)to->next_cl);
 	Network::send_buffer.add((unsigned char)to->team);
+	Network::send_to_player(*to);
+}
+
+void Game::send_team_info(const std::list<Player>::const_iterator to)
+{
+	// We will reuse renderbuffer for sending (it is vacant space when not
+	// rendering).
+	char *p = &(renderbuffer[1]);
+	if(to->team == T_SPEC)
+		renderbuffer[0] = cur_players.size() - num_players[0] - num_players[1];
+	else
+		renderbuffer[0] = num_players[to->team];
+	if(renderbuffer[0] > VIEWSIZE) // can't print more than this
+		renderbuffer[0] = VIEWSIZE;
+	int count = renderbuffer[0];
+	for(list<Player>::const_iterator it = cur_players.begin();
+		it != cur_players.end(); ++it)
+		if(it->team == to->team)
+		{
+			strcpy(p, it->nick.c_str());
+			p += it->nick.length(); // skip '\0'
+			if(it->botpid != -1)
+			{
+				strcpy(p, " (B)");
+				p += 5; // include '\0'
+			}
+			else
+			{
+				strcpy(p, admin_lvl_str[it->stats_i->ad_lvl].c_str());
+				p += admin_lvl_str[it->stats_i->ad_lvl].length()+1;
+			}
+			*(p++) = it->cl; // class
+			if(it->is_alive()) // sector
+				*(p++) = it->sector;
+			else
+				*(p++) = -1; // signifies dead
+			if(!(--count))
+				break;
+		}
+	Network::send_buffer.clear();
+	Network::send_buffer.add((unsigned char)MID_TEAM_INFO);
+	Network::send_buffer.write_compressed(renderbuffer, p - renderbuffer);
 	Network::send_to_player(*to);
 }
 

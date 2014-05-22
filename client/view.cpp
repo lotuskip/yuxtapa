@@ -13,6 +13,7 @@
 
 // globals:
 char viewbuffer[BUFFER_SIZE];
+char teambuffer[BUFFER_SIZE];
 
 extern e_ClientState clientstate;
 extern Coords aimer;
@@ -303,7 +304,7 @@ void redraw_view()
 		}
 		Base::print_view(helpview);
 	}
-	else
+	else if(clientstate != CS_TEAM_INFO)
 	{
 		Base::print_view(viewbuffer);
 		if(clientstate == CS_AIMING)
@@ -311,5 +312,41 @@ void redraw_view()
 		if(showtitles)
 			draw_titles();
 	}
+}
+
+
+void draw_team_info()
+{
+	char *rp = &(teambuffer[1]);
+	unsigned char num = static_cast<unsigned char>(teambuffer[0]);
+	int i;
+	unsigned short sh;
+	for(i = 0; i < (VIEWSIZE - num)/2; ++i)
+		Base::print_str("", 0, 0, i, VIEW_WIN, true);
+	for(; i < (VIEWSIZE + num)/2; ++i)
+	{
+		Base::incr_print_start(0, i, VIEW_WIN);
+		Base::incr_print(rp, 7, VIEW_WIN); // nick & AL
+		for(sh = num_syms(string(rp)); sh < 16; ++sh) // fill in blanks
+			Base::incr_print(" ", 0, VIEW_WIN);
+		rp += strlen(rp)+1; // skip '\0'
+		if(*rp != NO_CLASS)
+			Base::incr_print(classes[*rp].abbr, 7, VIEW_WIN);
+		else
+			Base::incr_print("- ", 7, VIEW_WIN);
+		Base::incr_print(" ", 0, VIEW_WIN);
+		if(*(++rp) == -1) // dead?
+			Base::incr_print("SPWN", 11, VIEW_WIN);
+		else // sector name
+		{
+			Base::incr_print("(", 7, VIEW_WIN);
+			Base::incr_print(short_sector_name[*rp].c_str(), 7, VIEW_WIN);
+			Base::incr_print(")", 7, VIEW_WIN);
+		}
+		Base::incr_print_end(VIEW_WIN, true);
+		++rp;
+	}
+	for(; i < VIEWSIZE; ++i)
+		Base::print_str("", 0, 0, i, VIEW_WIN, true);
 }
 

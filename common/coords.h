@@ -10,6 +10,9 @@ e_Dir& operator++(e_Dir& d); // "turn direction 45deg clockwise"
 e_Dir& operator--(e_Dir& d); // "turn direction 45deg anticlockwise"
 e_Dir operator!(const e_Dir d); // gives opposite direction
 
+const std::string short_sector_name[MAX_D+1] = { "N", "NE", "E", "SE", "S",
+	"SW", "W", "NW", "C" };
+
 class Coords
 {
 public:

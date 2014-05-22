@@ -16,6 +16,7 @@ namespace Network
 	void send_line(const std::string &s, const bool chat); // !chat => shout
 	void send_spawn(const unsigned char newclass);
 	void send_switch(); // to switch team
+	void send_teami_req(); // request team info
 
 	bool not_acted();
 }

@@ -10,6 +10,7 @@ enum e_ClientState {
 	CS_TYPE_SHOUT, // typing a shout
 	CS_LIMBO, // viewing the limbo menu
 	CS_HELP, // viewing the keymap
+	CS_TEAM_INFO, // viewting team info
 	// class specifics:
 	CS_AIMING, // archer aiming
 	CS_DIR // waiting for direction input
@@ -18,5 +19,7 @@ enum e_ClientState {
 void toggle_titles();
 void diff_titles();
 void redraw_view();
+
+void draw_team_info();
 
 #endif
