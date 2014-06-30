@@ -70,16 +70,17 @@ vector<string> botnames;
 vector<string>::const_iterator botname_iter;
 
 
-void check_path_setting(const string &name, string &val)
+bool check_path_setting(const string &name, string &val)
 {
 	if(!val.empty() && val[0] != '/')
 	{
 		to_log("Config error: the \'" + name + "\' setting must contain "
 			"the full path; ignoring the read \"" + val + "\".");
 		val.clear();
+		return true;
 	}
+	return false;
 }
-
 
 string construct_value_list(const vector<char> &l, string const* const s)
 {
@@ -95,9 +96,227 @@ string construct_value_list(const vector<char> &l, string const* const s)
 	return ret;
 }
 
+bool validate_int_set(const int i)
+{
+	using namespace Config;
+	if(i == IS_IPV)
+		return (int_settings[IS_IPV] != 0 && int_settings[IS_IPV] != 4
+			&& int_settings[IS_IPV] != 6);
+	return (int_settings[i] < hard_lims[i][0] || int_settings[i] > hard_lims[i][1]);
+}
+
+bool validate_classlim()
+{
+	using namespace Config;
+	if(int_settings[IS_CLASSLIMIT]
+		&& int_settings[IS_CLASSLIMIT]*2*NO_CLASS < int_settings[IS_MAXPLAYERS])
+	{
+		int_settings[IS_CLASSLIMIT] = 0;
+		return true;
+	}
+	return false;
+}
+
 } // end of local namespace
 
+
 unsigned int Config::int_settings[Config::MAX_INT_SETTING];
+
+bool Config::parse_config(const string &s, const bool from_conf)
+{
+	string keyw, olds;
+	vector<char> old_chv;
+	vector<string> old_sv;
+	int oldi, i;
+	stringstream ss(s, ios_base::in);
+
+	ss >> keyw;
+	// first check if it is a keyword:
+	for(i = 0; i < MAX_INT_SETTING; ++i)
+	{
+		if(keyw == keywords[i])
+		{
+			oldi = int_settings[i];
+			// teambalance separately:
+			if(i == IS_TEAMBALANCE)
+			{
+				ss >> keyw;
+				if(keyw == "active")
+					int_settings[i] = TB_ACTIVE;
+				else if(keyw == "passive")
+					int_settings[i] = TB_PASSIVE;
+				else if(keyw == "off")
+					int_settings[i] = TB_OFF;
+				else if(from_conf)
+					to_log("Warning: unknown team balance setting \'"
+						+ keyw + "\' in config.");
+				else return true;
+			}
+			else
+				ss >> int_settings[i];
+			break;
+		}
+	}
+	if(i < MAX_INT_SETTING) // found
+	{
+		if(!from_conf) // validate now
+		{
+			if(validate_int_set(i))
+			{
+				int_settings[i] = oldi;
+				return true;
+			}
+			validate_classlim();
+		}
+		return false;
+	}
+	// check non-numeric settings:
+	if(keyw == "greeting")
+	{
+		greeting = ss.str();
+		greeting.erase(0, greeting.find(' '));
+		if(!greeting.empty())
+		{
+			greeting.erase(0, 1);
+			if(greeting.size() >= MAXIMUM_STR_LEN)
+			{
+				if(from_conf)
+					to_log("The greeting string in the config is too long!");
+				while(greeting.size() >= MAXIMUM_STR_LEN)
+					del(greeting, 0);
+				return false;
+			}
+			// If the greeting contains words longer than MSG_WIN_X,
+			// they must be splitted:
+			size_t ind, jnd = 0;
+			while((ind = greeting.find(' ', jnd)) != string::npos)
+			{
+				if(ind - jnd > MSG_WIN_X)
+				{
+					greeting.insert(jnd + MSG_WIN_X, 1, ' ');
+					++ind;
+				}
+				if(ind == greeting.size()-1)
+					break;
+				jnd = ind+1;
+			}
+		}
+		return false;
+	}
+	if(keyw == "bots")
+	{
+		olds = botexe;
+		ss >> botexe;
+		if(check_path_setting(keyw, botexe) && !from_conf)
+		{
+			botexe = olds;
+			return true;
+		}
+		return false;
+	}
+	if(keyw == "botnames")
+	{
+		size_t ind;
+		old_sv = botnames;
+		botnames.clear();
+		while(ss >> keyw)
+		{
+			if(num_syms(keyw) > MAX_NICK_LEN)
+			{
+				if(from_conf)
+					to_log("Warning: bot name '" + keyw + "' is too long.");
+				del_syms(keyw, MAX_NICK_LEN);
+			}
+			ind = 0;
+			while((ind = keyw.find('_', ind)) != string::npos)
+				keyw.replace(ind, 1, 1, ' ');
+			botnames.push_back(keyw);
+		}
+		if(!from_conf && botnames.empty())
+			botnames = old_sv;
+		return false;
+	}
+	if(keyw == "mapdir")
+	{
+		olds = mapdir;
+		ss >> mapdir;
+		if(check_path_setting(keyw, mapdir) && !from_conf)
+		{
+			mapdir = olds;
+			return true;
+		}
+		// Make sure nonempty value ends in '/':
+		if(!mapdir.empty() && mapdir[mapdir.size()-1] != '/')
+			mapdir += '/';
+		return false;
+	}
+	if(keyw == "mode")
+	{
+		old_chv = poss_modes;
+		poss_modes.clear();
+		while(ss >> keyw)
+		{
+			if(keyw == "dominion")
+				poss_modes.push_back(GM_DOM);
+			else if(keyw == "conquest")
+				poss_modes.push_back(GM_CONQ);
+			else if(keyw == "steal")
+				poss_modes.push_back(GM_STEAL);
+			else if(keyw == "destroy")
+				poss_modes.push_back(GM_DESTR);
+			else if(keyw == "team-dm")
+				poss_modes.push_back(GM_TDM);
+			else if(from_conf)
+				to_log("Unrecognised game mode string \'" + keyw + "\'!");
+		}
+		if(!from_conf && poss_modes.empty())
+		{
+			poss_modes = old_chv;
+			return true;
+		}
+		return false;
+	}
+	if(keyw == "maptype")
+	{
+		old_chv = poss_mtypes;
+		poss_mtypes.clear();
+		while(ss >> keyw)
+		{
+			if(keyw == "dungeon")
+				poss_mtypes.push_back(MT_DUNGEON);
+			else if(keyw == "outdoor")
+				poss_mtypes.push_back(MT_OUTDOOR);
+			else if(keyw == "complex")
+				poss_mtypes.push_back(MT_COMPLEX);
+			else if(from_conf)
+				to_log("Unrecognised map type string \'" + keyw + "\'!");
+		}
+		if(!from_conf && poss_mtypes.empty())
+		{
+			poss_mtypes = old_chv;
+			return true;
+		}
+		return false;
+	}
+	if(keyw == "ban_command")
+	{
+		while(ss >> keyw)
+		{
+			for(i = 0; i < MAX_SERVER_CMD; ++i)
+			{
+				if(keyw == server_cmd[i] && banned_cmds.find(char(i)) == string::npos)
+				{
+					banned_cmds += char(i);
+					break;
+				}
+			}
+			if(i == MAX_SERVER_CMD && from_conf)
+				to_log("Unrecognised banned command \'" + keyw + "\' in config!");
+		}
+		return false;
+	}
+	return true;
+}
 
 void Config::read_config()
 {
@@ -108,7 +327,6 @@ void Config::read_config()
 
 	string s = get_config_dir() + "server.conf";
 	ifstream file(s.c_str());
-	string keyw;
 	if(!file)
 	{
 		to_log("Warning: config file does not exist or is not readable!");
@@ -120,179 +338,23 @@ void Config::read_config()
 		getline(file, s);
 		if(s.empty() || s[0] == '#')
 			continue;
-		stringstream ss(s, ios_base::in);
-		ss >> keyw;
-		// first check if it is a keyword:
-		for(i = 0; i < MAX_INT_SETTING; ++i)
+		if(parse_config(s, true))
 		{
-			if(keyw == keywords[i])
-			{
-				// teambalance separately:
-				if(i == IS_TEAMBALANCE)
-				{
-					ss >> keyw;
-					if(keyw == "active")
-						int_settings[i] = TB_ACTIVE;
-					else if(keyw == "passive")
-						int_settings[i] = TB_PASSIVE;
-					else if(keyw == "off")
-						int_settings[i] = TB_OFF;
-					else
-						to_log("Warning: unknown team balance setting \'"
-							+ keyw + "\' in config.");
-				}
-				else
-					ss >> int_settings[i];
-				break;
-			}
+			to_log("Warning: could not parse the following line in config file:");
+			to_log("\t\"" + s + "\"");
 		}
-		if(i < MAX_INT_SETTING) // found
-			continue;
-		// check non-numeric settings:
-		if(keyw == "greeting")
-		{
-			greeting = ss.str();
-			greeting.erase(0, greeting.find(' '));
-			if(!greeting.empty())
-			{
-				greeting.erase(0, 1);
-				if(greeting.size() >= MAXIMUM_STR_LEN)
-				{
-					to_log("The greeting string in the config is too long!");
-					while(greeting.size() >= MAXIMUM_STR_LEN)
-						del(greeting, 0);
-					continue;
-				}
-				// If the greeting contains words longer than MSG_WIN_X,
-				// they must be splitted:
-				size_t ind, jnd = 0;
-				while((ind = greeting.find(' ', jnd)) != string::npos)
-				{
-					if(ind - jnd > MSG_WIN_X)
-					{
-						greeting.insert(jnd + MSG_WIN_X, 1, ' ');
-						++ind;
-					}
-					if(ind == greeting.size()-1)
-						break;
-					jnd = ind+1;
-				}
-			}
-			continue;
-		}
-		if(keyw == "bots")
-		{
-			ss >> botexe;
-			check_path_setting(keyw, botexe);
-			continue;
-		}
-		if(keyw == "botnames")
-		{
-			size_t ind;
-			while(ss >> keyw)
-			{
-				if(num_syms(keyw) > MAX_NICK_LEN)
-				{
-					to_log("Warning: bot name '" + keyw + "' is too long.");
-					del_syms(keyw, MAX_NICK_LEN);
-				}
-				ind = 0;
-				while((ind = keyw.find('_', ind)) != string::npos)
-					keyw.replace(ind, 1, 1, ' ');
-				botnames.push_back(keyw);
-			}
-			continue;
-		}
-		if(keyw == "mapdir")
-		{
-			ss >> mapdir;
-			check_path_setting(keyw, mapdir);
-			// Make sure nonempty value ends in '/':
-			if(!mapdir.empty() && mapdir[mapdir.size()-1] != '/')
-				mapdir += '/';
-			continue;
-		}
-		if(keyw == "mode")
-		{
-			for(;;)
-			{
-				ss >> keyw;
-				if(keyw == "dominion")
-					poss_modes.push_back(GM_DOM);
-				else if(keyw == "conquest")
-					poss_modes.push_back(GM_CONQ);
-				else if(keyw == "steal")
-					poss_modes.push_back(GM_STEAL);
-				else if(keyw == "destroy")
-					poss_modes.push_back(GM_DESTR);
-				else if(keyw == "team-dm")
-					poss_modes.push_back(GM_TDM);
-				else
-					to_log("Unrecognised game mode string \'" + keyw + "\'!");
-				
-				if(ss.eof())
-					break;
-			}
-			continue;
-		}
-		if(keyw == "maptype")
-		{
-			for(;;)
-			{
-				ss >> keyw;
-				if(keyw == "dungeon")
-					poss_mtypes.push_back(MT_DUNGEON);
-				else if(keyw == "outdoor")
-					poss_mtypes.push_back(MT_OUTDOOR);
-				else if(keyw == "complex")
-					poss_mtypes.push_back(MT_COMPLEX);
-				else
-					to_log("Unrecognised map type string \'" + keyw + "\'!");
-				if(ss.eof())
-					break;
-			}
-			continue;
-		}
-		if(keyw == "ban_command")
-		{
-			for(;;)
-			{
-				ss >> keyw;
-				for(i = 0; i < MAX_SERVER_CMD; ++i)
-				{
-					if(keyw == server_cmd[i] && banned_cmds.find(char(i)) == string::npos)
-					{
-						banned_cmds += char(i);
-						break;
-					}
-				}
-				if(i == MAX_SERVER_CMD)
-					to_log("Unrecognised banned command \'" + keyw + "\' in config!");
-				if(ss.eof())
-					break;
-			}
-			continue;
-		}
-		// if here, not all is okay:
-		to_log("Warning: could not parse the following line in config file:");
-		to_log("\t\"" + s + "\"");
 	}
 	
 	// everything extracted (or failed altogether), check:
 	for(i = 0; i < MAX_INT_SETTING; ++i)
-	{
-		if(int_settings[i] < hard_lims[i][0] || int_settings[i] > hard_lims[i][1])
+		if(validate_int_set(i))
 		{
-			to_log("Warning: config gave invalid value for \'" + keywords[i] + "\'.");
 			int_settings[i] = default_sets[i];
+			to_log("Warning: config gave invalid value for \'" + keywords[i] + "\'.");
 		}
-	}
-	// Check ipv further:
-	if(int_settings[IS_IPV] != 0 && int_settings[IS_IPV] != 4 && int_settings[IS_IPV] != 6)
-	{
-		to_log("Warning: config has invalid ipv.");
-		int_settings[IS_IPV] = default_sets[IS_IPV];
-	}
+	if(validate_classlim())
+		to_log("Config error: classlimit is too small "
+			"with respect to the number of players allowed!");
 	// Check modes:
 	if(poss_modes.empty())
 	{
@@ -313,14 +375,6 @@ void Config::read_config()
 	if(botnames.empty())
 		botnames.push_back("Mr. Brown");
 	botname_iter = botnames.begin();
-	// finally check classlimit with respect to maxplayers:
-	if(int_settings[IS_CLASSLIMIT]
-		&& int_settings[IS_CLASSLIMIT]*2*NO_CLASS < int_settings[IS_MAXPLAYERS])
-	{
-		to_log("Config error: classlimit is too small "
-			"with respect to the number of players allowed!");
-		int_settings[IS_CLASSLIMIT] = 0;
-	}
 }
 
 
@@ -332,7 +386,6 @@ string &Config::get_config_dir()
 }
 
 string &Config::greeting_str() { return greeting; }
-void Config::set_greeting_str(const string &s) { greeting = s; }
 
 string &Config::get_botexe() { return botexe; }
 

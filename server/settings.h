@@ -7,15 +7,15 @@
 #include "declares.h"
 
 enum { CMD_SERVERINFO=0, CMD_ADMINLVL, CMD_TEAMS, CMD_SHUFFLE, CMD_STOREMAP,
-	CMD_LISTMAPS, CMD_NEXTMAP, CMD_TEAMBAL, CMD_KICK, CMD_MUTE, CMD_UNMUTE,
-	CMD_SETAL, CMD_BAN, CMD_SERVERMSG, CMD_CLEARBANS, CMD_SPAWNBOTS,
-	CMD_DROPBOTS, CMD_LOG, CMD_PLINFO, CMD_PUTTEAM, CMD_SETCLASS, CMD_HOWFAIR,
-	CMD_LSCMD, MAX_SERVER_CMD };
+	CMD_LISTMAPS, CMD_NEXTMAP, CMD_KICK, CMD_MUTE, CMD_UNMUTE, CMD_SETAL,
+	CMD_BAN, CMD_CLEARBANS, CMD_SPAWNBOTS, CMD_DROPBOTS, CMD_LOG, CMD_PLINFO,
+	CMD_PUTTEAM, CMD_SETCLASS, CMD_HOWFAIR, CMD_LSCMD, CMD_SETCONF,
+	MAX_SERVER_CMD };
 
 const std::string server_cmd[MAX_SERVER_CMD] = { "serverinfo", "adminlvl",
-	"teams", "shuffle", "storemap", "listmaps", "nextmap", "teambal", "kick",
-	"mute", "unmute", "setal", "ban", "servermsg", "clearbans", "spawnbots",
-	"dropbots", "log", "plinfo", "putteam", "setclass", "howfair", "lscmd" };
+	"teams", "shuffle", "storemap", "listmaps", "nextmap", "kick", "mute",
+	"unmute", "setal", "ban", "clearbans", "spawnbots", "dropbots", "log",
+	"plinfo", "putteam", "setclass", "howfair", "lscmd", "setconf" };
 
 #endif
 
@@ -40,11 +40,11 @@ namespace Config
 		IS_SAFE_CHASMS,
 		MAX_INT_SETTING	};
 
+	bool parse_config(const std::string &s, const bool from_conf);
 	void read_config();
 
 	std::string &get_config_dir();
 	std::string &greeting_str();
-	void set_greeting_str(const std::string &s);
 
 	std::string &get_botexe();
 	bool is_cmd_banned(const char index);

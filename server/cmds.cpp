@@ -232,26 +232,6 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			next_map_forced(keyw);
 		}
 		return false; // may broadcast
-	case CMD_TEAMBAL: // req: AL >= 3 && not muted
-		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
-			&& i != string::npos && i < cmd.size()-1)
-		{
-			using namespace Config;
-			switch(tolower(cmd[i+1]))
-			{
-			case 'a':
-				int_settings[IS_TEAMBALANCE] = TB_ACTIVE; break;
-			case 'p':
-				int_settings[IS_TEAMBALANCE] = TB_PASSIVE; break;
-			case 'o':
-				int_settings[IS_TEAMBALANCE] = TB_OFF; break;
-			default: return false;
-			}
-			keyw = "Team balance set to: \""
-				+ team_balance_str[int_settings[IS_TEAMBALANCE]] + "\".";
-			Network::to_chat(keyw);
-		}
-		return false; // may broadcast
 	case CMD_KICK: // req: AL > max(1, target's) && not muted
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU && i != string::npos
 			&& i < cmd.size()-1)
@@ -344,15 +324,6 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 				banlist().push_back(nit->address);
 				Game::remove_player(nit, " banned by " + pit->nick + '.');
 			}
-		}
-		return false; // may broadcast
-	case CMD_SERVERMSG: // req: AL >= 3 && not muted
-		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN && i != string::npos)
-		{
-			if(i < cmd.size()-1)
-				Config::set_greeting_str(cmd.substr(i+1));
-			else
-				Config::set_greeting_str("");
 		}
 		return false; // may broadcast
 	case CMD_CLEARBANS: // req: AL >= 3 && not muted
@@ -524,7 +495,6 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 		}
 		return false; // may broadcast
 	case CMD_LSCMD:
-	{
 		if(!pit->muted)
 		{
 			keyw = "Enabled commands:";
@@ -546,7 +516,17 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			Network::to_chat(keyw);
 		}
 		return false; // may broadcast
-	}
+	case CMD_SETCONF:
+		if(!pit->muted && pit->stats_i->ad_lvl >= AL_ADMIN
+			&& i != string::npos && i < cmd.size()-1)
+		{
+			if(!Config::parse_config(cmd.substr(i+1), false))
+			{
+				keyw = "Configuration changed.";
+				Network::to_chat(keyw);
+			}
+			return false;
+		}
 	default:
 #ifdef DEBUG
 		to_log("BUG: something wrong with command handling, keyw=\'" + keyw + '\'');

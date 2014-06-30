@@ -61,10 +61,13 @@ data as the team shuffling, so to get reasonable results you should have suffici
 <li><strong>!clearbans</strong> removes all bans (otherwise they remain until server restart)</li>
 <li><strong>!spawnbots [num]</strong> spawn num-many <a href="bots.html">Bots</a>; must be a single digit, so at most 9 at a time</li>
 <li><strong>!dropbots</strong> remove all bots (individual bots can of course be '!kick'ed, too)</li>
-<li><strong>!teambal [o/a/p]</strong> sets the <a href="teambalance.html">Team balance</a> option ([o]ff, [a]ctive, [p]assive)</li>
-<li><strong>!servermsg [new server greeting]</strong> sets the server greeting string</li>
+<li><strong>!setconf [config string]</strong> sets a server setting. The syntax
+and rules for <em>config string</em> are the same as in the <a
+href="serverconf.html">Server configuration</a>. This only affects a session; it
+does not overwrite the settings in the configuration file. If <em>config
+string</em> cannot be parsed, the config won't change. Note that changing the maximum
+number of players with this command might reset the class limit to 0.</li>
 </ul>
-The last two commands only affect a session; they do not overwrite the settings in the <a href="serverconf.html">Server configuration</a>.</p>
 
 <p>Requiring AL higher than the target's:
 <ul>
@@ -90,8 +93,9 @@ and you issue '!kick ano', and there is no other player with 'ano' in their name
 <p>The following commands, and only the following, can be used when muted (as using them will be completely invisible to other players): !adminlvl,
 !teams, !log, and !plinfo.</p>
 
-<p>Note that banning really bans the entire IP. This can have an undesired side-effect of banning a whole
-subnet of people when one player from that IP gets a ban. Also, if you ban bots, that
-bans the local IP making further spawning of bots impossible.</p>
+<p>Note that banning really bans the entire IP. This can have an undesired
+side-effect of banning a whole subnet of people when one player from that IP
+gets a ban. Also, if you ban bots, that bans the local IP making further
+spawning of bots impossible.</p>
 
 </body></html>
