@@ -1,6 +1,6 @@
 #!/bin/sh
 # Script to create yuxtapa-XX.tar.gz package.
-ver=$(grep --color=never "VERSION =" Makefile | sed 's/VERSION = //')
+ver=$(grep -F --color=never "VERSION =" Makefile | sed 's/VERSION = //')
 cd ..
 tar -czf yuxtapa-$ver.tar.gz yuxtapa/Makefile yuxtapa/LICENSE yuxtapa/manual yuxtapa/README \
 	yuxtapa/server/*[^o] yuxtapa/client/*[^o] yuxtapa/common/*[^o] \
