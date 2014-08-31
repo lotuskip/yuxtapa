@@ -24,9 +24,9 @@ void del_syms(std::string &s, const short start_at);
 // gives the index, in chars, of the nth symbol:
 short ind_of_sym(const std::string &s, int n);
 
-// Returns, as a C-string, the substring starting at the 'beg'th symbol
+// Returns the substring starting at the 'beg'th symbol
 // and 'len' symbols in length
-const char* mb_substr(const std::string &s, const short beg, short len);
+std::string mb_substr(const std::string &s, const short beg, short len);
 
 // If "s.substr(0,n)" would cut the string in the middle of a multi-byte
 // symbol, returns the last index m<=n so that "s.substr(0,m)" is valid utf8.

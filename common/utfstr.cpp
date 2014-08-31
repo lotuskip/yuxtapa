@@ -141,13 +141,13 @@ short ind_of_sym(const string &s, int n)
 }
 
 
-const char* mb_substr(const string &s, const short beg, short len)
+std::string mb_substr(const string &s, const short beg, short len)
 {
 	short b = ind_of_sym(s, beg);
 	short e = 0;
 	for(; len > 0; --len)
 		e += seq_len(s[b+e]);
-	return s.substr(b, e).c_str();
+	return s.substr(b, e);
 }
 
 

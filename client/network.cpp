@@ -21,7 +21,7 @@
 #include <fstream>
 #include <vector>
 #include <ctime>
-#include <ncurses.h>
+#include "inc_curses.h"
 
 namespace
 {

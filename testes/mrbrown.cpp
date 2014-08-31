@@ -961,9 +961,9 @@ int main(int argc, char *argv[])
 	send_buffer.clear();
 	send_buffer.add((unsigned char)MID_SPAWN_AXN);
 	send_buffer.add(cur_id);
-	/* Don't intentionally become scout/planewalker, since we don't have
-	 * any real AI rules for their special abilities. Note that bots might still,
-	 * by classlimiting, be spawned as these classes (myclass will ultimately
+	/* Don't intentionally become planewalker, since we don't have
+	 * any real AI rules for their special ability. Note that bots might still,
+	 * by classlimiting, be spawned as planewalkers (myclass will ultimately
 	 * be what the server replies). */
 	do myclass = e_Class(random()%NO_CLASS);
 	while(myclass == C_PLANEWALKER);
@@ -1016,7 +1016,7 @@ int main(int argc, char *argv[])
 #endif
 			}
 #ifdef BOTMSG
-			// If bot messaging is enables, we print out (chat) messages.
+			// If bot messaging is enabled, we print out (chat) messages.
 			else if(mid == MID_SAY_CHAT)
 			{
 				recv_buffer.read_sh(); // skip id

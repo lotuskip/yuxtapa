@@ -56,7 +56,7 @@ list<Player>::iterator who_is_this()
 			return it;
 		/* NOTE: in principle, a malignant client could register as one player and
 		 * afterwards ID as another... A remedy would be to check the address, but
-		 * atm it seens unnecessary. */
+		 * atm it seems unnecessary. */
 	}
 	return cur_players.end();
 }
@@ -388,10 +388,10 @@ void Network::broadcast(const unsigned short omit_id, SerialBuffer &sb)
 
 void Network::construct_msg(string &s, const unsigned char cpair)
 {
-	// Note: all message are server-generated, and pretty much the only content
-	// unknown at compile time are the player nicks, which have limited lenght.
-	// Hence, we can rest assured that the strings do not contain words of
-	// lenght > MSG_WIN_X (=57).
+	/* Note: all message are server-generated, and pretty much the only content
+	 * unknown at compile time and beyond the admin's control are the player nicks,
+	 * which have limited lenght. Hence, we can rest assured that the strings do
+	 * not contain words of lenght > MSG_WIN_X (=57). */
 	vector<string> blocks;
 	size_t i;
 	// break up at spaces:

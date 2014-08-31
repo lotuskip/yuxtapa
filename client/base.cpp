@@ -3,7 +3,7 @@
 #include "settings.h"
 #include "../common/utfstr.h"
 #include "../common/util.h"
-#include <ncurses.h>
+#include "inc_curses.h"
 #include <iostream>
 #include <vector>
 #include <csignal>

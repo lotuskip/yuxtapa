@@ -7,7 +7,7 @@
 #include "msg.h"
 #include "class_cpv.h"
 #include "../common/utfstr.h"
-#include <ncurses.h>
+#include "inc_curses.h"
 #include <cctype>
 #include <vector>
 
@@ -229,7 +229,7 @@ bool check_typing()
 	// color by chat/say:
 	k = (clientstate == CS_TYPE_CHAT) ? 7 : 11;
 	Base::print_str(mb_substr(viewn_str, printb_pos,
-		min(str_syms - printb_pos, int(MSG_WIN_X))),
+		min(str_syms - printb_pos, int(MSG_WIN_X))).c_str(),
 		k, 0, MSG_WIN_Y-1, MSG_WIN, true);
 	Base::type_cursor(type_pos - printb_pos);
 	return false;
