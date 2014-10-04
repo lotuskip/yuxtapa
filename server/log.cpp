@@ -22,11 +22,11 @@ void to_log(const string &s)
 {
 	if(canlog)
 	{
-		ofstream logfile((Config::get_config_dir() + logfilename).c_str(),
-			ios_base::app);
+		string fname = Config::get_config_dir() + logfilename;
+		ofstream logfile(fname.c_str(), ios_base::app);
 		if(!logfile)
 		{
-			cerr << "Could not open log file!" << endl;
+			cerr << "Could not open log file (" << fname << ")!" << endl;
 			canlog = false;
 			return;
 		}

@@ -6,18 +6,14 @@
 std::string get_conf_dir()
 {
 	std::string s;
-	char *tmp = getenv("XDG_CONFIG_HOME"); // not all users have set this
-	if(tmp)
+	char *tmp = getenv("HOME");
+	if(tmp && tmp[0])
 		s = std::string(tmp);
 	else
 	{
-		if(!(tmp = getenv("HOME"))) // this should be set, though
-		{
-			std::cerr << "Neither HOME nor XDG_CONFIG_HOME defined!" << std::endl;
-			exit(1);
-		}
-		s += "/.config";
+		std::cerr << "HOME not defined!" << std::endl;
+		exit(1);
 	}
-	s += "/yuxtapa/";
+	s += "/.config/yuxtapa/";
 	return s;
 }

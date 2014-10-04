@@ -38,6 +38,8 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 <ul>
 <li>Typing colour is different for chat/commands vs. shouting</li>
 <li>New key command 'i' for team information</li>
+<li>Fixed a piece of unsafe string handling (which luckily had never caused any
+trouble)</li>
 </ul></p>
 
 <p><strong>Server:</strong>
@@ -48,7 +50,8 @@ bugs are not added retrospectively to listings for old versions, though.</p>
 
 <p><strong>changes affecting both C&amp;S:</strong>
 <ul>
-<li></li>
+<li>Do not consider XDG_CONFIG_HOME anymore (weird stuff happens if one user has
+X running and yuxtapa is ran by another)</li>
 </ul></p>
 
 <p><strong>other:</strong>
