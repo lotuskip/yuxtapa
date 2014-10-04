@@ -328,10 +328,7 @@ void Config::read_config()
 	string s = get_config_dir() + "server.conf";
 	ifstream file(s.c_str());
 	if(!file)
-	{
 		to_log("Warning: config file does not exist or is not readable!");
-		return;
-	}
 	while(file)
 	{
 		// This is very crude parsing; if the file is not right it probably is read all wrong
