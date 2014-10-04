@@ -14,13 +14,10 @@
 
 
 <h3>Downloading</h3>
-<p>You have one or two options:
-<ul>
-<li>Download the yuxtapa source code (from <a
-href="http://github.com/lotuskip/yuxtapa/">github</a>) to compile it manually</li>
-<li>If you are an Arch Linux user, just search for yuxtapa in the <a href="http://aur.archlinux.org">AUR</a></li>
-</ul>
-Contributions such as RPMs are welcome, and will be made available (or linked) if received.</p>
+<p>Download the yuxtapa source code (from <a
+href="http://github.com/lotuskip/yuxtapa/">github</a>) to compile it manually.
+If you know how to use git and want the latest shiny version, pull the master
+branch instead.</p>
 
 
 <h3>Requirements</h3>
@@ -39,8 +36,8 @@ client requires from the terminal emulator.</p>
 
 <h3>Compiling the source</h3>
 
-<p>yuxtapa has a separate executable for the server and the client. You can compile either or both.
-The AUR package installs both by default. Users of AUR know what to do. The following is for everybody else.</p>
+<p>yuxtapa has a separate executable for the server and the client. You can
+compile either or both. First, modify the file 'config.mk' to your liking.</p>
 
 <p>To build either only the client or only the server, run (in the directory 'yuxtapa' that is created upon
 extracting the source package) either of
@@ -64,7 +61,7 @@ mv yuxtapa_cl yuxtapa_sv /usr/bin
 as root. There are no other &quot;system files&quot; beyond these two executables.</p>
 
 <p>The source tarball contains other stuff that might be of interest to users, as well.
-Such as this manual (AUR users will have it installed in /usr/share/doc/yuxtapa/),
+Such as this manual,
 the bot client (see the file 'testes/README' as well as the <a href="bots.html">manual page on bots</a>), and
 the template configuration files (see below).</p>
 
