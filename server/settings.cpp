@@ -110,10 +110,7 @@ void Config::read_config()
 	ifstream file(s.c_str());
 	string keyw;
 	if(!file)
-	{
 		to_log("Warning: config file does not exist or is not readable!");
-		return;
-	}
 	while(file)
 	{
 		// This is very crude parsing; if the file is not right it probably is read all wrong
