@@ -121,6 +121,7 @@ struct Player
 
 void init_known_players(const bool nopurge);
 void store_known_players();
+void write_player_stats();
 
 void output_stats();
 
@@ -142,5 +143,8 @@ void usage_update();
 void usage_report();
 
 std::list<sockaddr_storage> &banlist();
+
+bool next_bot(std::list<Player>::iterator &it);
+short num_bots();
 
 #endif

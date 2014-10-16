@@ -337,7 +337,9 @@ void Game::next_map(const string &loadmap)
 	construct_team_msgs(cur_players.end());
 	send_team_upds(cur_players.end());
 
-	// ready for next generation:
+	write_player_stats();
+
+	// ready for next map generation:
 	if(loadmap.empty())
 		init_phase = IPH_GEN_MAP;
 	else if(!curmap->load_from_file(loadmap))

@@ -7,8 +7,18 @@ players themselves, but they can be published by the server administrator.
 If you start the server with the extra command line argument '<strong>--pstats</strong>',
 the server will print to stdout all player statistics and exit.</p>
 
-<p>The stats are supposed to be human-readable to some extent, but in particular
-easily analysable/representable with self-made scripts or programs.</p>
+<p>The stats printed in this way are supposed to be human-readable to some extent,
+but in particular easily analysable/representable with self-made scripts or
+programs.</p>
+
+<p>The statistics are also written after each map, and can be viewed by running
+another instance of the server with the '--pstats' argument. This in principle
+allows publishing the stats in semi-realtime on a website while the server is
+running. Pre-engineered mechanism for this is not provided, though.</p>
+
+<p>Active <a href="bots.html">bots</a> are included in the statistics stored in between
+maps, but not in the statistics stored at server shutdown. Also, when an
+individual bot disconnects, its statistics are purged immediately.</p>
 
 
 <h3>The statistics table</h3>

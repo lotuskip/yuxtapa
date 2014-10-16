@@ -269,7 +269,7 @@ void add_to_chat(string &s, const string &talker, const unsigned char t)
 	short new_lines = 1;
 	if(len + num_syms(s) > Base::chat_width())
 	{
-		unsigned int i;
+		int i;
 		if((i = s.rfind(' ', Base::chat_width() - len)) == string::npos)
 			i = Base::chat_width() - len;
 		chatbuffer.push_back(ChatBufferLine(s.substr(0, i), talker, t));

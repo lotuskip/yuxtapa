@@ -9,6 +9,5 @@ bool process_cmd(const std::list<Player>::iterator pit, std::string &cmd);
 
 void shuffle_teams();
 bool drop_a_bot();
-short num_bots();
 
 #endif

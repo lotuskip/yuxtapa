@@ -97,14 +97,6 @@ list<Player>::iterator id_pl_by_nick_part(const string &s)
 	return foundit;
 }
 
-
-bool next_bot(list<Player>::iterator &it)
-{
-	while(it != cur_players.end() && it->botpid == -1)
-		++it;
-	return (it != cur_players.end());
-}
-
 } // end local namespace
 
 
@@ -610,19 +602,6 @@ bool drop_a_bot()
 		return true;
 	}
 	return false;
-}
-
-
-short num_bots()
-{
-	short num = 0;
-	list<Player>::iterator bit = cur_players.begin();
-	while(next_bot(bit))
-	{
-		++bit;
-		++num;
-	}
-	return num;
 }
 
 #endif // not maptest build

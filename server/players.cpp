@@ -32,7 +32,6 @@ using namespace std;
 const short STAT_VERSION = -1;
 
 const string playerfilename = ".playerdata";
-const string statfilename = "yuxtapa_stat";
 
 const string kill_way_name[MAX_WAY_TO_KILL] = { "melee", "arrow",
 	"slice", "zap", "boobytrap", "fireball", "mm", "backstab",
@@ -42,7 +41,7 @@ const string kill_way_name[MAX_WAY_TO_KILL] = { "melee", "arrow",
 // server settings are such that players are never forgotten, we might
 // _eventually_ have so many players it becomes a drag to find free
 // ID numbers for new ones...
-const unsigned short MAX_STORED_PLAYERS = 10000;
+const short MAX_STORED_PLAYERS = 10000;
 
 const string digitstr = "0123456789";
 
@@ -364,6 +363,11 @@ void store_known_players()
 	}
 
 	// Now start actually storing the player statistics:
+	write_player_stats();
+}
+
+void write_player_stats()
+{
 	string fname = Config::get_config_dir() + playerfilename;
 	ofstream file(fname.c_str(), ios_base::binary);
 	if(!file)
@@ -375,38 +379,36 @@ void store_known_players()
 	file.write(reinterpret_cast<const char*>(&STAT_VERSION), sizeof(short));
 
 	short numpl;
-	if(known_players.size() > MAX_STORED_PLAYERS)
+	if((signed int)(known_players.size()) > MAX_STORED_PLAYERS)
 		numpl = MAX_STORED_PLAYERS;
 	else // this is done like this 'cuz basically the size can be more than a short fits
 		numpl = known_players.size();
-	short sh;
+	// Note that when called between maps we are writing bots' stats into the
+	// file, too!
 	file.write(reinterpret_cast<char*>(&numpl), sizeof(short));
-	while(numpl)
+	for(list<PlayerStats>::iterator it = known_players.begin();
+		it != known_players.end(); ++it)
 	{
-		file.write(reinterpret_cast<char*>(&known_players.front().ID), sizeof(short));
+		file.write(reinterpret_cast<char*>(&it->ID), sizeof(short));
 		file.write(known_players.front().password, PASSW_LEN);
-		file.write(reinterpret_cast<char*>(known_players.front().kills), MAX_WAY_TO_KILL*sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().deaths), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().tks), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().healing_recvd), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().total_time), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().time_specced), sizeof(long));
-		file.write(reinterpret_cast<char*>(known_players.front().time_played), NO_CLASS*sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().arch_hits), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().arch_shots), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().cm_hits), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().cm_shots), sizeof(long));
-		file.write(reinterpret_cast<char*>(&known_players.front().ad_lvl), sizeof(e_AdminLvl));
-		file.write(reinterpret_cast<char*>(&known_players.front().last_seen), sizeof(time_t));
-		sh = known_players.front().last_known_as.size();
-		file.write(reinterpret_cast<char *>(&sh), sizeof(short));
-		file.write(known_players.front().last_known_as.c_str(), sh);
-
-		known_players.pop_front();
-		--numpl;
+		file.write(reinterpret_cast<char*>(it->kills), MAX_WAY_TO_KILL*sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->deaths), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->tks), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->healing_recvd), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->total_time), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->time_specced), sizeof(long));
+		file.write(reinterpret_cast<char*>(it->time_played), NO_CLASS*sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->arch_hits), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->arch_shots), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->cm_hits), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->cm_shots), sizeof(long));
+		file.write(reinterpret_cast<char*>(&it->ad_lvl), sizeof(e_AdminLvl));
+		file.write(reinterpret_cast<char*>(&it->last_seen), sizeof(time_t));
+		numpl = it->last_known_as.size();
+		file.write(reinterpret_cast<char *>(&numpl), sizeof(short));
+		file.write(it->last_known_as.c_str(), numpl);
 	}
 }
-
 
 unsigned short player_hello(const unsigned short id, string &passw,
 	const string &nick, sockaddr_storage &sas)
@@ -578,5 +580,25 @@ void output_stats()
 
 
 std::list<sockaddr_storage> &banlist() { return banned_ips; }
+
+
+bool next_bot(list<Player>::iterator &it)
+{
+	while(it != cur_players.end() && it->botpid == -1)
+		++it;
+	return (it != cur_players.end());
+}
+
+short num_bots()
+{
+	short num = 0;
+	list<Player>::iterator bit = cur_players.begin();
+	while(next_bot(bit))
+	{
+		++bit;
+		++num;
+	}
+	return num;
+}
 
 #endif // not maptest build
