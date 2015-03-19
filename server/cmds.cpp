@@ -331,30 +331,10 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 			// server over-full:
 			char num = min(int(cmd[i+1]-'0'),
 				int(int_settings[IS_MAXPLAYERS] - cur_players.size()));
-			pid_t pid;
 			for(; num > 0; --num)
 			{
-				if((pid = vfork()) < 0)
-				{
-					timed_log("!spawnbot -- error in fork!");
+				if(spawn_bot())
 					break;
-				}
-				else if(!pid)
-				{
-					// This is the forked bot.
-					execl(get_botexe().c_str(), get_botexe().c_str(), NULL);
-					_exit(0);
-				}
-				// Server code continues:
-				// It might be that the bot executable doesn't exists, in which
-				// case the forked child just exited; check:
-				if(waitpid(pid, &tmpi, WNOHANG) == pid && WIFEXITED(tmpi))
-				{
-					timed_log("!spawnbot -- could not find/run \'mrbrown\' executable!");
-					Network::to_chat("Cannot spawn bots! Check configuration.");
-					break;
-				}
-				// else bot is running and network will handle its connection attempt
 			}
 		}
 		return false; // may broadcast
@@ -601,6 +581,35 @@ bool drop_a_bot()
 		Game::remove_player(bit, " dropped.");
 		return true;
 	}
+	return false;
+}
+
+bool spawn_bot()
+{
+	using namespace Config;
+	pid_t pid;
+	int i;
+	if((pid = vfork()) < 0)
+	{
+		timed_log("!spawnbot -- error in fork!");
+		return true;
+	}
+	if(!pid)
+	{
+		// This is the forked bot.
+		execl(get_botexe().c_str(), get_botexe().c_str(), NULL);
+		_exit(0);
+	}
+	// Server code continues:
+	// It might be that the bot executable doesn't exists, in which
+	// case the forked child just exited; check:
+	if(waitpid(pid, &i, WNOHANG) == pid && WIFEXITED(i))
+	{
+		timed_log("!spawnbot -- could not find/run \'mrbrown\' executable!");
+		Network::to_chat("Cannot spawn bots! Check configuration.");
+		return true;
+	}
+	// else bot is running and network will handle its connection attempt
 	return false;
 }
 

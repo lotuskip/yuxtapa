@@ -1264,6 +1264,18 @@ list<Player>::iterator Game::remove_player(list<Player>::iterator pit,
 	list<Player>::iterator retval = cur_players.erase(pit);
 	Network::to_chat(msg);
 
+	// minplayers != 0 implies (by checks in settings.cpp) that bots are around
+	if(cur_players.size() < int_settings[IS_MINPLAYERS])
+	{
+		/* if ALL remaining players are now bots, drop them all */
+		if((unsigned int)num_bots() == cur_players.size())
+		{
+			while(drop_a_bot()); // not fast, but simple
+		}
+		else // otherwise fill up with a bot
+			spawn_bot();
+	}
+
 	if(cur_players.empty())
 		timed_log("no more players, awaiting connections.");
 	else

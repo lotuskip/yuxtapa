@@ -17,6 +17,14 @@ is written for the bots one day.</p>
 
 <p>If the server is full and new players try to connect, bots, if there are any, are automatically dropped to make room.</p>
 
+<p>Alternatively, the server can automatically fill itself up with bots when
+human players are lacking; this is done through the <em>minplayers</em> setting.
+If there is at least one human player but less than <em>minplayers</em> players
+total, bots are spawned to reach the minimum requirement. It is still possible
+to spawn more bots manually, but kicked bots will be automatically replaced by
+new ones. If you wish to play without the bots, change <em>minplayers</em> on
+the fly (assuming you are an admin and the server allows this).</p>
+
 
 <h3>Installing Mr. Brown</h3>
 <p>For AUR users: the bot executable, named 'mrbrown', is placed in

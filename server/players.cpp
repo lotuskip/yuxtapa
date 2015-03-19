@@ -54,7 +54,7 @@ vector<short> usage_per_30min;
 unsigned short next_ID_to_give = 0;
 
 void register_player(string nick, sockaddr_storage &sas,
-	list<PlayerStats>::iterator it)
+	list<PlayerStats>::iterator it, const bool is_bot)
 {
 	// Check if nick is taken and modify if needed:
 	list<Player>::const_iterator i = cur_players.begin();
@@ -119,6 +119,23 @@ void register_player(string nick, sockaddr_storage &sas,
 	(npit->own_vp = new ViewPoint())->set_owner(npit);
 	npit->own_vp->add_watcher(npit);
 	npit->viewn_vp = npit->own_vp;
+
+	if(!is_bot && Config::int_settings[Config::IS_MINPLAYERS])
+	{
+		// a newly connected player (including a bot) can replace a bot:
+		if(cur_players.size() == Config::int_settings[Config::IS_MINPLAYERS]+1)
+			drop_a_bot(); // if no bots, okay
+		// or this might be our first human player?
+		else if(cur_players.size() == 1)
+		{
+			// players won't get added to cur_players until later, so
+			// record locally how many have been added
+			unsigned short np = 1;
+			while(np < Config::int_settings[Config::IS_MINPLAYERS]
+				&& !spawn_bot())
+				++np;
+		}
+	}
 }
 
 
@@ -184,10 +201,10 @@ list<Player>::const_iterator find_pl_by_sas(const sockaddr_storage &sas)
 }
 
 unsigned short add_and_register_player(const string &nick, string &passw,
-	sockaddr_storage &sas)
+	sockaddr_storage &sas, const bool is_bot)
 {
 	list<PlayerStats>::iterator newpl = new_player();
-	register_player(nick, sas, newpl);
+	register_player(nick, sas, newpl, is_bot);
 	passw.assign(newpl->password);
 	return newpl->ID;
 }
@@ -411,7 +428,7 @@ void write_player_stats()
 }
 
 unsigned short player_hello(const unsigned short id, string &passw,
-	const string &nick, sockaddr_storage &sas)
+	const string &nick, sockaddr_storage &sas, const bool is_bot)
 {
 	/* First check if this client is already registered, because the same
 	 * client might send multiple hellos having lost the reply. We don't want
@@ -446,7 +463,7 @@ unsigned short player_hello(const unsigned short id, string &passw,
 	}
 
 	if(id == 0xFFFF) // a new player
-		return add_and_register_player(nick, passw, sas);
+		return add_and_register_player(nick, passw, sas, is_bot);
 
 	// Check if ID is already playing:
 	for(it = cur_players.begin(); it != cur_players.end(); ++it)
@@ -464,23 +481,23 @@ unsigned short player_hello(const unsigned short id, string &passw,
 			if(passw != si->password) // received wrong password!
 				return ID_STEAL;
 			// else all is good:
-			register_player(nick, sas, si);
+			register_player(nick, sas, si, is_bot);
 			return JOIN_OK_ID_OK;
 		}
 	}
 	// If here, we have forgotten about this player, most likely
-	return add_and_register_player(nick, passw, sas);
+	return add_and_register_player(nick, passw, sas, is_bot);
 }
 
 unsigned short bot_connect(const unsigned short pid, sockaddr_storage &sas)
 {
 	// Basically we delegate to player_hello, but some extra checks:
-	// We don't want to "drop bots to make room for bots:
+	// We don't want to "drop bots to make room for bots":
 	if(cur_players.size() >= Config::int_settings[Config::IS_MAXPLAYERS])
 		return SERVER_FULL;
 	// else:
 	string tmp1, tmp2 = Config::new_bot_name();
-	unsigned short sh = player_hello(0xFFFF, tmp1, tmp2, sas);
+	unsigned short sh = player_hello(0xFFFF, tmp1, tmp2, sas, true);
 	if(sh <= HIGHEST_VALID_ID) // player was added
 		cur_players.back().botpid = pid;
 	return sh;

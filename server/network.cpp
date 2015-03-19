@@ -165,7 +165,7 @@ bool Network::receive_n_handle()
 				 * That means it's a tampered client! Ignore the bastard. */
 				break;
 			}
-			ush = player_hello(ush, pl_passw, s, them);
+			ush = player_hello(ush, pl_passw, s, them, false);
 			// Note: player_hello can call something that uses send_buffer!
 			send_buffer.clear();
 			if(ush == ID_STEAL)

@@ -38,6 +38,7 @@ namespace Config
 		IS_IPV,
 		IS_STATPURGE,
 		IS_SAFE_CHASMS,
+		IS_MINPLAYERS,
 		MAX_INT_SETTING	};
 
 	bool parse_config(const std::string &s, const bool from_conf);

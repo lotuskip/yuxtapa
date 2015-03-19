@@ -11,6 +11,9 @@
 #include <vector>
 #include <sstream>
 #include <cstdlib>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 namespace
 {
@@ -32,13 +35,14 @@ Config::TB_PASSIVE,
 12360, // port
 0, // ip (4: IPv4, 6: IPv6, 0: unspecified)
 24, // stat purge (h)
-1 // safe chasms (how many warnings are given)
+1, // safe chasms (how many warnings are given)
+0 // min players
 };
 
 // keys to these:
 const string keywords[Config::MAX_INT_SETTING] = {
 "maxplayers", "teambalance", "mapsize", "mapsizevar", "classlimit",
-"turnms", "interm", "port", "ipv", "statpurge", "safe_chasms" };
+"turnms", "interm", "port", "ipv", "statpurge", "safe_chasms", "minplayers" };
 
 // hard limits (just staying within these is not sufficient alone):
 const unsigned int hard_lims[Config::MAX_INT_SETTING][2] = {
@@ -53,7 +57,8 @@ final map size span of 42--511 */
 { 1024, 61000 }, // port
 { 0, 6 }, // port
 { 0, 50000 }, // stat purge; again 0 means "no limit"
-{ 0, 255 } // safe chasms (number of warnings given)
+{ 0, 255 }, // safe chasms (number of warnings given)
+{ 0, 200 } // min players (must also be <= maxplayers)
 };
 
 string confdir_str = "";
@@ -70,12 +75,24 @@ vector<string> botnames;
 vector<string>::const_iterator botname_iter;
 
 
-bool check_path_setting(const string &name, string &val)
+bool check_path_setting(const string &name, string &val, const bool x)
 {
-	if(!val.empty() && val[0] != '/')
+	if(x)
 	{
-		to_log("Config error: the \'" + name + "\' setting must contain "
-			"the full path; ignoring the read \"" + val + "\".");
+		if(access(val.c_str(), X_OK) == -1)
+		{
+			to_log("Config error: the \'" + name + "\' setting does not "
+				"point to a valid executable file: \"" + val + "\".");
+			val.clear();
+			return true;
+		}
+		return false;
+	}
+	struct stat buf;
+	if(stat(val.c_str(), &buf) || !(S_ISDIR(buf.st_mode)))
+	{
+		to_log("Config error: the \'" + name + "\' setting does not "
+			"point to a valid directory: \"" + val + "\".");
 		val.clear();
 		return true;
 	}
@@ -112,6 +129,18 @@ bool validate_classlim()
 		&& int_settings[IS_CLASSLIMIT]*2*NO_CLASS < int_settings[IS_MAXPLAYERS])
 	{
 		int_settings[IS_CLASSLIMIT] = 0;
+		return true;
+	}
+	return false;
+}
+
+bool validate_minp()
+{
+	using namespace Config;
+	if(int_settings[IS_MINPLAYERS] > int_settings[IS_MAXPLAYERS]
+		|| (int_settings[IS_MINPLAYERS] && !botexe.length()))
+	{
+		int_settings[IS_MINPLAYERS] = 0;
 		return true;
 	}
 	return false;
@@ -167,6 +196,7 @@ bool Config::parse_config(const string &s, const bool from_conf)
 				return true;
 			}
 			validate_classlim();
+			validate_minp();
 		}
 		return false;
 	}
@@ -207,7 +237,7 @@ bool Config::parse_config(const string &s, const bool from_conf)
 	{
 		olds = botexe;
 		ss >> botexe;
-		if(check_path_setting(keyw, botexe) && !from_conf)
+		if(check_path_setting(keyw, botexe, true) && !from_conf)
 		{
 			botexe = olds;
 			return true;
@@ -240,7 +270,7 @@ bool Config::parse_config(const string &s, const bool from_conf)
 	{
 		olds = mapdir;
 		ss >> mapdir;
-		if(check_path_setting(keyw, mapdir) && !from_conf)
+		if(check_path_setting(keyw, mapdir, false) && !from_conf)
 		{
 			mapdir = olds;
 			return true;
@@ -352,6 +382,8 @@ void Config::read_config()
 	if(validate_classlim())
 		to_log("Config error: classlimit is too small "
 			"with respect to the number of players allowed!");
+	if(validate_minp())
+		to_log("Config error: minplayers forced to 0!");
 	// Check modes:
 	if(poss_modes.empty())
 	{

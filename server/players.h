@@ -135,7 +135,8 @@ enum { // Player Hello Result
 	SERVER_FULL = 0xFFFC, // any other return value means "this is your new id"
 	HIGHEST_VALID_ID = 0xFFFB };
 unsigned short player_hello(const unsigned short id,
-	std::string &passw, const std::string &nick, sockaddr_storage &sas);
+	std::string &passw, const std::string &nick, sockaddr_storage &sas,
+	const bool is_bot);
 unsigned short bot_connect(const unsigned short pid, sockaddr_storage &sas);
 
 // to log average usage of the server:
