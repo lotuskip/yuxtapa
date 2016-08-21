@@ -371,7 +371,7 @@ char score_walk(const e_Dir d, const bool avoid_pcs)
 	return WALK_GOOD; // just a walkable tile (this includes doors)
 }
 
-// Walk to direction d if can. If cannot, try ++d and --d in random order.
+// Walk in what seems best out of the directions d, (d+1), and (d-1).
 // Returns whether did move.
 bool random_turn_from_dir(e_Dir d, const bool avoid_pcs, const bool ign_terrain)
 {
@@ -400,8 +400,10 @@ bool random_turn_from_dir(e_Dir d, const bool avoid_pcs, const bool ign_terrain)
 	return true;
 }
 
+// Walk randomly. May or may not actually take a step.
 void random_walk()
 {
+	// Sometimes walking randomly means staying still. But not in water!
 	if(symbol_under_feet != '~' && !(random()%WAIT_ON_RANDOM_WALK_1IN))
 		return;
 	// a small chance of turning without reason:
@@ -467,7 +469,7 @@ void scan_view() // extract PCs and flag in view, count walls
 		if(viewbuffer[i] == '&') // flag
 		{
 			/* Note that since '@' etc. overrule '&' in the display, we don't
-			 * have to check all possible colours (as they are, in fact, impossible) */
+			 * have to check all possible colours (they are, in fact, impossible) */
 			switch(viewbuffer[i-1])
 			{
 			case C_GREEN_PC: case C_GREEN_PC_LIT: case C_GREEN_ON_MISS:
@@ -568,7 +570,8 @@ bool could_shoot(Coords &target, const bool cardinals)
 			&& !(ind = abs(eti->y - center.y)) && line != ind)
 			continue; // this enemy not in a cardinal direction
 		// Check that there are no teammates on the line of fire:
-		// NOTE: atm not checking for walls etc...
+		// NOTE: atm not checking for walls etc... (scouts can reveal PCs you
+		// can't actually see)
 		if(eti->y - VIEWSIZE/2 == -r) line = eti->x - VIEWSIZE/2 + r;
 		else if(eti->x - VIEWSIZE/2 == r) line = 3*r + eti->y - VIEWSIZE/2;
 		else if(eti->y - VIEWSIZE/2 == r) line = 5*r - eti->x + VIEWSIZE/2;
@@ -665,7 +668,7 @@ bool no_close_teammates()
 
 bool get_enemy_corpse_dir(Coords &t)
 {
-	// scout and not already disguised:
+	// must be scout and not already disguised:
 	if(myclass == C_SCOUT && !brown_pc_color(viewbuffer[(center.y*VIEWSIZE+center.x)*2]))
 	{
 		for(int i = 1; i < VIEWSIZE*VIEWSIZE*2; i += 2)
@@ -688,8 +691,9 @@ bool no_class_spc_Ar()
 	if(could_shoot(tmp_coords, false))
 	{
 		/* Shoot if had a clear shot for some turns, otherwise keep "aiming"
-		 * (do nothing). Note that having a clear shot to different targets at
-		 * different turns counts... */
+		 * (do nothing). This simulates how human players take a while to fire.
+		 * Note that having a clear shot to different targets at different
+		 * turns counts... */
 		if(++abil_counter == AIM_TURNS)
 		{
 			send_action(XN_SHOOT, tmp_coords.x - VIEWSIZE/2, tmp_coords.y - VIEWSIZE/2);
@@ -716,6 +720,7 @@ bool no_class_spc_As()
 		return true;
 	// Need at least one non-assassin enemy and no non-assassin friends
 	// within range (3 tiles; cf. server/chores.cpp:flash_at())
+	// TODO: remove this magic number
 	vector<Coords>::const_iterator ti;
 	for(ti = pcs[myteam].begin(); ti != pcs[myteam].end(); ++ti)
 	{
@@ -895,7 +900,7 @@ bool (*no_cl_spc[NO_CLASS])() = {
 	no_class_spc_Sc, no_class_spc_Fi, no_class_spc_Mi, no_class_spc_He,
 	no_class_spc_Wi, no_class_spc_Tr, no_class_spc_Pw };
 
-// See if decides to commit a class-specific action. Returns false if yes.
+// See if decides to commit a class-specific action.
 bool no_class_specific()
 {
 	// To make bot behaviour a bit less predictable, there is, for each class,
@@ -1034,19 +1039,15 @@ int main(int argc, char *argv[])
 				if((torchlit = (rv <= 0 && myhp > 0))) /* this means we spawned
 					* (use torchlit as a temp variable) */
 				{
-					// wizards can immediately light their torch:
-					if(myclass == C_WIZARD)
-						send_action(XN_TORCH_HANDLE);
 					/* Everyone ought to wait so we don't act based on an old
 					 * view (VIEW_UPD might arrive after STATE_UPD on this
-					 * turn). So wizards light their torch and others just stand
-					 * around for a single turn. */
+					 * turn). So bots just stand around for a single turn. */
 					wait_turns = 1;
 					isolation_turns = random()%50;
 				}
 				else if(myhp <= 0 && rv > 0) // this means we died
 					symbol_under_feet = col_under_feet = 0;
-				// TODO: use more of these?
+				// TODO: record and make use of more of these?
 				recv_buffer.read_ch(); // tohit
 				recv_buffer.read_ch(); // +damage
 				recv_buffer.read_ch(); // dv
@@ -1064,7 +1065,9 @@ int main(int argc, char *argv[])
 			else if(mid == MID_STATE_CHANGE)
 			{
 				if((myclass = e_Class(recv_buffer.read_ch())) == NO_CLASS)
-					myhp = 0; // was forced into a spectator
+					myhp = 0; /* was forced into a spectator. Note that the bot
+					           * won't try to spawn again but must be put into
+							   * a team by an admin. */
 				else if(myclass == C_ARCHER)
 					abil_counter = 0;
 				else if(myclass == C_ASSASSIN)
@@ -1104,7 +1107,7 @@ int main(int argc, char *argv[])
 				}
 			}
 #if 0
-			// Maybe do something with this sometime?
+			// Maybe do something with this sometime? (TODO?)
 			else if(mid == MID_TIME_UPD) { }
 #endif
 			continue; // as long as we receive messages, keep handling them!
