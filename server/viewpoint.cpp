@@ -260,9 +260,10 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 		/* In addition, for the higher radii, in order to cover a few "blind
 		 * spots", we have to run with another radius (this could be optimized a
 		 * little more, I'm sure, but I haven't bothered figuring that out). */
-		if(LOSrad > 6)
+		if(LOSrad >= 6)
 		{
-			fill_loslittbl(LOSrad - 2);
+			if(LOSrad > 6)
+				fill_loslittbl(LOSrad - 2);
 			fill_loslittbl(LOSrad - 1);
 		}
 		if(LOSrad == 10) // scouts have their own extra blind spots

@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #Script to generate an empty yuxtapa map file. Extremely slow, but does the
 #job (no bashisms; way faster with dash, zsh, and probably others).
 #Usage:

@@ -431,7 +431,7 @@ bool process_cmd(const list<Player>::iterator pit, string &cmd)
 	case CMD_HOWFAIR: // must be TU
 		if(!pit->muted && pit->stats_i->ad_lvl >= AL_TU)
 		{
-			if(num_players[T_GREEN]*num_players[T_PURPLE])
+			if(num_players[T_GREEN] && num_players[T_PURPLE])
 			{
 				tmpi = 0;
 				list<Player>::const_iterator it2;
