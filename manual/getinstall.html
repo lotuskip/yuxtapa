@@ -3,7 +3,7 @@
 
 <p><strong>If you just want to try the game out real quick</strong>, the necessary steps are:
 <ul>
-<li>Download the source code tarball and extract it</li>
+<li>Download the source using git (assuming there is no package for your Linux distro)</li>
 <li>Compile the server and the client as explained below</li>
 <li>Create the directory ~/.config/yuxtapa</li>
 <li>Copy the configuration template files server.conf and client.conf from 'yuxtapa/tmplates/' there</li>
@@ -16,8 +16,8 @@
 <h3>Downloading</h3>
 <p>Download the yuxtapa source code (from <a
 href="http://github.com/lotuskip/yuxtapa/">github</a>) to compile it manually.
-If you know how to use git and want the latest shiny version, pull the master
-branch instead.</p>
+Assuming you have git installed, you can just
+<pre>git clone "https://github.com/lotuskip/yuxtapa.git"</pre></p>
 
 
 <h3>Requirements</h3>
@@ -40,7 +40,7 @@ client requires from the terminal emulator.</p>
 compile either or both. First, modify the file 'config.mk' to your liking.</p>
 
 <p>To build either only the client or only the server, run (in the directory 'yuxtapa' that is created upon
-extracting the source package) either of
+git cloning) either of
 <pre>
 make client
 </pre>
