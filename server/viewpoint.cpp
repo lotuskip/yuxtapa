@@ -265,9 +265,9 @@ short ViewPoint::render(char *target, vector<string> &shouts)
 			if(LOSrad > 6)
 				fill_loslittbl(LOSrad - 2);
 			fill_loslittbl(LOSrad - 1);
+			if(LOSrad == 10) // scouts have their own extra blind spots
+				fill_loslittbl(6);
 		}
-		if(LOSrad == 10) // scouts have their own extra blind spots
-			fill_loslittbl(6);
 
 		// The center point of the view needs to be checked separately.
 		// It is always in LOS!
